@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Target, CheckCircle, Circle, Trophy, Zap, Star, Award, Plus, Trash2, XCircle, Minus, X } from 'lucide-react'
+import { Target, CheckCircle, Circle, Trophy, Plus, Trash2, XCircle, Minus, X, Star } from 'lucide-react'
 import { objectivesService } from '../../services/objectivesService'
 import type { UserObjectifInfos } from '../../types/objectives'
 import CreateObjectifForm from '../objectives/CreateObjectifForm'

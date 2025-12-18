@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
 import { Award, Star } from 'lucide-react';
 import type { Member } from '../../types';
 import { getRankColor } from '../../utils';
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 
 interface TopPerformersByRoleProps {
     members: Member[];

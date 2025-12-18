@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import  { useMemo, useState } from 'react';
 import { Filter, Trophy } from 'lucide-react';
 
 interface PointsHistoryRaw {

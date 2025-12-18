@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Shield, Star, Award } from 'lucide-react';
+import { ChevronRight, Shield, Star }    from 'lucide-react';
 import type { Member } from '../types';
 import { getRankColor, getValidationStatusColor } from '../utils';
 

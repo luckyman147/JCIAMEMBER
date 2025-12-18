@@ -82,7 +82,6 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
           const d = new Date(h.created_at)
           const date = d.getDate()
           const weekNum = Math.ceil(date / 7)
-          const key = `W${Math.min(weekNum, 4)}` // Cap at 4 for display simplicity or handle 5
           // Let's allow W5
            if (weekNum === 5) weeksMap.set('W5', 0);
            

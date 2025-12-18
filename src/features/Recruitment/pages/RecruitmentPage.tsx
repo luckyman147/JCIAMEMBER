@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
 import type { Candidate } from '../models/types'
 import { toast } from 'sonner'
