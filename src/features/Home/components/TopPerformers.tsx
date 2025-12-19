@@ -15,7 +15,8 @@ export default function TopPerformers() {
     try {
       const allMembers = await getMembers()
       const sorted = allMembers
-   
+        .sort((a, b) => (b.points || 0) - (a.points || 0))
+        .slice(0, 5)
       setMembers(sorted)
     } catch (error) {
       console.error(error)
@@ -29,14 +30,6 @@ export default function TopPerformers() {
       <div className="animate-pulse h-64 bg-white rounded-xl shadow-sm border p-6" />
     )
 
-  if (!loading && members.length === 0) {
-    return (
-      <div className="p-4 text-center text-gray-500">
-        No top performers found.
-      </div>
-    );
-  }
-  
   return (
     <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6 flex flex-col">
       

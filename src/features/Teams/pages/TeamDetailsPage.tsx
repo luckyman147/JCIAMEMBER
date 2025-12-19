@@ -68,7 +68,8 @@ export default function TeamDetailsPage() {
     // Helpers
     const isTeamAdmin = team?.my_role === 'admin' || team?.my_role === 'lead';
     const isGlobalAdmin = role?.toLowerCase() === 'admin'; 
-    const canManageTeam = (isTeamAdmin && hasExecutiveRole) || isGlobalAdmin;
+    const isPresident = role?.toLowerCase() === 'president';
+    const canManageTeam = isTeamAdmin || isGlobalAdmin || isPresident || hasExecutiveRole;
 
     if (loading) return <div>
         <Navbar />

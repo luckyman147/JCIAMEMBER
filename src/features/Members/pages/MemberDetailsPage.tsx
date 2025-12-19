@@ -3,13 +3,15 @@ import { toast } from "sonner";
 import { 
     MemberHeader, 
     MemberStatus, 
-    MemberInfo,
     MemberPoints,
     MemberPointsProgress,
     MemberObjectives,
     MemberActivities,
     MemberComplaints,
-
+    MemberStrengths,
+    MemberWeaknesses,
+    MemberInterests,
+    MemberBio,
 } from "../components";
 import Navbar from "../../../Global_Components/navBar";
 import MemberPointsHistory from "../components/stats/MemberPointsHistory";
@@ -119,14 +121,29 @@ export default function MemberDetailsPage() {
 
                 {/* Middle Column (Info & Activities) */}
                 <div className="space-y-8 lg:col-span-1">
-                     <MemberInfo 
-                        memberId={member.id}
-                        description={member.description}
-                        onDescriptionUpdate={(desc) => handleUpdate({ description: desc })}
-                        readOnly={!isOwnProfile}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                        <MemberInterests 
+                            memberId={member.id}
+                            readOnly={!isOwnProfile && !canEdit}
                         />
+                        <MemberBio 
+                            description={member.description}
+                            onUpdate={(desc) => handleUpdate({ description: desc })}
+                            readOnly={!isOwnProfile && !canEdit}
+                        />
+                    </div>
                 </div>
-                
+                    <MemberStrengths 
+                            strengths={member.strengths || []}
+                            onUpdate={(str: string[]) => handleUpdate({ strengths: str })}
+                            readOnly={!isOwnProfile && !canEdit}
+                        />
+                        <MemberWeaknesses 
+                            weaknesses={member.weaknesses || []}
+                            onUpdate={(weak: string[]) => handleUpdate({ weaknesses: weak })}
+                            readOnly={!isOwnProfile && !canEdit}
+                        />
                  {/* Right Column (Activities, Objectives & Complaints) */}
                  <div className="space-y-8 lg:col-span-2">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

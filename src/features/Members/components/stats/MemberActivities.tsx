@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { activityService } from '../../../Activities/services/activityService';
 import { getMemberById } from '../../services/members.service';
 import type { Activity } from '../../../Activities/models/Activity'; // Use type import
-import { Calendar, Star, MessageSquare, Award, XCircle, CheckCircle, PieChart, Activity as ActivityIcon } from 'lucide-react';
+import { Calendar, Star, MessageSquare, Award, XCircle, CheckCircle, PieChart, Activity as ActivityIcon, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import supabase from '../../../../utils/supabase';
 
@@ -62,7 +62,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
         // 3. Fetch all activities
         const { data: allActivities, error: actError } = await supabase
             .from('activities')
-            .select('*')
+            .select('*, activity_participants(count)')
             .gte('activity_begin_date', joinDate)
             .order('activity_begin_date', { ascending: false });
 
@@ -222,6 +222,39 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
       </div>
 
 
+       {/* Presence Summary Highlight */}
+       {!loading && historyItems.length > 0 && (
+         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900/50 dark:to-slate-800/50 border-b border-blue-100 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center p-1">
+                        <div className="h-full w-full rounded-full border-4 border-blue-500 border-t-transparent animate-[spin_3s_linear_infinite] flex items-center justify-center relative">
+                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400 absolute">
+                                {Math.round((attendedCount / (attendedCount + missedCount)) * 100)}%
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white">Average Presence Rate</h4>
+                        <p className="text-xs text-gray-600 dark:text-slate-400">
+                           {(() => {
+                               const pct = (attendedCount / (attendedCount + missedCount)) * 100;
+                               if (pct >= 90) return "Exceptional commitment! You are a core pillar of our activities.";
+                               if (pct >= 75) return "Excellent involvement. Your active participation is highly valued.";
+                               if (pct >= 50) return "Consistent attendance. Keep staying involved in our activities.";
+                               if (pct >= 30) return "Regular presence. Try to join more events to maximize impact.";
+                               return "Low presence. Attend more events to grow within the organization.";
+                           })()}
+                        </p>
+                    </div>
+                </div>
+                <div className="hidden sm:block text-right">
+                    <span className="text-2xl font-black text-blue-600/20 dark:text-blue-400/10 uppercase tracking-tighter">Presence</span>
+                </div>
+            </div>
+         </div>
+       )}
+
        {showCharts && historyItems.length > 0 && (
          <div className="p-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -267,24 +300,42 @@ const PresencePieChart = ({ attended, missed }: { attended: number, missed: numb
     const circumference = 2 * Math.PI * radius;
     const strokeDasharray = `${(attendedPercentage / 100) * circumference} ${circumference}`;
 
+    const getNote = (pct: number) => {
+        if (pct >= 90) return { label: "Exceptional", color: "text-green-600", text: "Outstanding commitment! You are a core pillar of our activities." };
+        if (pct >= 75) return { label: "Excellent", color: "text-green-500", text: "Great involvement. Your active participation is highly valued." };
+        if (pct >= 50) return { label: "Good", color: "text-blue-500", text: "Consistent attendance. Keep staying involved in our activities." };
+        if (pct >= 30) return { label: "Average", color: "text-amber-500", text: "Regular presence. Try to join more events to maximize your impact." };
+        return { label: "Developing", color: "text-red-400", text: "Low presence. We encourage you to attend more events to grow within the organization." };
+    };
+
+    const note = getNote(attendedPercentage);
+
     return (
-        <div className="relative w-40 h-40 flex items-center justify-center transform scale-110">
-            <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                {/* Background Circle (Missed) */}
-                <circle cx="50" cy="50" r={radius} fill="none" stroke="#FCA5A5" strokeWidth="12" className="text-red-300 opacity-30" />
-                <circle cx="50" cy="50" r={radius} fill="none" stroke="#FCA5A5" strokeWidth="12" className="text-red-400" 
-                    strokeDasharray={`${circumference} ${circumference}`} 
-                />
-                
-                {/* Foreground Circle (Attended) */}
-                <circle 
-                    cx="50" cy="50" r={radius} fill="none" stroke="#22C55E" strokeWidth="12" 
-                    strokeDasharray={strokeDasharray} strokeLinecap="round" className="text-green-500 transition-all duration-1000 ease-out"
-                />
-            </svg>
-            <div className="absolute flex flex-col items-center">
-                <span className="text-3xl font-bold text-gray-800 dark:text-white">{Math.round(attendedPercentage)}%</span>
-                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Present</span>
+        <div className="flex flex-col items-center">
+            <div className="relative w-36 h-36 flex items-center justify-center mb-4">
+                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                    <circle cx="50" cy="50" r={radius} fill="none" stroke="#F1F5F9" strokeWidth="10" className="dark:stroke-slate-700" />
+                    <circle 
+                        cx="50" cy="50" r={radius} fill="none" stroke={attendedPercentage > 50 ? "#22C55E" : "#F59E0B"} strokeWidth="10" 
+                        strokeDasharray={strokeDasharray} strokeLinecap="round" className="transition-all duration-1000 ease-out"
+                    />
+                </svg>
+                <div className="absolute flex flex-col items-center">
+                    <span className="text-2xl font-bold text-gray-800 dark:text-white">{Math.round(attendedPercentage)}%</span>
+                    <span className="text-[10px] text-slate-500 font-medium uppercase">Attendance</span>
+                </div>
+            </div>
+            
+            <div className="text-center px-4">
+                <div className={`text-sm font-bold ${note.color} mb-1`}>{note.label} Presence</div>
+                <p className="text-xs text-gray-500 dark:text-slate-400 max-w-[200px] leading-relaxed">
+                    {note.text}
+                </p>
+                <div className="mt-2 text-[10px] text-gray-400 flex items-center justify-center gap-2">
+                    <span>{attended} Attended</span>
+                    <span>•</span>
+                    <span>{missed} Missed</span>
+                </div>
             </div>
         </div>
     );
@@ -454,107 +505,115 @@ const EmptyState = () => (
     </div>
 );
 
-const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => (
-    <Link to={`/activities/${item.activity.id}/GET`} className="block">
-        <div className="p-4 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors relative group">
-            <div className="flex gap-4">
-                {/* Visual Indicator Line */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                    item.status === 'attended' ? 'bg-green-500' : 
-                    item.status === 'recommended' ? 'bg-amber-400' : 'bg-red-400'
-                }`} />
+const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => {
+    const participantCount = item.activity.activity_participants?.[0]?.count || 0;
+    
+    return (
+        <Link to={`/activities/${item.activity.id}/GET`} className="block">
+            <div className="p-4 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors relative group">
+                <div className="flex gap-4">
+                    {/* Visual Indicator Line */}
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                        item.status === 'attended' ? 'bg-green-500' : 
+                        item.status === 'recommended' ? 'bg-amber-400' : 'bg-red-400'
+                    }`} />
 
-                {/* Activity Image or Placeholder */}
-                <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gray-200 dark:bg-slate-700 overflow-hidden relative">
-                    {item.activity.image_url ? (
-                        <img 
-                            src={item.activity.image_url} 
-                            alt={item.activity.name} 
-                            className={`w-full h-full object-cover ${item.status === 'missed' ? 'grayscale opacity-70' : ''}`}
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-500">
-                            <Calendar className="w-6 h-6" />
-                        </div>
-                    )}
-                    {/* Status Overlay Icon */}
-                    <div className="absolute bottom-1 right-1">
-                        {item.status === 'attended' ? (
-                            <CheckCircle className="w-4 h-4 text-green-500 bg-white rounded-full" />
-                        ) : item.status === 'recommended' ? (
-                            <Star className="w-4 h-4 text-amber-500 bg-white rounded-full fill-current" />
+                    {/* Activity Image or Placeholder */}
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gray-200 dark:bg-slate-700 overflow-hidden relative">
+                        {item.activity.image_url ? (
+                            <img 
+                                src={item.activity.image_url} 
+                                alt={item.activity.name} 
+                                className={`w-full h-full object-cover ${item.status === 'missed' ? 'grayscale opacity-70' : ''}`}
+                            />
                         ) : (
-                            <XCircle className="w-4 h-4 text-red-400 bg-white rounded-full" />
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-500">
+                                <Calendar className="w-6 h-6" />
+                            </div>
                         )}
+                        {/* Status Overlay Icon */}
+                        <div className="absolute bottom-1 right-1">
+                            {item.status === 'attended' ? (
+                                <CheckCircle className="w-4 h-4 text-green-500 bg-white rounded-full" />
+                            ) : item.status === 'recommended' ? (
+                                <Star className="w-4 h-4 text-amber-500 bg-white rounded-full fill-current" />
+                            ) : (
+                                <XCircle className="w-4 h-4 text-red-400 bg-white rounded-full" />
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h4 className={`font-medium truncate pr-2 ${
-                                item.status !== 'missed' 
-                                ? 'text-gray-900 dark:text-white' 
-                                : 'text-gray-500 dark:text-slate-400'
-                            }`}>
-                                {item.activity.name}
-                            </h4>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                    item.activity.type === 'event' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
-                                    item.activity.type === 'meeting' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                                    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h4 className={`font-medium truncate pr-2 ${
+                                    item.status !== 'missed' 
+                                    ? 'text-gray-900 dark:text-white' 
+                                    : 'text-gray-500 dark:text-slate-400'
                                 }`}>
-                                    {item.activity.type}
-                                </span>
-                                <span className="text-xs text-slate-500">
-                                    {new Date(item.activity.activity_begin_date).toLocaleDateString()}
-                                </span>
-                                {item.status === 'recommended' && (
-                                    <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-bold uppercase">
-                                        Matched your interests
+                                    {item.activity.name}
+                                </h4>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                        item.activity.type === 'event' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
+                                        item.activity.type === 'meeting' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                                        'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                                    }`}>
+                                        {item.activity.type}
                                     </span>
+                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+                                        <Users className="w-3 h-3 text-blue-500" />
+                                        {participantCount}
+                                    </div>
+                                    <span className="text-xs text-slate-500">
+                                        {new Date(item.activity.activity_begin_date).toLocaleDateString()}
+                                    </span>
+                                    {item.status === 'recommended' && (
+                                        <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-bold uppercase">
+                                            Matched your interests
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* Points Badge */}
+                            <div className={`flex flex-col items-end ${item.status === 'missed' ? 'opacity-50' : ''}`}>
+                                 {(item.activity.activity_points || 0) > 0 && (
+                                <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-500 rounded text-xs font-bold">
+                                    <Award className="w-3 h-3" />
+                                    {item.status === 'attended' ? '+' : ''}{item.activity.activity_points}
+                                </div>
                                 )}
                             </div>
                         </div>
-                        
-                        {/* Points Badge */}
-                        <div className={`flex flex-col items-end ${item.status === 'missed' ? 'opacity-50' : ''}`}>
-                             {(item.activity.activity_points || 0) > 0 && (
-                            <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-500 rounded text-xs font-bold">
-                                <Award className="w-3 h-3" />
-                                {item.status === 'attended' ? '+' : ''}{item.activity.activity_points}
-                            </div>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* Feedback Section (Only for attended) */}
-                    {item.status === 'attended' && item.participation && (item.participation.rate || item.participation.notes) && (
-                        <div className="mt-3 bg-slate-50 dark:bg-slate-900/50 p-2 rounded text-sm border border-slate-100 dark:border-slate-800">
-                            {item.participation.rate && (
-                                <div className="flex items-center gap-1 mb-1 text-amber-500">
-                                    {Array.from({ length: 5 }).map((_, i) => (
-                                        <Star 
-                                            key={i} 
-                                            className={`w-3 h-3 ${i < item.participation!.rate! ? 'fill-current' : 'text-gray-300 dark:text-slate-600'}`} 
-                                        />
-                                    ))}
-                                    <span className="text-xs text-slate-500 ml-1">Rating</span>
-                                </div>
-                            )}
-                            {item.participation.notes && (
-                                <div className="flex gap-2 text-slate-600 dark:text-slate-400 text-xs italic">
-                                    <MessageSquare className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                                    <p>"{item.participation.notes}"</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        {/* Feedback Section (Only for attended) */}
+                        {item.status === 'attended' && item.participation && (item.participation.rate || item.participation.notes) && (
+                            <div className="mt-3 bg-slate-50 dark:bg-slate-900/50 p-2 rounded text-sm border border-slate-100 dark:border-slate-800">
+                                {item.participation.rate && (
+                                    <div className="flex items-center gap-1 mb-1 text-amber-500">
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <Star 
+                                                key={i} 
+                                                className={`w-3 h-3 ${i < item.participation!.rate! ? 'fill-current' : 'text-gray-300 dark:text-slate-600'}`} 
+                                            />
+                                        ))}
+                                        <span className="text-xs text-slate-500 ml-1">Rating</span>
+                                    </div>
+                                )}
+                                {item.participation.notes && (
+                                    <div className="flex gap-2 text-slate-600 dark:text-slate-400 text-xs italic">
+                                        <MessageSquare className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                        <p>"{item.participation.notes}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
-    </Link>
-);
+        </Link>
+    );
+};
 
 export default MemberActivities;

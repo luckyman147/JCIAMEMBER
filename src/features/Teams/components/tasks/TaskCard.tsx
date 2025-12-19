@@ -12,6 +12,7 @@ interface TaskCardProps {
     onDelete: (taskId: string) => void;
     onUpdate: () => void;
     provided?: any;
+    canDrag?: boolean;
 }
 
 export const TaskCard = ({ 
@@ -22,7 +23,8 @@ export const TaskCard = ({
     onEdit, 
     onDelete, 
     onUpdate,
-    provided 
+    provided,
+    canDrag = true 
 }: TaskCardProps) => (
     <div 
         ref={provided?.innerRef}
@@ -31,6 +33,7 @@ export const TaskCard = ({
         className={`
             bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all group
             ${isKanban ? 'mb-3' : 'mb-0'}
+            ${!canDrag ? 'cursor-default' : ''}
         `}
     >
         <div className="flex justify-between items-start gap-4">
@@ -61,17 +64,17 @@ export const TaskCard = ({
             </div>
 
             <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {isAdmin && (
-                    <>
-                        <button onClick={() => onEdit(task)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
-                            <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => onDelete(task.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-                            <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                    </>
+                {(isAdmin || task.assignments?.some(a => a.member_id === currentUserId)) && (
+                    <button onClick={() => onEdit(task)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <Edit2 className="w-3.5 h-3.5" />
+                    </button>
                 )}
-                {isKanban && (
+                {isAdmin && (
+                    <button onClick={() => onDelete(task.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                )}
+                {isKanban && canDrag && (
                     <div className="mt-2 text-gray-300">
                         <GripVertical className="w-4 h-4 cursor-grab active:cursor-grabbing" />
                     </div>

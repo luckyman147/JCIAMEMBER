@@ -46,7 +46,7 @@ export default function MembersList({ members, loading }: MembersListProps) {
         // Return as array of [role, members] sorted by some criteria? 
         // Maybe alphabetical or custom order. Let's do alphabetical for now.
         return Object.entries(groups)
-            .filter(([role]) => role.toLowerCase() !== 'president')
+            .filter(([role]) => !['president', 'admin'].includes(role.toLowerCase()))
             .sort((a, b) => a[0].localeCompare(b[0]));
     }, [members]);
 
@@ -82,11 +82,11 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border border-gray-100">
+                                                    <div className="h-14 w-14 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                                                         {member.avatar_url ? (
                                                             <img className="h-full w-full object-cover" src={member.avatar_url} alt="" />
                                                         ) : (
-                                                            <span className="text-gray-500 font-medium">{member.fullname.charAt(0)}</span>
+                                                            <span className="text-gray-500 font-bold text-lg">{member.fullname.charAt(0)}</span>
                                                         )}
                                                     </div>
                                                     <div className="ml-4">
@@ -135,11 +135,11 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
-                                                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+                                                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                                                     {member.avatar_url ? (
                                                         <img className="h-full w-full object-cover" src={member.avatar_url} alt="" />
                                                     ) : (
-                                                        <span className="text-gray-500 font-bold text-lg">{member.fullname.charAt(0)}</span>
+                                                        <span className="text-gray-500 font-bold text-xl">{member.fullname.charAt(0)}</span>
                                                     )}
                                                 </div>
                                                 <div className="absolute -bottom-1 -right-1 bg-gray-900 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border border-white font-bold">

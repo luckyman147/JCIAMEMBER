@@ -34,7 +34,7 @@ export default function MemberHeader({
       {/* LEFT: AVATAR + INFO */}
       <div className="flex items-center gap-4">
         {/* Avatar */}
-        <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+        <div className="h-20 w-20 sm:h-32 sm:w-32 rounded-3xl bg-gray-200 overflow-hidden flex items-center justify-center border-4 border-white shadow-xl flex-shrink-0">
           {member.avatar_url ? (
             <img
               src={member.avatar_url}
@@ -42,7 +42,7 @@ export default function MemberHeader({
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-lg sm:text-xl font-medium text-gray-500">
+            <span className="text-3xl sm:text-5xl font-bold text-gray-400">
               {member.fullname.charAt(0)}
             </span>
           )}

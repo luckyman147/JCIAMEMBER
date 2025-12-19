@@ -51,6 +51,8 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
             is_validated,
             points,
             description,
+            strengths,
+            weaknesses,
             created_at,
             birth_date,
        
@@ -76,6 +78,8 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
         cotisation_status: data.cotisation_status || { semester1: false, semester2: false },
         is_validated: data.is_validated || false,
         points: data.points || 0,
+        strengths: data.strengths || [],
+        weaknesses: data.weaknesses || [],
         created_at: data.created_at,
         birth_date: data.birth_date,
         complaints: data.complaints || [] // Supabase returns relations as arrays
@@ -103,13 +107,15 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
 
     const currentUserRole = (currentUserProfile?.roles as any)?.name?.toLowerCase();
     const isPresident = currentUserRole === 'president';
+    const isAdmin = currentUserRole === 'admin';
+    const isHighLevel = isPresident || isAdmin;
     const isEditingSelf = user.id === id;
 
     // Define admin-only fields
     const adminFields = ['role_id', 'cotisation_status', 'is_validated', 'points'];
 
     // Filter updates based on permissions
-    if (isEditingSelf && !isPresident) {
+    if (isEditingSelf && !isHighLevel) {
         // Regular user editing their own profile
         // Remove admin fields from updates
         adminFields.forEach(field => {
@@ -123,24 +129,24 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
         if (role) {
             console.warn('User attempted to update their own role');
         }
-    } else if (isPresident && !isEditingSelf) {
-        // President editing another user's profile
+    } else if (isHighLevel && !isEditingSelf) {
+        // High level user editing another user's profile
         // Only allow admin fields
         Object.keys(finalUpdates).forEach(field => {
             if (!adminFields.includes(field)) {
                 delete finalUpdates[field];
             }
         });
-    } else if (isPresident && isEditingSelf) {
-        // President editing their own profile - allow all fields
+    } else if (isHighLevel && isEditingSelf) {
+        // High level user editing their own profile - allow all fields
         // No restrictions
     } else {
-        // User trying to edit someone else's profile (not president)
+        // User trying to edit someone else's profile (not high level)
         throw new Error('Unauthorized: You can only edit your own profile');
     }
 
     // Handle birthday specifically: ensure it's mapped correctly
-    if (updates.birth_date && (isEditingSelf || isPresident)) {
+    if (updates.birth_date && (isEditingSelf || isHighLevel)) {
         finalUpdates.birth_date = updates.birth_date;
     }
 
@@ -154,8 +160,8 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
         });
     }
 
-    // Handle role updates (only for presidents)
-    if (role && isPresident) {
+    // Handle role updates (only for high level users)
+    if (role && isHighLevel) {
         const { data: roleData, error: roleError } = await supabase
             .from('roles')
             .select('id')

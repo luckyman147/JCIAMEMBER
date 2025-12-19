@@ -1,5 +1,8 @@
 // Profile components
 export { default as MemberHeader } from './MemberHeader'
-export { default as MemberInfo } from './MemberInfo'
 export { default as MemberStatus } from './MemberStatus'
 export { default as AvatarImage } from './avatarImageComponents'
+export { default as MemberStrengths } from './MemberStrengths'
+export { default as MemberWeaknesses } from './MemberWeaknesses'
+export { default as MemberInterests } from './MemberInterests'
+export { default as MemberBio } from './MemberBio'

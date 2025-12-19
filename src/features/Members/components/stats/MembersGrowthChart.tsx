@@ -13,8 +13,8 @@ interface PointsHistoryRaw {
 interface ChartProps {
     history: PointsHistoryRaw[];
 }
-
-type TimeFrame = 'all' | 'year' | 'month';
+ 
+type TimeFrame = 'all' | 'year' | 'quarter' | 'month';
 
 export default function MembersGrowthChart({ history }: ChartProps) {
     const [hoveredMember, setHoveredMember] = useState<string | null>(null);
@@ -26,11 +26,13 @@ export default function MembersGrowthChart({ history }: ChartProps) {
         // 1. Filter History by TimeFrame
         const now = new Date();
         const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const startOfQuarter = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         const filteredHistory = history.filter(record => {
             const date = new Date(record.created_at);
             if (timeFrame === 'year') return date >= startOfYear;
+            if (timeFrame === 'quarter') return date >= startOfQuarter;
             if (timeFrame === 'month') return date >= startOfMonth;
             return true;
         });
@@ -93,13 +95,13 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                 <Filter className="w-8 h-8 mb-2 opacity-30" />
                 <p className="text-sm">No points activity found for this period.</p>
                 <div className="flex gap-2 mt-4">
-                    {(['month', 'year', 'all'] as TimeFrame[]).map(tf => (
+                    {(['month', 'quarter', 'year', 'all'] as TimeFrame[]).map(tf => (
                          <button
                             key={tf}
                             onClick={() => setTimeFrame(tf)}
                             className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${timeFrame === tf ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-gray-200 hover:bg-gray-50'}`}
                         >
-                            {tf === 'all' ? 'All' : tf === 'year' ? 'Year' : 'Month'}
+                            {tf === 'all' ? 'All' : tf === 'year' ? 'Year' : tf === 'quarter' ? 'Quarter' : 'Month'}
                         </button>
                     ))}
                 </div>
@@ -121,7 +123,7 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                 </div>
                 
                 <div className="flex bg-gray-100/80 p-1 rounded-lg self-start">
-                    {(['month', 'year', 'all'] as TimeFrame[]).map((tf) => (
+                    {(['month', 'quarter', 'year', 'all'] as TimeFrame[]).map((tf) => (
                         <button
                             key={tf}
                             onClick={() => setTimeFrame(tf)}
@@ -131,7 +133,7 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                                     : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
-                            {tf === 'all' ? 'All' : tf === 'year' ? 'Year' : 'Month'}
+                            {tf === 'all' ? 'All' : tf === 'year' ? 'Year' : tf === 'quarter' ? 'Quarter' : 'Month'}
                         </button>
                     ))}
                 </div>
@@ -176,18 +178,18 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                             <div className="mt-3 flex flex-col items-center">
                                 <div className={`relative p-0.5 rounded-full bg-gradient-to-tr ${member.color} mb-1.5 transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
                                     <div className="bg-white p-0.5 rounded-full">
-                                        <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 overflow-hidden">
                                             {member.avatar ? (
                                                 <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center font-bold text-gray-400 text-xs text-[10px]">
+                                                <div className="w-full h-full flex items-center justify-center font-bold text-gray-400 text-sm">
                                                     {member.name.charAt(0).toUpperCase()}
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     {/* Rank Badge */}
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-900 text-white text-[8px] font-bold flex items-center justify-center rounded-full border border-white">
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gray-900 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-white">
                                         #{member.rank}
                                     </div>
                                 </div>

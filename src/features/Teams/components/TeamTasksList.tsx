@@ -149,6 +149,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin }: TeamT
                     onClose={() => setEditingTask(null)} 
                     task={editingTask} 
                     onUpdated={loadTasks} 
+                    isAdmin={isAdmin}
                 />
             )}
         </div>

@@ -16,6 +16,7 @@ import TemplateCreatePage from '../features/Recruitment/pages/TemplateCreatePage
 import CandidateEvaluationPage from '../features/Recruitment/pages/CandidateEvaluationPage'
 import MembersPage from '../features/Members/pages/MembersPage'
 import MemberDetailsPage from '../features/Members/pages/MemberDetailsPage'
+import NotFoundPage from '../Global_Components/NotFoundPage'
 import { EXECUTIVE_LEVELS } from '../utils/roles'
 
 export const router = createBrowserRouter([
@@ -150,5 +151,11 @@ export const router = createBrowserRouter([
         <MemberDetailsPage />
       </ProtectedRoute>
     ),
+  },
+
+  // Catch-all 404
+  {
+    path: '*',
+    element: <NotFoundPage />,
   },
 ])

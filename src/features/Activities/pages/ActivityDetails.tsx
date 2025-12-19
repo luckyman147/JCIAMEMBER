@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Calendar, MapPin, Video, DollarSign, Edit, Trash2, ArrowLeft, Clock, Tag } from 'lucide-react'
+import { Calendar, MapPin, Video, DollarSign, Edit, Trash2, ArrowLeft, Clock, Tag, Users } from 'lucide-react'
 import { activityService } from '../services/activityService'
 import type { Activity } from '../models/Activity'
 import { toast } from 'sonner'
@@ -280,6 +280,16 @@ export default function ActivityDetails() {
                                  ) : (
                                      activity.activity_address || 'Address TBD'
                                  )}
+                             </p>
+                         </div>
+                     </div>
+
+                     <div className="flex items-start gap-3">
+                         <Users className="w-5 h-5 text-blue-500 mt-0.5" />
+                         <div>
+                             <p className="text-sm font-medium text-gray-900">Participants</p>
+                             <p className="text-sm text-gray-600">
+                                 {activity.activity_participants?.[0]?.count || 0} Members joined
                              </p>
                          </div>
                      </div>

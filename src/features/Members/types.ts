@@ -31,6 +31,8 @@ export interface Member {
  
     
     description?: string;
+    strengths?: string[];
+    weaknesses?: string[];
    
     complaints?: Complaint[];  
     

@@ -3,7 +3,6 @@ import Navbar from "../../../Global_Components/navBar";
 import MembersGrowthChart from "../components/stats/MembersGrowthChart";
 import MembersList from "../components/MembersList";
 import MembersStatistics from "../components/stats/MembersStatistics";
-import TopPerformersByRole from "../components/stats/TopPerformersByRole";
 import { useMembers, useAllPointsHistory } from "../hooks/useMembers";
 import AddMemberModal from "../components/AddMemberModal";
 import { UserPlus, Users, ShieldCheck, User } from "lucide-react";
@@ -89,9 +88,6 @@ export default function MembersPage() {
 
             {/* General Statistics */}
             {!loading && members.length > 0 && <MembersStatistics members={members} />}
-
-            {/* Top Performers */}
-            {!loading && members.length > 0 && <TopPerformersByRole members={members} />}
 
             {/* Growth Chart */}
             <MembersGrowthChart history={history} />

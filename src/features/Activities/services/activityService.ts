@@ -46,7 +46,7 @@ export const activityService = {
     // 1. Fetch parent (base activity fields)
     const { data: parent, error: parentErr } = await supabase
       .from('activities')
-      .select('*')
+      .select('*, activity_participants(count)')
       .eq('id', id)
       .single()
 
@@ -363,7 +363,8 @@ export const activityService = {
           type,
           activity_points,
           activity_begin_date,
-          image_url
+          image_url,
+          activity_participants(count)
         )
       `)
       .eq('user_id', memberId)

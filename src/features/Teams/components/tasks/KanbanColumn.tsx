@@ -44,22 +44,32 @@ export const KanbanColumn = ({
                         ref={provided.innerRef}
                         className="flex-1 overflow-y-auto p-3 space-y-3"
                     >
-                        {columnTasks.map((task, index) => (
-                            <Draggable key={task.id} draggableId={task.id} index={index}>
-                                {(draggableProvided) => (
-                                    <TaskCard 
-                                        task={task} 
-                                        isKanban={true} 
-                                        isAdmin={isAdmin}
-                                        currentUserId={currentUserId}
-                                        onEdit={onEdit}
-                                        onDelete={onDelete}
-                                        onUpdate={onUpdate}
-                                        provided={draggableProvided}
-                                    />
-                                )}
-                            </Draggable>
-                        ))}
+                        {columnTasks.map((task, index) => {
+                            const canDrag = isAdmin || task.assignments?.some(a => a.member_id === currentUserId);
+                            
+                            return (
+                                <Draggable 
+                                    key={task.id} 
+                                    draggableId={task.id} 
+                                    index={index}
+                                    isDragDisabled={!canDrag}
+                                >
+                                    {(draggableProvided) => (
+                                        <TaskCard 
+                                            task={task} 
+                                            isKanban={true} 
+                                            isAdmin={isAdmin}
+                                            currentUserId={currentUserId}
+                                            onEdit={onEdit}
+                                            onDelete={onDelete}
+                                            onUpdate={onUpdate}
+                                            provided={draggableProvided}
+                                            canDrag={canDrag}
+                                        />
+                                    )}
+                                </Draggable>
+                            );
+                        })}
                         {provided.placeholder}
                     </div>
                 )}

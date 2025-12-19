@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Video, DollarSign, ArrowRight } from 'lucide-react'
+import { Calendar, MapPin, Video, DollarSign, ArrowRight, Users } from 'lucide-react'
 import type { Activity } from '../models/Activity'
 import { Link } from 'react-router-dom'
 
@@ -38,15 +38,19 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
     }
 }
 
+  const participantCount = activity.activity_participants?.[0]?.count || 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border border-gray-100">
+    <Link 
+      to={`/activities/${activity.id}/GET`}
+      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full border border-gray-100 group"
+    >
       {/* Image Container */}
       <div className="relative h-48 overflow-hidden">
         <img
           src={activity.image_url || getPlaceholderImage(activity.type)}
           alt={activity.name}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         <div className="absolute top-4 right-4">
           <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getTypeColor(activity.type)}`}>
@@ -65,7 +69,7 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
 
       {/* Content */}
       <div className="p-5 flex-1 flex flex-col">
-        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2" title={activity.name}>
+        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 transition-colors group-hover:text-(--color-myPrimary)" title={activity.name}>
           {activity.name}
         </h3>
         
@@ -74,9 +78,16 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
             {activity.description || 'No description provided.'}
           </p>
           
-          <div className="flex items-center text-sm text-gray-500 gap-2">
-            <Calendar className="w-4 h-4 text-blue-500" />
-            <span>{formatDate(startDate)}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center text-sm text-gray-500 gap-2">
+              <Calendar className="w-4 h-4 text-blue-500" />
+              <span>{formatDate(startDate)}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>{participantCount}</span>
+            </div>
           </div>
 
           <div className="flex items-center text-sm text-gray-500 gap-2">
@@ -97,14 +108,13 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
              {activity.activity_points > 0 ? `${activity.activity_points} Points` : ''}
            </div>
            
-           <Link 
-            to={`/activities/${activity.id}/GET`} 
-             className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors"
+           <div 
+             className="inline-flex items-center gap-1 text-blue-600 group-hover:text-blue-700 font-semibold text-sm transition-colors"
            >
-             View Details <ArrowRight className="w-4 h-4" />
-           </Link>
+             View Details <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+           </div>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
