@@ -130,11 +130,18 @@ const googleSignIn = async () => {
   const queryClient = useQueryClient()
 
   const signOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setRole(null)
-    setIsValidated(false)
-    queryClient.clear()
+    try {
+      setLoading(true) // Show loading state during logout
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error('Error during sign out:', error)
+    } finally {
+      setUser(null)
+      setRole(null)
+      setIsValidated(false)
+      queryClient.clear()
+      setLoading(false)
+    }
   }
 
   return (

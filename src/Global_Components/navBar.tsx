@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../features/Authentication/auth.context'
 import logo from '../assets/logo.png'
 import { useState, useRef, useEffect } from 'react'
@@ -7,6 +7,7 @@ import { EXECUTIVE_LEVELS } from '../utils/roles'
 
 export default function Sidebar() {
   const { user, role, signOut } = useAuth()
+  const navigate = useNavigate()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
 
@@ -18,6 +19,18 @@ export default function Sidebar() {
     isActive
       ? 'flex items-center gap-3 px-4 py-2 rounded-lg bg-(--color-myPrimary) text-white font-semibold'
       : 'flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition'
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      setIsMobileOpen(false)
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+      // fallback
+      navigate('/login')
+    }
+  }
 
   // Close on outside click (mobile)
   useEffect(() => {
@@ -115,7 +128,7 @@ export default function Sidebar() {
         <div className="p-4 border-t">
           {user ? (
             <button
-              onClick={signOut}
+              onClick={handleLogout}
               className="w-full text-left px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 transition flex items-center gap-2"
             >
               Logout

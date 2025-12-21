@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { useAuth } from '../auth.context'
 import AuthForm from '../components/AuthForm'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 
 // ---------------------
 // ZOD VALIDATION SCHEMA
@@ -17,7 +18,7 @@ const registerSchema = z.object({
 })
 
 export default function Register() {
-  const { signUp } = useAuth()
+  const { signUp, signOut } = useAuth()
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
@@ -73,8 +74,11 @@ export default function Register() {
         return
       }
 
-      // Navigate to pending validation page on success
-      navigate('/pending-validation')
+      // Force signOut if Supabase auto-logged us in, 
+      // preventing ProtectedRoute from bouncing us to home.
+      await signOut()
+      toast.success('Registration successful! Please login to continue.')
+      navigate('/login')
     } catch (err: any) {
       // Handle unexpected errors
       console.error('Unexpected error:', err)
