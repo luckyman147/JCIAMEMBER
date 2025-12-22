@@ -1,6 +1,7 @@
 
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import type { Task } from "../../../Tasks/types";
+import { Plus } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 
 interface KanbanColumnProps {
@@ -10,6 +11,7 @@ interface KanbanColumnProps {
     currentUserId?: string;
     onEdit: (task: Task) => void;
     onDelete: (taskId: string) => void;
+    onAddNew: (status: any) => void;
     onUpdate: () => void;
 }
 
@@ -20,6 +22,7 @@ export const KanbanColumn = ({
     currentUserId, 
     onEdit, 
     onDelete, 
+    onAddNew,
     onUpdate 
 }: KanbanColumnProps) => {
     const columnTasks = tasks.filter(t => (t.status || 'todo') === column.id);
@@ -35,6 +38,14 @@ export const KanbanColumn = ({
                         {columnTasks.length}
                     </span>
                 </div>
+                {isAdmin && (
+                    <button 
+                        onClick={() => onAddNew(column.id)}
+                        className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-gray-100"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                    </button>
+                )}
             </div>
 
             <Droppable droppableId={column.id}>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { SubTaskDefinition } from "../../../Tasks/types";
 import { Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -16,15 +16,24 @@ interface CreateTeamTaskModalProps {
     teamId: string;
     teamMembers: TeamMemberOption[];
     onCreated: () => void;
+    initialStatus?: 'todo' | 'in_progress' | 'completed';
 }
 
-export default function CreateTeamTaskModal({ open, onClose, teamId, teamMembers, onCreated }: CreateTeamTaskModalProps) {
+export default function CreateTeamTaskModal({ 
+    open, 
+    onClose, 
+    teamId, 
+    teamMembers, 
+    onCreated,
+    initialStatus = 'todo' 
+}: CreateTeamTaskModalProps) {
     const [loading, setLoading] = useState(false);
     
     // Task State
     const [title, setTitle] = useState("");
     const [points, setPoints] = useState<number>(0);
     const [description, setDescription] = useState("");
+    const [status, setStatus] = useState<'todo' | 'in_progress' | 'completed'>(initialStatus);
     const [trackingType, setTrackingType] = useState<'manual' | 'subtasks'>('subtasks');
     
     const handleTrackingTypeChange = (type: 'manual' | 'subtasks') => {
@@ -33,6 +42,13 @@ export default function CreateTeamTaskModal({ open, onClose, teamId, teamMembers
     };
     const [subtasks, setSubtasks] = useState<SubTaskDefinition[]>([]);
     const [newSubtaskText, setNewSubtaskText] = useState("");
+
+    // Sync status with initialStatus when modal opens
+    useEffect(() => {
+        if (open) {
+            setStatus(initialStatus);
+        }
+    }, [open, initialStatus]);
 
     // Assignment State
     const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
@@ -120,7 +136,7 @@ export default function CreateTeamTaskModal({ open, onClose, teamId, teamMembers
                 description,
                 points,
                 team_id: teamId,
-                status: 'todo',
+                status: status,
                 subtasks: trackingType === 'subtasks' ? subtasks : []
             });
 
@@ -139,6 +155,7 @@ export default function CreateTeamTaskModal({ open, onClose, teamId, teamMembers
             setTitle("");
             setDescription("");
             setPoints(0);
+            setStatus(initialStatus);
             setSubtasks([]);
             setAssigneeIds([]);
             setAssignAll(false);
@@ -191,6 +208,19 @@ export default function CreateTeamTaskModal({ open, onClose, teamId, teamMembers
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Initial Status</label>
+                            <select 
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value as any)}
+                            >
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
                         </div>
 
                          <div>

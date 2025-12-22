@@ -80,6 +80,19 @@ export const assignTaskToMember = async (memberId: string, taskId: string, initi
     return data;
 };
 
+export const unassignTaskFromMember = async (memberId: string, taskId: string): Promise<void> => {
+    const { error } = await supabase
+        .from('member_tasks')
+        .delete()
+        .eq('member_id', memberId)
+        .eq('task_id', taskId);
+
+    if (error) {
+        console.error('Error unassigning task:', error);
+        throw error;
+    }
+};
+
 // Convenience: Create Task and Assign in one go
 export const createAndAssignTask = async (
     memberId: string, 

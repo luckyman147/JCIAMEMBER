@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Ban, Trash2 } from 'lucide-react'
+import { Ban, Trash2, Sparkles, CheckCircle2 } from 'lucide-react'
 import type { Member } from '../../types'
 import EditMemberModal from '../common/EditMemberModal'
 import { useAuth } from '../../../Authentication/auth.context'
-import { ROLE_MANAGERS } from '../../../../utils/roles'
+import { EXECUTIVE_LEVELS } from '../../../../utils/roles'
 
 interface MemberHeaderProps {
   member: Member
@@ -21,145 +21,231 @@ export default function MemberHeader({
   const [isEditing, setIsEditing] = useState(false)
   /* LEFT: AVATAR + INFO */
   const { user, role } = useAuth()
-  const isManager = ROLE_MANAGERS.includes(role?.toLowerCase() || '')
+  const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '')
 
-  // Allow edit if it's own profile OR if user has manager role
-  const canEditProfile = (user && user.id === member.id) || isManager
+  // Allow edit if it's own profile OR if user has executive role
+  const canEditProfile = (user && user.id === member.id) || isExecutive
 
   const isTopRank = rankPosition && ['1', '2', '3'].includes(rankPosition)
+  const isOwnProfile = user && user.id === member.id
+
+  // Profile completion check
+  const completenessChecks = [
+    { label: 'Photo', value: !!member.avatar_url },
+    { label: 'Phone', value: !!member.phone },
+    { label: 'Birthday', value: !!member.birth_date },
+    { label: 'Bio', value: !!member.description },
+    { label: 'Strengths', value: (member.strengths?.length || 0) > 0 },
+    { label: 'Weaknesses', value: (member.weaknesses?.length || 0) > 0 },
+    { label: 'Job Title', value: !!member.job_title },
+    { label: 'Specialties', value: (member.specialties?.length || 0) > 0 },
+    { label: 'Availability', value: (member.availability_days?.length || 0) > 0 },
+  ];
+
+  const missingFields = completenessChecks.filter(c => !c.value).map(c => c.label);
+  const completionPercentage = Math.round(((completenessChecks.length - missingFields.length) / completenessChecks.length) * 100);
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      
-      {/* LEFT: AVATAR + INFO */}
-      <div className="flex items-center gap-4">
-        {/* Avatar */}
-        <div className="h-20 w-20 sm:h-32 sm:w-32 rounded-3xl bg-gray-200 overflow-hidden flex items-center justify-center border-4 border-white shadow-xl flex-shrink-0">
-          {member.avatar_url ? (
-            <img
-              src={member.avatar_url}
-              alt={member.fullname}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-3xl sm:text-5xl font-bold text-gray-400">
-              {member.fullname.charAt(0)}
-            </span>
-          )}
-        </div>
+    <div className="flex flex-col gap-4">
+      {isOwnProfile && missingFields.length > 0 && (
+          <div className="relative overflow-hidden bg-white border border-blue-100 p-5 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 blur-3xl" />
+              
+              <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                      <div className="bg-(--color-myAccent) p-2.5 rounded-xl text-white shadow-lg shadow-blue-100 flex-shrink-0">
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-black text-gray-900 uppercase tracking-wider">Elevate Your Profile</p>
+                            <span className="bg-(--color-myAccent) text-white px-2 py-0.5 rounded-full text-[10px] font-black border border-blue-100">
+                                {completionPercentage}% COMPLETE
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 font-medium max-w-md italic">
+                            Adding your professional expertise and availability helps the organization assign you to the best-fitting teams and projects.
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                             {missingFields.slice(0, 4).map(field => (
+                               <span key={field} className="text-[15px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                                 + {field}
+                               </span>
+                             ))}
+                             {missingFields.length > 4 && (
+                               <span className="text-[9px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                                 & {missingFields.length - 4} more
+                               </span>
+                             )}
+                          </div>
+                      </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                        // Scroll to the professional section since that's often what's missing
+                        window.scrollTo({ top: 100, behavior: 'smooth' });
+                        setIsEditing(true);
+                    }}
+                    className="flex-shrink-0 bg-(--color-mySecondary)  text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-gray-200 active:scale-95 flex items-center gap-2"
+                  >
+                    Finish Profile
+                    <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3" />
+                    </div>
+                  </button>
+              </div>
 
-        {/* Text */}
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
-            {member.fullname}
-          </h1>
+              {/* Progress Bar Backdrop */}
+              <div className="mt-4 h-1.5 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100/50">
+                  <div 
+                    className="h-full bg-gradient-to-r from-(--color-mySecondary) to-(--color-myAccent) rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+              </div>
+          </div>
+      )}
 
-          <div className="text-gray-500 text-sm flex flex-col sm:flex-row sm:items-center sm:gap-2 truncate">
-            {member.email && <span className="truncate">{member.email}</span>}
-            {member.phone && (
-              <span className=" sm:inline">• {member.phone}</span>
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        
+        {/* LEFT: AVATAR + INFO */}
+        <div className="flex items-center gap-4">
+          {/* Avatar */}
+          <div className="h-20 w-20 sm:h-32 sm:w-32 rounded-3xl bg-gray-200 overflow-hidden flex items-center justify-center border-4 border-white shadow-xl flex-shrink-0 relative group">
+            {member.avatar_url ? (
+              <img
+                src={member.avatar_url}
+                alt={member.fullname}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-3xl sm:text-5xl font-bold text-gray-400">
+                {member.fullname.charAt(0)}
+              </span>
+            )}
+            
+            {isOwnProfile && !member.avatar_url && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => setIsEditing(true)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
             )}
           </div>
 
-          {member.birth_date && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-gray-500 text-xs">Birthday:</span>
-              <span className="font-bold text-white bg-[var(--color-myAccent)] px-2 py-1 rounded-full text-xs">
-                🎂{' '}
-                {new Date(member.birth_date).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: '2-digit',
-                  year: 'numeric'
-                })}
-              </span>
+          {/* Text */}
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {member.fullname}
+            </h1>
+
+            <div className="text-gray-500 text-sm flex flex-col sm:flex-row sm:items-center sm:gap-2 truncate">
+              {member.email && <span className="truncate">{member.email}</span>}
+              {member.phone && (
+                <span className=" sm:inline">• {member.phone}</span>
+              )}
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* RIGHT: ACTIONS + RANK */}
-      <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
-        <div className="flex items-center gap-2">
-          {canEditProfile && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="text-gray-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 transition"
-              title="Edit Profile"
-            >
-              
-  <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth={1.5}
-                stroke='currentColor'
-                className='w-5 h-5'
+            {member.birth_date && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-gray-500 text-xs">Birthday:</span>
+                <span className="font-bold text-white bg-[var(--color-myAccent)] px-2 py-1 rounded-full text-xs">
+                  🎂{' '}
+                  {new Date(member.birth_date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: ACTIONS + RANK */}
+        <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
+          <div className="flex items-center gap-2">
+            {canEditProfile && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-gray-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 transition"
+                title="Edit Profile"
               >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10'
-                />
-              </svg>            </button>
-          )}
-
-          {isManager && !canEditProfile && (
-              <>
-                <button
-                    onClick={() => onUpdate && onUpdate({ is_banned: !member.is_banned })}
-                    className={`p-2 rounded-full transition ${member.is_banned ? 'text-red-600 bg-red-50' : 'text-gray-400 hover:text-red-600 hover:bg-gray-100'}`}
-                    title={member.is_banned ? "Unban Member" : "Ban Member"}
+                
+    <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                  className='w-5 h-5'
                 >
-                    <Ban className="w-5 h-5" />
-                </button>
-                <button
-                    onClick={() => {
-                        if(window.confirm('Are you sure you want to delete this member? This action cannot be undone.')) {
-                            onDelete && onDelete();
-                        }
-                    }}
-                    className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-gray-100 transition"
-                    title="Delete Member"
-                >
-                    <Trash2 className="w-5 h-5" />
-                </button>
-              </>
-          )}
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10'
+                  />
+                </svg>            </button>
+            )}
 
-          {rankPosition && (
-            <span
-              className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
-                isTopRank
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-gray-100 text-gray-700'
-              }`}
-            >
-              {rankPosition}
-              {rankPosition === '1'
-                ? 'st'
-                : rankPosition === '2'
-                ? 'nd'
-                : rankPosition === '3'
-                ? 'rd'
-                : 'th'}
-            </span>
-          )}
+            {isExecutive && !isOwnProfile && (
+                <>
+                  <button
+                      onClick={() => onUpdate && onUpdate({ is_banned: !member.is_banned })}
+                      className={`p-2 rounded-full transition ${member.is_banned ? 'text-red-600 bg-red-50' : 'text-gray-400 hover:text-red-600 hover:bg-gray-100'}`}
+                      title={member.is_banned ? "Unban Member" : "Ban Member"}
+                  >
+                      <Ban className="w-5 h-5" />
+                  </button>
+                  <button
+                      onClick={() => {
+                          if(window.confirm('Are you sure you want to delete this member? This action cannot be undone.')) {
+                              onDelete && onDelete();
+                          }
+                      }}
+                      className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-gray-100 transition"
+                      title="Delete Member"
+                  >
+                      <Trash2 className="w-5 h-5" />
+                  </button>
+                </>
+            )}
+
+            {rankPosition && (
+              <span
+                className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
+                  isTopRank
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {rankPosition}
+                {rankPosition === '1'
+                  ? 'st'
+                  : rankPosition === '2'
+                  ? 'nd'
+                  : rankPosition === '3'
+                  ? 'rd'
+                  : 'th'}
+              </span>
+            )}
+          </div>
+
+          <span className="text-xs text-gray-400 uppercase tracking-wider hidden md:block">
+            Current Rank
+          </span>
         </div>
 
-        <span className="text-xs text-gray-400 uppercase tracking-wider hidden md:block">
-          Current Rank
-        </span>
+        {/* EDIT MODAL */}
+        {canEditProfile && isEditing && (
+          <EditMemberModal
+            member={member}
+            isOpen={isEditing}
+            onClose={() => setIsEditing(false)}
+            onSave={onUpdate!}
+          />
+        )}
       </div>
-
-      {/* EDIT MODAL */}
-      {canEditProfile && isEditing && (
-        <EditMemberModal
-          member={member}
-          isOpen={isEditing}
-          onClose={() => setIsEditing(false)}
-          onSave={onUpdate!}
-        />
-      )}
     </div>
   )
 }

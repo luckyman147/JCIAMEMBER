@@ -46,7 +46,7 @@ export default function MembersList({ members, loading }: MembersListProps) {
         // Return as array of [role, members] sorted by some criteria? 
         // Maybe alphabetical or custom order. Let's do alphabetical for now.
         return Object.entries(groups)
-            .filter(([role]) => !['president', 'admin'].includes(role.toLowerCase()))
+            .filter(([role]) => ![ 'admin'].includes(role.toLowerCase()))
             .sort((a, b) => a[0].localeCompare(b[0]));
     }, [members]);
 

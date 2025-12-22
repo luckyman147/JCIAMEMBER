@@ -33,7 +33,7 @@ export default function AuthForm({
         <div className="flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-8 duration-700">
           <img src={logo} alt='Logo' className='h-32 md:h-64 w-auto object-contain drop-shadow-2xl' />
           <h2 className="mt-4 text-2xl font-black text-gray-900 tracking-tight text-center md:hidden">
-            JCI <span className="text-(--color-myPrimary)">Leadership</span>
+            JCI <span className="text-(--color-myPrimary)">A MEMBER </span>
           </h2>
         </div>
 

@@ -7,13 +7,28 @@ interface MemberWeaknessesProps {
     readOnly?: boolean;
 }
 
+const WEAKNESS_OPTIONS = [
+    'Time Management', 'Delegation', 'Perfectionism', 'Public Speaking', 
+    'Networking', 'Confidence', 'Overthinking', 'Multitasking', 
+    'Attention to Detail', 'Sensitivity', 'Work-Life Balance',
+    'Technical Skills', 'Impatience', 'Procrastination'
+];
+
 export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly = false }: MemberWeaknessesProps) {
     const [newItem, setNewItem] = useState("");
 
-    const handleAdd = (e: React.KeyboardEvent) => {
+    const handleAddCustom = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && newItem.trim()) {
-            onUpdate([...weaknesses, newItem.trim()]);
+            if (!weaknesses.includes(newItem.trim())) {
+                onUpdate([...weaknesses, newItem.trim()]);
+            }
             setNewItem("");
+        }
+    };
+
+    const handleSelectOption = (option: string) => {
+        if (option && !weaknesses.includes(option)) {
+            onUpdate([...weaknesses, option]);
         }
     };
 
@@ -54,19 +69,40 @@ export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly =
                 </div>
 
                 {!readOnly && (
-                    <div className="relative mt-2">
-                        <input
-                            type="text"
-                            value={newItem}
-                            onChange={(e) => setNewItem(e.target.value)}
-                            onKeyDown={handleAdd}
-                            placeholder="Add a weakness..."
-                            className="w-full pl-3 pr-10 py-2 text-sm border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
-                        />
-                        <div className="absolute right-2 top-1.5">
-                           <kbd className="px-2 py-1 text-[10px] font-semibold text-gray-400 bg-white border border-gray-200 rounded-md shadow-sm">
-                                Enter
-                           </kbd>
+                    <div className="space-y-3 mt-4">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quick Select</label>
+                            <select 
+                                onChange={(e) => {
+                                    handleSelectOption(e.target.value);
+                                    e.target.value = "";
+                                }}
+                                className="w-full px-3 py-2 text-xs border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white outline-none transition-all cursor-pointer"
+                            >
+                                <option value="">Choose an area to improve...</option>
+                                {WEAKNESS_OPTIONS.filter(opt => !weaknesses.includes(opt)).map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Or Type Custom</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={newItem}
+                                    onChange={(e) => setNewItem(e.target.value)}
+                                    onKeyDown={handleAddCustom}
+                                    placeholder="Add a weakness..."
+                                    className="w-full pl-3 pr-10 py-2 text-sm border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+                                />
+                                <div className="absolute right-2 top-1.5">
+                                   <kbd className="px-2 py-1 text-[10px] font-semibold text-gray-400 bg-white border border-gray-200 rounded-md shadow-sm">
+                                        Enter
+                                   </kbd>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

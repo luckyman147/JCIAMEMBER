@@ -32,7 +32,7 @@ export const TaskCard = ({
         {...provided?.dragHandleProps}
         className={`
             bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all group
-            ${isKanban ? 'mb-3' : 'mb-0'}
+            ${isKanban ? 'mb-3' : 'mb-3'}
             ${!canDrag ? 'cursor-default' : ''}
         `}
     >

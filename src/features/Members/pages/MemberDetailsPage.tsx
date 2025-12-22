@@ -12,6 +12,7 @@ import {
     MemberWeaknesses,
     MemberInterests,
     MemberBio,
+    MemberProfessionalInfo,
 } from "../components";
 import Navbar from "../../../Global_Components/navBar";
 import MemberPointsHistory from "../components/stats/MemberPointsHistory";
@@ -98,6 +99,11 @@ export default function MemberDetailsPage() {
                     rankPosition={member.rankPos?.toString() || member.role} 
                     onUpdate={handleUpdate}
                     onDelete={handleDelete}
+                />
+                <MemberProfessionalInfo 
+                    member={member} 
+                    onUpdate={handleUpdate}
+                    readOnly={!isOwnProfile && !canEdit}
                 />
             </div>
 

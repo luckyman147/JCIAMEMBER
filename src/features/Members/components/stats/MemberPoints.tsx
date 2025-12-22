@@ -8,11 +8,13 @@ interface MemberPointsProps {
 
 export default function MemberPoints({ points, onPointsChange, readOnly = false }: MemberPointsProps) {
     const [pointsInput, setPointsInput] = useState<string>('');
+    const [action, setAction] = useState<'add' | 'reduce'>('add');
 
-    const handleAddPoints = () => {
+    const handleUpdatePoints = () => {
         const val = parseInt(pointsInput);
         if (!isNaN(val)) {
-            onPointsChange(points + val);
+            const delta = action === 'add' ? val : -val;
+            onPointsChange(points + delta);
             setPointsInput('');
         }
     };
@@ -25,21 +27,40 @@ export default function MemberPoints({ points, onPointsChange, readOnly = false 
             </div>
 
             {!readOnly && (
-                <div className="flex gap-2">
-                    <input 
-                        type="number" 
-                        placeholder="Add/Remove points..." 
-                        value={pointsInput}
-                        onChange={(e) => setPointsInput(e.target.value)}
-                        className="flex-1 border rounded px-3 py-2 text-sm"
-                    />
-                    <button 
-                        onClick={handleAddPoints}
-                        disabled={!pointsInput}
-                        className="bg-gray-900 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 hover:bg-gray-800"
-                    >
-                        Update
-                    </button>
+                <div className="space-y-3">
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button 
+                            onClick={() => setAction('add')}
+                            className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${action === 'add' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500'}`}
+                        >
+                            Increase (+)
+                        </button>
+                        <button 
+                            onClick={() => setAction('reduce')}
+                            className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${action === 'reduce' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500'}`}
+                        >
+                            Decrease (-)
+                        </button>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                        <input 
+                            type="number" 
+                            placeholder={action === 'add' ? "Points to add..." : "Points to remove..."} 
+                            value={pointsInput}
+                            onChange={(e) => setPointsInput(e.target.value)}
+                            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <button 
+                            onClick={handleUpdatePoints}
+                            disabled={!pointsInput}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold disabled:opacity-50 transition-all ${
+                                action === 'add' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                            } text-white`}
+                        >
+                            Apply
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

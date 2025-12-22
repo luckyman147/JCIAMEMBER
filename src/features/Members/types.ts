@@ -36,10 +36,15 @@ export interface Member {
    
     complaints?: Complaint[];  
     
-    // Timestamps
     created_at?: string;
     birth_date?: string;
     is_banned?: boolean;
+
+    // Professional & Availability
+    job_title?: string;
+    specialties?: string[];
+    availability_days?: string[];
+    availability_time?: 'matinal' | 'afternoon' | 'full_day';
 }
 
 export interface ActivityLog {

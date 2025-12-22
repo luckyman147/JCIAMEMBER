@@ -85,7 +85,7 @@ export default function TeamDetailsPage() {
     if (!team) return null;
 
     // Strict Access Control for Private Teams
-    if (!team.is_public && !team.is_member && !isGlobalAdmin) {
+    if (!team.is_public && !team.is_member && !isGlobalAdmin && !isPresident) {
         return (
             <div className="min-h-screen bg-gray-50">
                 <Navbar />
@@ -142,7 +142,7 @@ export default function TeamDetailsPage() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {team.is_member || isGlobalAdmin ? (
+                            {team.is_member || isGlobalAdmin || isPresident ? (
                                 <>
                                     {canManageTeam && (
                                         <>
@@ -219,7 +219,16 @@ export default function TeamDetailsPage() {
                                 )}
                             </div>
                             
-                            <TeamTasksList teamId={team.id} refreshTrigger={taskRefreshTrigger} isAdmin={canManageTeam} />
+                            <TeamTasksList 
+                                teamId={team.id} 
+                                refreshTrigger={taskRefreshTrigger} 
+                                isAdmin={canManageTeam} 
+                                teamMembers={team.members?.map((m: any) => ({ 
+                                    id: m.member_id, 
+                                    fullname: m.member?.fullname || 'Unknown', 
+                                    avatar_url: m.member?.avatar_url 
+                                })) || []}
+                            />
 
                         </div>
                     </div>

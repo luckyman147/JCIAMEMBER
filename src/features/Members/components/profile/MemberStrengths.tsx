@@ -7,13 +7,28 @@ interface MemberStrengthsProps {
     readOnly?: boolean;
 }
 
+const STRENGTH_OPTIONS = [
+    'Leadership', 'Communication', 'Teamwork', 'Problem Solving', 
+    'Public Speaking', 'Creativity', 'Organization', 'Adaptability', 
+    'Strategic Thinking', 'Project Management', 'Conflict Resolution',
+    'Decision Making', 'Time Management', 'Networking'
+];
+
 export default function MemberStrengths({ strengths = [], onUpdate, readOnly = false }: MemberStrengthsProps) {
     const [newItem, setNewItem] = useState("");
 
-    const handleAdd = (e: React.KeyboardEvent) => {
+    const handleAddCustom = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && newItem.trim()) {
-            onUpdate([...strengths, newItem.trim()]);
+            if (!strengths.includes(newItem.trim())) {
+                onUpdate([...strengths, newItem.trim()]);
+            }
             setNewItem("");
+        }
+    };
+
+    const handleSelectOption = (option: string) => {
+        if (option && !strengths.includes(option)) {
+            onUpdate([...strengths, option]);
         }
     };
 
@@ -54,19 +69,40 @@ export default function MemberStrengths({ strengths = [], onUpdate, readOnly = f
                 </div>
 
                 {!readOnly && (
-                    <div className="relative mt-2">
-                        <input
-                            type="text"
-                            value={newItem}
-                            onChange={(e) => setNewItem(e.target.value)}
-                            onKeyDown={handleAdd}
-                            placeholder="Add a strength..."
-                            className="w-full pl-3 pr-10 py-2 text-sm border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
-                        />
-                        <div className="absolute right-2 top-1.5">
-                           <kbd className="px-2 py-1 text-[10px] font-semibold text-gray-400 bg-white border border-gray-200 rounded-md shadow-sm">
-                                Enter
-                           </kbd>
+                    <div className="space-y-3 mt-4">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quick Select</label>
+                            <select 
+                                onChange={(e) => {
+                                    handleSelectOption(e.target.value);
+                                    e.target.value = "";
+                                }}
+                                className="w-full px-3 py-2 text-xs border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white outline-none transition-all cursor-pointer"
+                            >
+                                <option value="">Choose a common strength...</option>
+                                {STRENGTH_OPTIONS.filter(opt => !strengths.includes(opt)).map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Or Type Custom</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={newItem}
+                                    onChange={(e) => setNewItem(e.target.value)}
+                                    onKeyDown={handleAddCustom}
+                                    placeholder="Add a strength..."
+                                    className="w-full pl-3 pr-10 py-2 text-sm border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                                />
+                                <div className="absolute right-2 top-1.5">
+                                   <kbd className="px-2 py-1 text-[10px] font-semibold text-gray-400 bg-white border border-gray-200 rounded-md shadow-sm">
+                                        Enter
+                                   </kbd>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

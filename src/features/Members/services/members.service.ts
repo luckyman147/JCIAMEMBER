@@ -1,5 +1,6 @@
 import type { Member, PointsHistoryEntry } from "../types";
 import supabase from "../../../utils/supabase";
+import { ROLE_MANAGERS } from "../../../utils/roles";
 
 
 
@@ -62,7 +63,11 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
                 content,
                 status,
                 created_at
-            )
+            ),
+            job_title,
+            specialties,
+            availability_days,
+            availability_time
         `)
         .eq('id', id)
         .single();
@@ -82,151 +87,140 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
         weaknesses: data.weaknesses || [],
         created_at: data.created_at,
         birth_date: data.birth_date,
-        complaints: data.complaints || [] // Supabase returns relations as arrays
+        complaints: data.complaints || [], // Supabase returns relations as arrays
+        job_title: data.job_title,
+        specialties: data.specialties || [],
+        availability_days: data.availability_days || [],
+        availability_time: data.availability_time || 'matinal'
     };
 };
 
 export const updateMember = async (id: string, updates: Partial<Member>) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { role, complaints, ...updateData } = updates; // Exclude relation fields
-    
-    const finalUpdates: any = { ...updateData };
+    try {
+        // 1. Get Current User & Permissions
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
 
-    // Get current user and their role
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    // Fetch current user's role
-    const { data: currentUserProfile } = await supabase
-        .from('profiles')
-        .select('role_id, roles(name)')
-        .eq('id', user.id)
-        .single();
-
-    const currentUserRole = (currentUserProfile?.roles as any)?.name?.toLowerCase();
-    const isPresident = currentUserRole === 'president';
-    const isAdmin = currentUserRole === 'admin';
-    const isHighLevel = isPresident || isAdmin;
-    const isEditingSelf = user.id === id;
-
-    // Define admin-only fields
-    const adminFields = ['role_id', 'cotisation_status', 'is_validated', 'points'];
-
-    // Filter updates based on permissions
-    if (isEditingSelf && !isHighLevel) {
-        // Regular user editing their own profile
-        // Remove admin fields from updates
-        adminFields.forEach(field => {
-            if (field in finalUpdates) {
-                delete finalUpdates[field];
-                console.warn(`User attempted to update restricted field: ${field}`);
-            }
-        });
-        
-        // Also remove role from updates (it's handled separately)
-        if (role) {
-            console.warn('User attempted to update their own role');
-        }
-    } else if (isHighLevel && !isEditingSelf) {
-        // High level user editing another user's profile
-        // Only allow admin fields
-        Object.keys(finalUpdates).forEach(field => {
-            if (!adminFields.includes(field)) {
-                delete finalUpdates[field];
-            }
-        });
-    } else if (isHighLevel && isEditingSelf) {
-        // High level user editing their own profile - allow all fields
-        // No restrictions
-    } else {
-        // User trying to edit someone else's profile (not high level)
-        throw new Error('Unauthorized: You can only edit your own profile');
-    }
-
-    // Handle birthday specifically: ensure it's mapped correctly
-    if (updates.birth_date && (isEditingSelf || isHighLevel)) {
-        finalUpdates.birth_date = updates.birth_date;
-    }
-
-    // Update Auth Metadata if this is the current user's profile
-    if (user && user.id === id) {
-        await supabase.auth.updateUser({
-            data: {
-                fullname: updates.fullname || user.user_metadata?.fullname,
-                avatar_url: updates.avatar_url || user.user_metadata?.avatar_url
-            }
-        });
-    }
-
-    // Handle role updates (only for high level users)
-    if (role && isHighLevel) {
-        const { data: roleData, error: roleError } = await supabase
-            .from('roles')
-            .select('id')
-            .eq('name', role)
-            .single();
-        
-        if (roleError) {
-            console.error('Error resolving role:', roleError);
-        } else if (roleData) {
-            finalUpdates.role_id = roleData.id;
-        }
-    }
-    
-    // Check if we are updating points to handle history logging
-    let oldPoints = 0;
-    const pointsChanged = Object.prototype.hasOwnProperty.call(finalUpdates, 'points');
-
-    if (pointsChanged) {
-        // Fetch current points before update
-        const { data: currentMember } = await supabase
+        const { data: currentUserProfile } = await supabase
             .from('profiles')
-            .select('points')
-            .eq('id', id)
+            .select('roles(name)')
+            .eq('id', user.id)
             .single();
+
+        const rawRole = (currentUserProfile?.roles as any);
+        const currentUserRole = (Array.isArray(rawRole) ? rawRole[0]?.name : rawRole?.name)?.toLowerCase() || 'member';
         
-        if (currentMember) {
-            oldPoints = currentMember.points || 0;
+        const isHighLevel = ROLE_MANAGERS.includes(currentUserRole);
+        const isEditingSelf = user.id === id;
+
+        // Debug Log (Development only)
+        console.log(`Update Attempt [Self: ${isEditingSelf}, Manager: ${isHighLevel}, Role: ${currentUserRole}]`);
+
+        if (!isEditingSelf && !isHighLevel) {
+            throw new Error('Unauthorized: You do not have permission to edit this profile');
         }
-    }
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .update(finalUpdates)
-        .eq('id', id)
-        .select()
-        .single();
+        // 2. Build Whitelisted Payload
+        // We only allow these specific database columns to be sent
+        const finalPayload: any = {};
+        
+        // Fields anybody can update on their OWN profile
+        const selfFields = [
+            'fullname', 'phone', 'birth_date', 'description', 'avatar_url', 
+            'strengths', 'weaknesses', 'job_title', 'specialties', 
+            'availability_days', 'availability_time'
+        ];
+        
+        // Fields ONLY high-level users can update
+        const adminFields = ['points', 'is_validated', 'cotisation_status', 'is_banned'];
 
-    if (error) {
-        console.error(`Error updating member ${id}:`, error);
-        throw error;
-    }
+        // Process keys from the updates object
+        Object.keys(updates).forEach(key => {
+            const val = (updates as any)[key];
+            
+            if (isHighLevel) {
+                // High level users can update almost anything (except meta fields like 'role')
+                if ([...selfFields, ...adminFields].includes(key)) {
+                    finalPayload[key] = val;
+                }
+            } else if (isEditingSelf) {
+                // Regular users can only update their 'self' fields
+                if (selfFields.includes(key)) {
+                    finalPayload[key] = val;
+                } else if (adminFields.includes(key)) {
+                    console.warn(`Permission Denied: Role "${currentUserRole}" cannot update restricted field "${key}"`);
+                }
+            }
+        });
 
-    // Log points change if applicable
-    if (pointsChanged && data) {
-        const newPoints = data.points || 0;
-        const diff = newPoints - oldPoints;
+        // 3. Special Case: Role Update
+        if (updates.role && isHighLevel) {
+            const { data: roleData } = await supabase
+                .from('roles')
+                .select('id')
+                .eq('name', updates.role)
+                .single();
+            if (roleData) finalPayload.role_id = roleData.id;
+        }
 
-        if (diff !== 0) {
-            const { error: historyError } = await supabase
-                .from('points_history')
-                .insert({
+        if (Object.keys(finalPayload).length === 0) {
+            console.warn('Update Aborted: No valid changes provided for your permission level.');
+            return null;
+        }
+
+        // 4. Points History Pre-check
+        let oldPoints = 0;
+        const pointsChanged = 'points' in finalPayload;
+        if (pointsChanged) {
+            const { data: current } = await supabase.from('profiles').select('points').eq('id', id).single();
+            oldPoints = current?.points || 0;
+        }
+
+        // 5. Execute Database Update
+        const { data, error } = await supabase
+            .from('profiles')
+            .update(finalPayload)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Database Update Error:', error);
+            throw new Error(`Cloud Update Failed: ${error.message}`);
+        }
+
+        // 6. Post-Update Tasks (Background)
+        
+        // Update Auth Metadata if editing self
+        if (isEditingSelf && (finalPayload.fullname || finalPayload.avatar_url)) {
+            supabase.auth.updateUser({
+                data: {
+                    fullname: finalPayload.fullname || user.user_metadata?.fullname,
+                    avatar_url: finalPayload.avatar_url || user.user_metadata?.avatar_url
+                }
+            });
+        }
+
+        // Log Points History
+        if (pointsChanged && data) {
+            const diff = (data.points || 0) - oldPoints;
+            if (diff !== 0) {
+                supabase.from('points_history').insert({
                     member_id: id,
                     points: diff,
                     source_type: 'manual',
-                    source_id: null,
-                    description: 'Manual adjustment by administrator'
+                    description: 'Manual adjustment via dashboard'
+                }).then(({ error: hErr }) => {
+                    if (hErr) console.error('History Log Error:', hErr);
                 });
-            
-            if (historyError) {
-                console.error('Error logging points history:', historyError);
             }
         }
-    }
 
-    return data;
+        return data;
+    } catch (err: any) {
+        console.error(`Update Service Failure [ID: ${id}]:`, err.message);
+        throw err;
+    }
 };
 
 export const getRoles = async (): Promise<string[]> => {
@@ -381,6 +375,22 @@ export const createCategory = async (name: string): Promise<Category | null> => 
         throw error;
     }
     return data;
+};
+
+/**
+ * Delete a category globally from the categories table
+ */
+export const deleteGlobalCategory = async (id: number): Promise<boolean> => {
+    const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+    
+    if (error) {
+        console.error('Error deleting category:', error);
+        throw error;
+    }
+    return true;
 };
 
 /**

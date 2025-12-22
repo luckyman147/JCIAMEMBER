@@ -11,19 +11,30 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { KanbanColumn } from "./tasks/KanbanColumn";
 import { ViewToggle } from "./tasks/ViewToggle";
 import { TaskCard } from "./tasks/TaskCard";
+import CreateTeamTaskModal from "./modals/CreateTeamTaskModal";
+import { Plus } from "lucide-react";
+
+interface TeamMemberOption {
+    id: string; // member_id
+    fullname: string;
+    avatar_url?: string;
+}
 
 interface TeamTasksListProps {
     teamId: string;
     refreshTrigger?: number;
     isAdmin?: boolean;
+    teamMembers?: TeamMemberOption[];
 }
 
-export default function TeamTasksList({ teamId, refreshTrigger, isAdmin }: TeamTasksListProps) {
+export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMembers = [] }: TeamTasksListProps) {
     const { user } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
     const [view, setView] = useState<'list' | 'kanban'>('kanban');
+    const [creationStatus, setCreationStatus] = useState<'todo' | 'in_progress' | 'completed'>('todo');
 
     useEffect(() => {
         loadTasks();
@@ -85,18 +96,6 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin }: TeamT
         Loading tasks...
     </div>;
 
-    if (tasks.length === 0) {
-        return (
-            <div className="text-center py-16 border-2 border-dashed border-gray-100 rounded-3xl bg-gray-50/50">
-                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 text-gray-300">
-                    <FileText className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">No tasks yet</h3>
-                <p className="text-sm text-gray-500 max-w-xs mx-auto mt-2">Create tasks to start tracking your team's progress on this project.</p>
-            </div>
-        );
-    }
-
     const COLUMNS = [
         { id: 'todo', title: 'To Do', color: 'bg-slate-100 text-slate-700' },
         { id: 'in_progress', title: 'In Progress', color: 'bg-blue-50 text-(--color-myPrimary)' },
@@ -109,7 +108,15 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin }: TeamT
                 <ViewToggle view={view} onViewChange={setView} />
             </div>
 
-            {view === 'list' ? (
+            {tasks.length === 0 ? (
+                <div className="text-center py-16 border-2 border-dashed border-gray-100 rounded-3xl bg-gray-50/50">
+                    <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 text-gray-300">
+                        <FileText className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">No tasks yet</h3>
+                    <p className="text-sm text-gray-500 max-w-xs mx-auto mt-2">Create tasks to start tracking your team's progress on this project.</p>
+                </div>
+            ) : view === 'list' ? (
                 <div className="space-y-3">
                     {tasks.map(task => (
                         <TaskCard 
@@ -136,6 +143,10 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin }: TeamT
                                 currentUserId={user?.id}
                                 onEdit={setEditingTask}
                                 onDelete={handleDelete}
+                                onAddNew={(status) => {
+                                    setCreationStatus(status);
+                                    setIsCreateTaskOpen(true);
+                                }}
                                 onUpdate={loadTasks}
                             />
                         ))}
@@ -149,7 +160,18 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin }: TeamT
                     onClose={() => setEditingTask(null)} 
                     task={editingTask} 
                     onUpdated={loadTasks} 
-                    isAdmin={isAdmin}
+                    teamMembers={teamMembers}
+                />
+            )}
+
+            {isCreateTaskOpen && (
+                <CreateTeamTaskModal
+                    open={isCreateTaskOpen}
+                    onClose={() => setIsCreateTaskOpen(false)}
+                    teamId={teamId}
+                    teamMembers={teamMembers}
+                    onCreated={loadTasks}
+                    initialStatus={creationStatus}
                 />
             )}
         </div>

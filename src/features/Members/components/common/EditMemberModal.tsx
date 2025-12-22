@@ -5,7 +5,7 @@ import { useFileUpload } from '../../../Activities/hooks/useFileUpload'
 import { getRoles } from '../../services/members.service'
 import AvatarImageSection from '../profile/avatarImageComponents'
 import { useAuth } from '../../../Authentication/auth.context'
-import { ROLE_MANAGERS } from '../../../../utils/roles'
+import { EXECUTIVE_LEVELS } from '../../../../utils/roles'
 
 // Placeholder for your Supabase/Auth context hook
 // You will need to implement this to get the user ID for file path storage.
@@ -27,7 +27,7 @@ export default function EditMemberModal({
 }: EditMemberModalProps) {
   /* LEFT: AVATAR + INFO */
   const { role: currentUserRole, user } = useAuth()
-  const canEditRole = ROLE_MANAGERS.includes(currentUserRole?.toLowerCase() || '')
+  const canEditExclusive = EXECUTIVE_LEVELS.includes(currentUserRole?.toLowerCase() || '')
   
   // Determine if the user is editing their own profile
   const isOwnProfile = user?.id === member.id;
@@ -72,7 +72,7 @@ export default function EditMemberModal({
     try {
       const updates: Partial<Member> = {};
 
-      if (isOwnProfile) {
+      if (isOwnProfile || canEditExclusive) {
           // 1. Upload new avatar if a file was selected in the component
           // Check if useFileUpload has a file
           if (avatarImage.file && avatarImage.file.length > 0) {
@@ -90,7 +90,7 @@ export default function EditMemberModal({
           updates.avatar_url = imageUrl || member.avatar_url; // Keep existing if no new upload
       }
 
-      if (canEditRole) {
+      if (canEditExclusive) {
         updates.role = role
       }
 
@@ -113,10 +113,10 @@ export default function EditMemberModal({
         <div className='p-6 border-b border-gray-100 flex justify-between items-center'>
             <div>
               <h2 className='text-xl font-semibold text-gray-900'>
-                {isOwnProfile ? 'Edit Your Profile' : 'Edit Member Role'}
+                {isOwnProfile ? 'Edit Your Profile' : 'Edit Member Profile'}
               </h2>
-              {!isOwnProfile && (
-                  <p className="text-sm text-gray-500">You can only change the role of other members.</p>
+              {!isOwnProfile && !canEditExclusive && (
+                  <p className="text-sm text-gray-500">You do not have permission to edit this profile.</p>
               )}
             </div>
           <button
@@ -128,12 +128,8 @@ export default function EditMemberModal({
         </div>
 
         <form onSubmit={handleSubmit} className='p-6 space-y-4'>
-          {/* Full Name and Phone inputs remain the same */}
-          {/* ... (Full Name Input) ... */}
-          {/* ... (Phone Input) ... */}
-
           {/* --- Image Upload Field --- */}
-          {isOwnProfile && (
+          {(isOwnProfile || canEditExclusive) && (
              <AvatarImageSection fileUpload={avatarImage} />
           )}
 
@@ -146,8 +142,8 @@ export default function EditMemberModal({
             <input
               type='text'
               required
-              disabled={!isOwnProfile}
-              className={`w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary) ${!isOwnProfile ? 'bg-gray-100 text-gray-500' : ''}`}
+              disabled={!isOwnProfile && !canEditExclusive}
+              className={`w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary) ${(!isOwnProfile && !canEditExclusive) ? 'bg-gray-100 text-gray-500' : ''}`}
               value={fullname}
               onChange={(e) => setFullname(e.target.value)}
             />
@@ -160,8 +156,8 @@ export default function EditMemberModal({
 
             <input
               type='tel'
-              disabled={!isOwnProfile}
-              className={`w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary) ${!isOwnProfile ? 'bg-gray-100 text-gray-500' : ''}`}
+              disabled={!isOwnProfile && !canEditExclusive}
+              className={`w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary) ${(!isOwnProfile && !canEditExclusive) ? 'bg-gray-100 text-gray-500' : ''}`}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
@@ -173,13 +169,14 @@ export default function EditMemberModal({
             </label>
             <input
               type='date'
-              disabled={!isOwnProfile}
-              className={`w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary) ${!isOwnProfile ? 'bg-gray-100 text-gray-500' : ''}`}
+              disabled={!isOwnProfile && !canEditExclusive}
+              className={`w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary) ${(!isOwnProfile && !canEditExclusive) ? 'bg-gray-100 text-gray-500' : ''}`}
               value={birthday}
               onChange={(e) => setBirthday(e.target.value)}
             />
           </div>
-          {canEditRole && (
+
+          {canEditExclusive && (
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>
                 Role

@@ -1,57 +1,66 @@
-
 import { useState, useEffect } from "react";
 import type { Task, SubTaskDefinition } from "../../../Tasks/types";
-import { updateTask, completeAllTaskAssignments } from "../../../Tasks/services/tasks.service";
-import { X, Plus, ListTodo } from "lucide-react";
+import { updateTask, completeAllTaskAssignments, assignTaskToMember, unassignTaskFromMember } from "../../../Tasks/services/tasks.service";
+import { getTaskAssignments } from "../../services/teams.service";
+import { X, ListTodo, UserPlus, Check } from "lucide-react";
 import { toast } from "sonner";
+
+interface TeamMemberOption {
+    id: string; // member_id
+    fullname: string;
+    avatar_url?: string;
+}
 
 interface EditTaskModalProps {
     open: boolean;
     onClose: () => void;
     task: Task;
     onUpdated: () => void;
-    isAdmin?: boolean;
+    teamMembers?: TeamMemberOption[];
 }
 
-export default function EditTaskModal({ open, onClose, task, onUpdated, isAdmin }: EditTaskModalProps) {
+export default function EditTaskModal({ open, onClose, task, onUpdated, teamMembers = [] }: EditTaskModalProps) {
     const [loading, setLoading] = useState(false);
+    
+    // Editable state
     const [title, setTitle] = useState(task.title);
+    const [status, setStatus] = useState<'todo' | 'in_progress' | 'completed'>(task.status || 'todo');
+    const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+    
+    // Read-only / Immutable state
     const [points, setPoints] = useState(task.points);
     const [description, setDescription] = useState(task.description || "");
-    const [status, setStatus] = useState<'todo' | 'in_progress' | 'completed'>(task.status || 'todo');
     const [trackingType, setTrackingType] = useState<'manual' | 'subtasks'>(task.subtasks && task.subtasks.length > 0 ? 'subtasks' : 'manual');
     const [subtasks, setSubtasks] = useState<SubTaskDefinition[]>(task.subtasks || []);
-    const [newSubtaskText, setNewSubtaskText] = useState("");
-
-    const isRestricted = !isAdmin;
-
-    const handleTrackingTypeChange = (type: 'manual' | 'subtasks') => {
-        if (isRestricted) return;
-        setTrackingType(type);
-        if (type === 'manual') setSubtasks([]);
-    };
 
     useEffect(() => {
         if (open) {
             setTitle(task.title);
+            setStatus(task.status || 'todo');
             setPoints(task.points);
             setDescription(task.description || "");
-            setStatus(task.status || 'todo');
             const initialType = task.subtasks && task.subtasks.length > 0 ? 'subtasks' : 'manual';
             setTrackingType(initialType);
             setSubtasks(task.subtasks || []);
+            
+            // Fetch assignments to sync selection
+            loadAssignments();
         }
     }, [open, task]);
 
-    const handleAddSubtask = () => {
-        if (isRestricted || !newSubtaskText.trim()) return;
-        setSubtasks([...subtasks, { id: crypto.randomUUID(), text: newSubtaskText.trim() }]);
-        setNewSubtaskText("");
+    const loadAssignments = async () => {
+        try {
+            const data = await getTaskAssignments(task.id);
+            setAssigneeIds(data.map((a: any) => a.member_id));
+        } catch (error) {
+            console.error("Failed to load assignments", error);
+        }
     };
 
-    const removeSubtask = (id: string) => {
-        if (isRestricted) return;
-        setSubtasks(subtasks.filter(s => s.id !== id));
+    const toggleAssignee = (id: string) => {
+        setAssigneeIds(prev => 
+            prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
+        );
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -59,19 +68,27 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, isAdmin 
         try {
             setLoading(true);
             
-            // If restricted, only status can be updated via this modal for convenience
-            // But usually the user just wants to move the task status.
+            // 1. Update core task fields (Name/Title and Status)
             await updateTask(task.id, {
-                title: isRestricted ? task.title : title,
-                points: isRestricted ? task.points : points,
-                description: isRestricted ? task.description : description,
-                status,
-                subtasks: isRestricted ? task.subtasks : (trackingType === 'subtasks' ? subtasks : [])
+                title,
+                status
             });
 
-            // If marked as completed, auto-complete ALL assignments
+            // 2. Reconcile Assignments
+            const currentAssignments = await getTaskAssignments(task.id);
+            const currentIds = currentAssignments.map((a: any) => a.member_id);
+            
+            const toAdd = assigneeIds.filter(id => !currentIds.includes(id));
+            const toRemove = currentIds.filter(id => !assigneeIds.includes(id));
+
+            await Promise.all([
+                ...toAdd.map(id => assignTaskToMember(id, task.id, trackingType)),
+                ...toRemove.map(id => unassignTaskFromMember(id, task.id))
+            ]);
+
+            // 3. Status specific Logic
             if (status === 'completed') {
-                await completeAllTaskAssignments(task.id, trackingType === 'subtasks' ? (isRestricted ? task.subtasks || [] : subtasks) : []);
+                await completeAllTaskAssignments(task.id, subtasks);
             }
 
             toast.success("Task updated");
@@ -79,6 +96,7 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, isAdmin 
             onClose();
         } catch (error) {
             toast.error("Failed to update task");
+            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -88,108 +106,119 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, isAdmin 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center p-6 border-b">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">Edit Task</h2>
-                        {isRestricted && <p className="text-[10px] text-amber-600 font-medium">Limited access: Only status can be modified.</p>}
+                        <p className="text-[10px] text-gray-500 font-medium">Locked fields: Points, Description, Tracking Method.</p>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input 
-                            type="text" 
-                            disabled={isRestricted}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                        />
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Points</label>
-                        <input 
-                            type="number" 
-                            disabled={isRestricted}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
-                            value={points}
-                            onChange={(e) => setPoints(parseInt(e.target.value) || 0)}
-                        />
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea 
-                            disabled={isRestricted}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none disabled:bg-gray-50 disabled:text-gray-500"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select 
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value as any)}
-                        >
-                            <option value="todo">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Tracking Method</label>
-                        <div className={`flex bg-gray-100 p-1 rounded-lg ${isRestricted ? 'opacity-50' : ''}`}>
-                            <button type="button" onClick={() => handleTrackingTypeChange('subtasks')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${trackingType === 'subtasks' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}>Subtasks</button>
-                            <button type="button" onClick={() => handleTrackingTypeChange('manual')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${trackingType === 'manual' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}>Manual %</button>
+                
+                <form onSubmit={handleSubmit} className="flex flex-col md:flex-row max-h-[85vh]">
+                    {/* Left: Metadata & Status */}
+                    <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+                        <div>
+                            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Task Name</label>
+                            <input 
+                                type="text" 
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                            />
                         </div>
-                    </div>
 
-                    {trackingType === 'subtasks' && (
-                        <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
-                                 <ListTodo className="w-3 h-3" /> Subtasks
-                            </label>
-                            {!isRestricted && (
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="text" 
-                                        className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                                        placeholder="Add item..."
-                                        value={newSubtaskText}
-                                        onChange={(e) => setNewSubtaskText(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSubtask())}
-                                    />
-                                    <button type="button" onClick={handleAddSubtask} className="bg-gray-900 text-white px-3 rounded-lg">
-                                        <Plus className="w-4 h-4" />
-                                    </button>
+                        <div>
+                            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Status</label>
+                            <select 
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value as any)}
+                            >
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                             <div>
+                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Points (Fixed)</label>
+                                <div className="px-3 py-2 bg-gray-50 border rounded-lg text-sm text-gray-500 font-medium">
+                                    {points} pts
                                 </div>
-                            )}
-                            <ul className="space-y-2">
-                                {subtasks.map(st => (
-                                    <li key={st.id} className="flex justify-between text-sm bg-white p-2 rounded border border-gray-200">
-                                        <span>{st.text}</span>
-                                        {!isRestricted && (
-                                            <button type="button" onClick={() => removeSubtask(st.id)} className="text-red-400 hover:text-red-600">
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
+                            </div>
+                             <div>
+                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Method (Fixed)</label>
+                                <div className="px-3 py-2 bg-gray-50 border rounded-lg text-sm text-gray-500 font-medium capitalize">
+                                    {trackingType}
+                                </div>
+                            </div>
                         </div>
-                    )}
 
-                    <div className="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
-                        <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                            {loading ? 'Saving...' : 'Save Changes'}
-                        </button>
+                        {description && (
+                            <div>
+                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Description (Fixed)</label>
+                                <div className="p-3 bg-gray-50 border rounded-lg text-xs text-gray-500 leading-relaxed italic">
+                                    {description}
+                                </div>
+                            </div>
+                        )}
+
+                        {trackingType === 'subtasks' && (
+                            <div className="space-y-2">
+                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Subtasks (Fixed)</label>
+                                <div className="space-y-1">
+                                    {subtasks.map(st => (
+                                        <div key={st.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-100 text-[11px] text-gray-600">
+                                            <ListTodo className="w-3 h-3" />
+                                            {st.text}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right: Assignments */}
+                    <div className="w-full md:w-72 bg-gray-50 border-l flex flex-col">
+                        <div className="p-4 border-b bg-white">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                <UserPlus className="w-3 h-3" /> Assign To
+                            </h3>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                            {teamMembers.map(m => {
+                                const isSelected = assigneeIds.includes(m.id);
+                                return (
+                                    <div 
+                                        key={m.id}
+                                        onClick={() => toggleAssignee(m.id)}
+                                        className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer border transition-all ${isSelected ? 'bg-white border-blue-200 shadow-sm' : 'border-transparent hover:bg-gray-100'}`}
+                                    >
+                                        <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-[10px] font-bold text-gray-600 overflow-hidden">
+                                            {m.avatar_url ? <img src={m.avatar_url} className="w-full h-full object-cover" /> : m.fullname.substring(0,2).toUpperCase()}
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-700 flex-grow truncate">{m.fullname}</span>
+                                        {isSelected && <Check className="w-3 h-3 text-blue-600" />}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="p-4 border-t bg-white sticky bottom-0 flex flex-col gap-2">
+                             <button 
+                                type="submit" 
+                                disabled={loading} 
+                                className="w-full py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50 shadow-md"
+                            >
+                                {loading ? 'Saving...' : 'Update Task'}
+                            </button>
+                            <button type="button" onClick={onClose} className="w-full py-2 text-sm text-gray-500 font-medium hover:text-gray-700">Cancel</button>
+                        </div>
                     </div>
                 </form>
             </div>

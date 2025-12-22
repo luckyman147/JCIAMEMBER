@@ -222,54 +222,34 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
       </div>
 
 
-       {/* Presence Summary Highlight */}
-       {!loading && historyItems.length > 0 && (
-         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900/50 dark:to-slate-800/50 border-b border-blue-100 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center p-1">
-                        <div className="h-full w-full rounded-full border-4 border-blue-500 border-t-transparent animate-[spin_3s_linear_infinite] flex items-center justify-center relative">
-                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400 absolute">
-                                {Math.round((attendedCount / (attendedCount + missedCount)) * 100)}%
-                            </span>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white">Average Presence Rate</h4>
-                        <p className="text-xs text-gray-600 dark:text-slate-400">
-                           {(() => {
-                               const pct = (attendedCount / (attendedCount + missedCount)) * 100;
-                               if (pct >= 90) return "Exceptional commitment! You are a core pillar of our activities.";
-                               if (pct >= 75) return "Excellent involvement. Your active participation is highly valued.";
-                               if (pct >= 50) return "Consistent attendance. Keep staying involved in our activities.";
-                               if (pct >= 30) return "Regular presence. Try to join more events to maximize impact.";
-                               return "Low presence. Attend more events to grow within the organization.";
-                           })()}
-                        </p>
-                    </div>
-                </div>
-                <div className="hidden sm:block text-right">
-                    <span className="text-2xl font-black text-blue-600/20 dark:text-blue-400/10 uppercase tracking-tighter">Presence</span>
+      {/* Presence Statistics Navigation */}
+      <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Attendance Analytics</h4>
+                <p className="text-xs text-gray-500 dark:text-slate-400">Track your involvement levels across different time periods.</p>
+            </div>
+            <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:block">Total Rate:</span>
+                <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-black">
+                    {Math.round((attendedCount / (attendedCount + missedCount || 1)) * 100)}% Presence
                 </div>
             </div>
          </div>
-       )}
+      </div>
 
        {showCharts && historyItems.length > 0 && (
-         <div className="p-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Presence Pie Chart */}
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center min-h-[200px]">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                        <PieChart className="w-4 h-4 text-purple-500" /> Presence Overview
-                    </h4>
-                    <PresencePieChart attended={attendedCount} missed={missedCount} />
+         <div className="p-4 border-b border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Presence History Chart (NEW) */}
+                <div className="bg-gray-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-800">
+                    <PresenceHistoryChart items={historyItems} />
                 </div>
 
                 {/* Impact/Ratings Line Chart */}
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col min-h-[200px]">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                        <ActivityIcon className="w-4 h-4 text-orange-500" /> Impact & Ratings
+                <div className="bg-gray-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-800">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-6 flex items-center gap-2">
+                        <ActivityIcon className="w-4 h-4 text-orange-500" /> Member Impact Trend
                     </h4>
                     <ImpactLineChart items={historyItems} />
                 </div>
@@ -290,53 +270,133 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
 
 // --- Sub-Components ---
 
-const PresencePieChart = ({ attended, missed }: { attended: number, missed: number }) => {
-    const total = attended + missed;
-    if (total === 0) return <div className="text-xs text-gray-400">No data</div>;
+const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
+    const [period, setPeriod] = useState<'month' | 'trimester' | 'year' | 'custom'>('month');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
 
-    const attendedPercentage = (attended / total) * 100;
-    // Increased size relative to container
-    const radius = 40;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDasharray = `${(attendedPercentage / 100) * circumference} ${circumference}`;
+    // Pre-calculated periods
+    const getGroupedData = () => {
+        const attended = items.filter(i => i.status === 'attended');
+        const now = new Date();
+        
+        let filteredAttended = attended;
+        let groupBy: (d: Date) => string;
+        let buckets: string[] = [];
 
-    const getNote = (pct: number) => {
-        if (pct >= 90) return { label: "Exceptional", color: "text-green-600", text: "Outstanding commitment! You are a core pillar of our activities." };
-        if (pct >= 75) return { label: "Excellent", color: "text-green-500", text: "Great involvement. Your active participation is highly valued." };
-        if (pct >= 50) return { label: "Good", color: "text-blue-500", text: "Consistent attendance. Keep staying involved in our activities." };
-        if (pct >= 30) return { label: "Average", color: "text-amber-500", text: "Regular presence. Try to join more events to maximize your impact." };
-        return { label: "Developing", color: "text-red-400", text: "Low presence. We encourage you to attend more events to grow within the organization." };
+        if (period === 'month') {
+            const start = new Date(now.getFullYear(), now.getMonth(), 1);
+            filteredAttended = attended.filter(i => new Date(i.activity.activity_begin_date) >= start);
+            groupBy = (d) => `Day ${d.getDate()}`;
+            // Simple: just days of current month
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            buckets = Array.from({length: daysInMonth}, (_, i) => `Day ${i + 1}`);
+        } else if (period === 'trimester') {
+            const start = new Date();
+            start.setMonth(now.getMonth() - 3);
+            filteredAttended = attended.filter(i => new Date(i.activity.activity_begin_date) >= start);
+            groupBy = (d) => d.toLocaleString('default', { month: 'short' });
+            buckets = [];
+            for(let i=3; i>=0; i--) {
+                const d = new Date();
+                d.setMonth(now.getMonth() - i);
+                buckets.push(d.toLocaleString('default', { month: 'short' }));
+            }
+        } else if (period === 'year') {
+            const start = new Date(now.getFullYear(), 0, 1);
+            filteredAttended = attended.filter(i => new Date(i.activity.activity_begin_date) >= start);
+            groupBy = (d) => d.toLocaleString('default', { month: 'short' });
+            buckets = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        } else {
+            // Custom
+            const start = customStart ? new Date(customStart) : new Date(0);
+            const end = customEnd ? new Date(customEnd) : new Date();
+            filteredAttended = attended.filter(i => {
+                const d = new Date(i.activity.activity_begin_date);
+                return d >= start && d <= end;
+            });
+            groupBy = (d) => d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+            // Sort by date for custom
+            const sortedDates = filteredAttended
+                .map(i => new Date(i.activity.activity_begin_date))
+                .sort((a,b) => a.getTime() - b.getTime());
+            
+            buckets = Array.from(new Set(sortedDates.map(groupBy)));
+        }
+
+        const counts = new Map<string, number>();
+        filteredAttended.forEach(i => {
+            const key = groupBy(new Date(i.activity.activity_begin_date));
+            counts.set(key, (counts.get(key) || 0) + 1);
+        });
+
+        return buckets.map(b => ({ label: b, count: counts.get(b) || 0 }));
     };
 
-    const note = getNote(attendedPercentage);
+    const data = getGroupedData();
+    const maxVal = Math.max(...data.map(d => d.count), 5);
 
     return (
-        <div className="flex flex-col items-center">
-            <div className="relative w-36 h-36 flex items-center justify-center mb-4">
-                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                    <circle cx="50" cy="50" r={radius} fill="none" stroke="#F1F5F9" strokeWidth="10" className="dark:stroke-slate-700" />
-                    <circle 
-                        cx="50" cy="50" r={radius} fill="none" stroke={attendedPercentage > 50 ? "#22C55E" : "#F59E0B"} strokeWidth="10" 
-                        strokeDasharray={strokeDasharray} strokeLinecap="round" className="transition-all duration-1000 ease-out"
+        <div className="flex-1 flex flex-col min-h-[200px]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" /> Count of Presences
+                </h4>
+                <div className="flex p-1 bg-gray-200 dark:bg-slate-800 rounded-lg overflow-x-auto">
+                    {(['month', 'trimester', 'year', 'custom'] as const).map(p => (
+                        <button
+                            key={p}
+                            onClick={() => setPeriod(p)}
+                            className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-md transition-all whitespace-nowrap ${
+                                period === p ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {period === 'custom' && (
+                <div className="flex gap-2 mb-4 animate-in slide-in-from-top-2">
+                    <input 
+                        type="date" 
+                        value={customStart} 
+                        onChange={e => setCustomStart(e.target.value)} 
+                        className="bg-white dark:bg-slate-800 border dark:border-slate-700 text-[10px] p-1 rounded-md flex-1 outline-none focus:ring-1 focus:ring-blue-500 text-gray-700 dark:text-white"
                     />
-                </svg>
-                <div className="absolute flex flex-col items-center">
-                    <span className="text-2xl font-bold text-gray-800 dark:text-white">{Math.round(attendedPercentage)}%</span>
-                    <span className="text-[10px] text-slate-500 font-medium uppercase">Attendance</span>
+                    <input 
+                        type="date" 
+                        value={customEnd} 
+                        onChange={e => setCustomEnd(e.target.value)} 
+                        className="bg-white dark:bg-slate-800 border dark:border-slate-700 text-[10px] p-1 rounded-md flex-1 outline-none focus:ring-1 focus:ring-blue-500 text-gray-700 dark:text-white"
+                    />
                 </div>
+            )}
+
+            <div className="flex-1 flex items-end justify-between gap-1 h-32 mt-auto">
+                {data.map((d, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative h-full justify-end">
+                        {d.count > 0 && (
+                            <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-bold rounded py-1 px-2 z-20 whitespace-nowrap">
+                                {d.count} Activities
+                            </div>
+                        )}
+                        <div 
+                            className={`w-full rounded-t-lg transition-all duration-500 ${d.count > 0 ? 'bg-green-500/80 shadow-[0_-4px_12px_rgba(34,197,94,0.2)]' : 'bg-gray-200/50 dark:bg-slate-700/50'}`}
+                            style={{ height: `${(d.count / maxVal) * 100}%`, minHeight: '4px' }}
+                        />
+                        <span className="text-[8px] font-bold text-gray-400 dark:text-gray-500 uppercase truncate w-full text-center">
+                            {period === 'month' ? (i % 5 === 0 ? d.label : '') : d.label}
+                        </span>
+                    </div>
+                ))}
             </div>
-            
-            <div className="text-center px-4">
-                <div className={`text-sm font-bold ${note.color} mb-1`}>{note.label} Presence</div>
-                <p className="text-xs text-gray-500 dark:text-slate-400 max-w-[200px] leading-relaxed">
-                    {note.text}
-                </p>
-                <div className="mt-2 text-[10px] text-gray-400 flex items-center justify-center gap-2">
-                    <span>{attended} Attended</span>
-                    <span>•</span>
-                    <span>{missed} Missed</span>
+            {data.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-100 dark:border-slate-800 rounded-xl">
+                    <span className="text-[10px] font-bold text-gray-400">No presences found for this range</span>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
