@@ -474,7 +474,7 @@ export const getAllComplaints = async (): Promise<any[]> => {
  * Update the status of a complaint
  */
 export const updateComplaintStatus = async (id: string, status: 'pending' | 'resolved'): Promise<void> => {
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('complaints')
         .update({ status })
         .eq('id', id)
