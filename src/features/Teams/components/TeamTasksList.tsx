@@ -12,7 +12,6 @@ import { KanbanColumn } from "./tasks/KanbanColumn";
 import { ViewToggle } from "./tasks/ViewToggle";
 import { TaskCard } from "./tasks/TaskCard";
 import CreateTeamTaskModal from "./modals/CreateTeamTaskModal";
-import { Plus } from "lucide-react";
 
 interface TeamMemberOption {
     id: string; // member_id
