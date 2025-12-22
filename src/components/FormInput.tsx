@@ -27,7 +27,7 @@ export default function FormInput({
   isTextarea = false
 }: FormInputProps) {
   const baseInputClasses = "block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm border"
-  const inputClasses = icon ? `${baseInputClasses} pl-10 pr-3 py-2` : `${baseInputClasses} pl-3 pr-3 py-2`
+  const inputClasses = icon ? `${baseInputClasses} ps-10 pe-3 py-2` : `${baseInputClasses} px-3 py-2`
 
   return (
     <div>
@@ -36,7 +36,7 @@ export default function FormInput({
       </label>
       <div className="mt-1 relative">
         {icon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
             {icon}
           </div>
         )}
@@ -45,7 +45,7 @@ export default function FormInput({
             id={id}
             rows={rows}
             {...register}
-            className={baseInputClasses + " pl-3 pr-3 py-2"}
+            className={baseInputClasses + " px-3 py-2"}
             placeholder={placeholder}
           />
         ) : (

@@ -4,22 +4,24 @@ import { useAuth } from '../auth.context'
 import AuthForm from '../components/AuthForm'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 // ---------------------
 // ZOD VALIDATION SCHEMA
 // ---------------------
-const registerSchema = z.object({
-  fullname: z.string().min(3, 'Full name is required'),
-  phone: z.string().min(6, 'Phone number is required'),
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  birth_date: z.string().min(1, 'Birthday is required'),
-  device_id: z.string(),
-})
-
 export default function Register() {
   const { signUp, signOut } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
+
+  const registerSchema = z.object({
+    fullname: z.string().min(3, t('auth.fullnameRequired')),
+    phone: z.string().min(6, t('auth.phoneRequired')),
+    email: z.string().email(t('auth.invalidEmailFormat')),
+    password: z.string().min(6, t('auth.passwordMinLength')),
+    birth_date: z.string().min(1, t('auth.birthdayRequired')),
+    device_id: z.string(),
+  })
 
   const [form, setForm] = useState({
     fullname: '',

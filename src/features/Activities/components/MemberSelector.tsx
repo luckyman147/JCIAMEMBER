@@ -1,4 +1,5 @@
 import { Search, X, User, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface Member {
   id: string
@@ -24,6 +25,9 @@ export default function MemberSelector({
   onClearSelection,
   excludeIds = []
 }: MemberSelectorProps) {
+  const { t, i18n } = useTranslation()
+  const isRTL = i18n.dir() === 'rtl'
+
   const availableMembers = members.filter(m => !excludeIds.includes(m.id))
   const filteredMembers = availableMembers.filter(m => 
     m.fullname.toLowerCase().includes(memberSearch.toLowerCase())
@@ -34,17 +38,17 @@ export default function MemberSelector({
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Select Member *</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">{t('activities.selectMember')}</label>
       
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+        <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10`} />
         <input
           type="text"
           value={memberSearch}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={selectedMember ? members.find(m => m.id === selectedMember)?.fullname || "Search..." : "Search members..."}
-          className={`w-full rounded-xl shadow-sm text-sm py-3 pl-10 pr-10 border-2 transition-all duration-200 focus:outline-none ${
+          placeholder={selectedMember ? members.find(m => m.id === selectedMember)?.fullname || t('activities.search') : t('activities.search')}
+          className={`w-full rounded-xl shadow-sm text-sm py-3 ${isRTL ? 'pr-10 pl-10 text-right' : 'pl-10 pr-10 text-left'} border-2 transition-all duration-200 focus:outline-none ${
             selectedMember 
               ? 'border-green-300 bg-green-50 focus:border-green-500' 
               : 'border-gray-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
@@ -54,7 +58,7 @@ export default function MemberSelector({
           <button
             type="button"
             onClick={onClearSelection}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+            className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 transition-colors`}
           >
             <X className="w-4 h-4" />
           </button>
@@ -71,8 +75,8 @@ export default function MemberSelector({
             {filteredMembers.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
                 <User className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No members found</p>
-                {memberSearch && <p className="text-xs mt-1">Try a different search</p>}
+                <p className="text-sm">{t('activities.noMembersFound')}</p>
+                {memberSearch && <p className="text-xs mt-1">{t('activities.tryDifferentSearch')}</p>}
               </div>
             ) : (
               filteredMembers.map((m, index) => (
@@ -89,7 +93,7 @@ export default function MemberSelector({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 truncate">{m.fullname}</p>
-                    <p className="text-xs text-gray-500">Click to select</p>
+                    <p className="text-xs text-gray-500">{t('activities.clickToSelect')}</p>
                   </div>
                   <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-200 flex items-center justify-center">
                     <Check className="w-3 h-3 text-gray-300" />
@@ -111,7 +115,7 @@ export default function MemberSelector({
             <p className="font-medium text-gray-900">
               {members.find(m => m.id === selectedMember)?.fullname}
             </p>
-            <p className="text-xs text-green-600 font-medium">✓ Selected</p>
+            <p className="text-xs text-green-600 font-medium">✓ {t('activities.selected')}</p>
           </div>
         </div>
       )}

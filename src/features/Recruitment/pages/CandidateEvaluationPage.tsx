@@ -8,8 +8,10 @@ import { useAuth } from '../../../features/Authentication/auth.context'
 import Navbar from '../../../Global_Components/navBar'
 import EvaluationForm from '../components/EvaluationForm'
 import ScoreSummary from '../components/ScoreSummary'
+import { useTranslation } from 'react-i18next'
 
 export default function CandidateEvaluationPage() {
+  const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -59,7 +61,7 @@ export default function CandidateEvaluationPage() {
 
     } catch (error) {
       console.error(error)
-      toast.error('Failed to load data')
+      toast.error(t('recruitment.saveFailed'))
     } finally {
       setLoading(false)
     }
@@ -99,10 +101,10 @@ export default function CandidateEvaluationPage() {
       await recruitmentService.updateCandidateStatus(candidate.id, 'evaluated') 
       setCandidate(prev => prev ? { ...prev, status: 'evaluated' } : null)
 
-      toast.success('Evaluation saved successfully')
+      toast.success(t('recruitment.evaluationSaved'))
     } catch (error) {
       console.error(error)
-      toast.error('Failed to save evaluation')
+      toast.error(t('recruitment.evaluationSaveFailed'))
     } finally {
       setSaving(false)
     }
@@ -132,38 +134,38 @@ export default function CandidateEvaluationPage() {
         // 2. Update status
         await recruitmentService.updateCandidateStatus(candidate.id, status)
         setCandidate(prev => prev ? { ...prev, status } : null)
-        toast.success(`Candidate ${status === 'accepted' ? 'Accepted' : 'Rejected'}!`)
+        toast.success(t('recruitment.statusUpdated', { status: t(`recruitment.${status}`).toLowerCase() }))
         setTimeout(() => navigate('/recruitment'), 1000)
 
       } catch (error) {
         console.error(error)
-        toast.error('Failed to update status')
+        toast.error(t('recruitment.statusUpdateFailed'))
       } finally {
         setSaving(false)
       }
   }
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>
-  if (!candidate) return <div className="p-8 text-center text-red-500">Candidate not found</div>
+  if (loading) return <div className="p-8 text-center">{t('common.loading')}</div>
+  if (!candidate) return <div className="p-8 text-center text-red-500">{t('recruitment.noCandidates')}</div>
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-          <main className="md:ml-64 pt-16 md:pt-6">
+          <main className="md:ms-64 pt-16 md:pt-6">
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <button 
             onClick={() => navigate('/recruitment')}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
         >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Candidates
+            <ArrowLeft className={`w-4 h-4 ${i18n.dir() === 'rtl' ? 'ml-2 rotate-180' : 'mr-2'}`} />
+            {t('recruitment.backToCandidates')}
         </button>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Evaluate Candidate</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('recruitment.evaluationTitle')}</h1>
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span className="flex items-center gap-1 font-medium text-gray-900">
                             <CheckCircle className="w-4 h-4 text-blue-500" />
@@ -173,7 +175,7 @@ export default function CandidateEvaluationPage() {
                             ${candidate.status === 'accepted' ? 'bg-green-100 text-green-700' : 
                               candidate.status === 'rejected' ? 'bg-red-100 text-red-700' : 
                               candidate.status === 'evaluated' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                            {candidate.status}
+                            {t(`recruitment.${candidate.status}`)}
                         </span>
                     </div>
                 </div>
@@ -185,7 +187,7 @@ export default function CandidateEvaluationPage() {
                 {/* Template Selection */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Evaluation Template
+                        {t('recruitment.selectTemplate')}
                     </label>
                     <select
                         value={selectedTemplateId}
@@ -196,7 +198,7 @@ export default function CandidateEvaluationPage() {
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                         disabled={loading}
                     >
-                        <option value="">-- Choose a Template --</option>
+                        <option value="">{t('recruitment.chooseTemplate')}</option>
                         {templates.map(t => (
                           <option key={t.id} value={t.id}>{t.title} ({t.questions.length} Qs)</option>
                         ))}
@@ -221,14 +223,14 @@ export default function CandidateEvaluationPage() {
 
                         <div className="border-t border-gray-100 pt-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Additional Remarks
+                                {t('recruitment.additionalRemarks')}
                             </label>
                             <textarea
                                 value={remarks}
                                 onChange={(e) => setRemarks(e.target.value)}
                                 rows={3}
                                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                                placeholder="Any comments..."
+                                placeholder={t('recruitment.remarksPlaceholder')}
                                 />
                         </div>
                     </div>

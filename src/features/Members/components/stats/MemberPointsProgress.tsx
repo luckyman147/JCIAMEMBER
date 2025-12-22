@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { TrendingUp, Calendar, Trophy, Target, BarChart2 } from 'lucide-react'
 import { getPointsHistory } from '../../services/members.service'
 import type { PointsHistoryEntry } from '../../types'
+import { useTranslation } from "react-i18next";
 
 interface MemberPointsProgressProps {
   memberId: string
@@ -16,6 +17,7 @@ interface DisplayData {
 }
 
 export default function MemberPointsProgress({ memberId, currentPoints }: MemberPointsProgressProps) {
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>('month')
   const [history, setHistory] = useState<PointsHistoryEntry[]>([])
@@ -46,7 +48,7 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
     let label = ''
 
     if (range === 'week') {
-      label = 'Last 7 Days'
+      label = t('profile.last7Days')
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(now.getDate() - 6)
       sevenDaysAgo.setHours(0, 0, 0, 0)
@@ -58,7 +60,7 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
         d.setDate(now.getDate() - 6 + i)
         return {
             date: d.toDateString(),
-            label: d.toLocaleDateString('en-US', { weekday: 'short' })
+            label: d.toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'short' })
         }
       })
 
@@ -70,7 +72,7 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
       })
 
     } else if (range === 'month') {
-      label = 'This Month'
+      label = t('profile.thisMonth')
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
       filtered = history.filter(h => new Date(h.created_at) >= startOfMonth)
 
@@ -94,11 +96,11 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
         .map(([k, v]) => ({ label: k, points: v }))
 
     } else if (range === 'year') {
-      label = 'This Year'
+      label = t('profile.thisYear')
       const startOfYear = new Date(now.getFullYear(), 0, 1)
       filtered = history.filter(h => new Date(h.created_at) >= startOfYear)
       
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      const monthIndices = Array.from({ length: 12 }, (_, i) => i);
       const monthPoints = new Array(12).fill(0)
 
       filtered.forEach(h => {
@@ -106,7 +108,13 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
           monthPoints[d.getMonth()] += h.points
       })
 
-      groupedData = months.map((m, i) => ({ label: m, points: monthPoints[i] }))
+      groupedData = monthIndices.map(i => {
+          const d = new Date(now.getFullYear(), i, 1);
+          return {
+              label: d.toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'fr' ? 'fr-FR' : 'en-US', { month: 'short' }),
+              points: monthPoints[i]
+          }
+      });
     }
     
     totalPoints = filtered.reduce((a, b) => a + b.points, 0)
@@ -138,7 +146,7 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-500" />
-            Points Progress
+            {t('profile.pointsProgress')}
           </h3>
           <div className="flex bg-gray-100 dark:bg-slate-900 rounded-lg p-1">
             {(['week', 'month', 'year'] as TimeRange[]).map(range => (
@@ -151,7 +159,7 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
-                {range.charAt(0).toUpperCase() + range.slice(1)}
+                {t(`profile.${range}`)}
               </button>
             ))}
           </div>
@@ -160,9 +168,9 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-4 p-4">
-        <StatCard icon={Trophy} label="Total Points" value={currentPoints} color="blue" />
+        <StatCard icon={Trophy} label={t('profile.totalPoints')} value={currentPoints} color="blue" />
         <StatCard icon={Calendar} label={display.periodLabel} value={display.points} color="green" />
-        <StatCard icon={Target} label="Avg Activity" value={avgPerPeriod} color="purple" />
+        <StatCard icon={Target} label={t('profile.avgActivity')} value={avgPerPeriod} color="purple" />
       </div>
 
       {/* Chart */}
@@ -171,7 +179,7 @@ export default function MemberPointsProgress({ memberId, currentPoints }: Member
            {!hasData && (
              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 z-10">
                 <BarChart2 className="w-8 h-8 mb-2 opacity-50" />
-                <span className="text-sm font-medium">No activity this {timeRange}</span>
+                <span className="text-sm font-medium">{t('profile.noActivityRange', { range: t(`profile.${timeRange}`) })}</span>
              </div>
            )}
            

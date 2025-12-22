@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Briefcase, Calendar, Clock, Sparkles, Pencil, Check, X, Plus } from "lucide-react";
 import type { Member } from "../../types";
+import { useTranslation } from "react-i18next";
 
 interface MemberProfessionalInfoProps {
     member: Member;
@@ -24,6 +25,7 @@ const SPECIALTY_OPTIONS = [
 ];
 
 export default function MemberProfessionalInfo({ member, onUpdate, readOnly = true }: MemberProfessionalInfoProps) {
+    const { t } = useTranslation();
     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     // Edit States
@@ -86,9 +88,9 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                             <Briefcase className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Professional Profile</h3>
+                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('profile.professionalProfile')}</h3>
                             {!isEditingProf && (
-                                <p className="text-xs text-gray-500 font-medium">{member.job_title || 'No job title specified'}</p>
+                                <p className="text-xs text-gray-500 font-medium">{member.job_title || t('profile.noJobSpecified')}</p>
                             )}
                         </div>
                     </div>
@@ -116,31 +118,31 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                     {isEditingProf ? (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">Job Title</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">{t('profile.jobTitle')}</label>
                                 <select 
                                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:border-blue-500 outline-none transition-all"
                                     value={tempJob}
                                     onChange={(e) => setTempJob(e.target.value)}
                                 >
-                                    <option value="">Select or type below...</option>
+                                    <option value="">{t('profile.jobTitlePlaceholder')}</option>
                                     {JOB_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                 </select>
                                 <input 
                                     type="text"
-                                    placeholder="Enter custom job title..."
+                                    placeholder={t('profile.customJobPlaceholder')}
                                     className="w-full mt-2 px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:border-blue-500 outline-none transition-all"
                                     value={tempJob}
                                     onChange={(e) => setTempJob(e.target.value)}
                                 />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">Specialties</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">{t('profile.specialties')}</label>
                                 <div className="flex gap-2 mb-3">
                                     <select 
                                         className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50/50 outline-none"
                                         onChange={(e) => { addSpecialty(e.target.value); e.target.value = ""; }}
                                     >
-                                        <option value="">Quick Add...</option>
+                                        <option value="">{t('profile.quickAdd')}</option>
                                         {SPECIALTY_OPTIONS.filter(o => !tempSpecialties.includes(o)).map(opt => (
                                             <option key={opt} value={opt}>{opt}</option>
                                         ))}
@@ -148,7 +150,7 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                                     <div className="flex-1 relative">
                                         <input 
                                             type="text"
-                                            placeholder="Custom..."
+                                            placeholder={t('profile.customPlaceholder')}
                                             className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50/50 outline-none"
                                             value={newSpecialty}
                                             onChange={(e) => setNewSpecialty(e.target.value)}
@@ -176,17 +178,17 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Briefcase className="w-3.5 h-3.5 text-blue-500" />
-                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Current Occupation</span>
+                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('profile.currentOccupation')}</span>
                                 </div>
                                 <p className="text-sm font-bold text-gray-900 border-l-2 border-blue-100 pl-3 py-1">
-                                    {member.job_title || <span className="text-gray-400 italic font-medium">Not specified</span>}
+                                    {member.job_title || <span className="text-gray-400 italic font-medium">{t('profile.notSpecified')}</span>}
                                 </p>
                             </div>
 
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Expertise & Specialties</span>
+                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('profile.expertiseTitle')}</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {member.specialties && member.specialties.length > 0 ? (
@@ -196,7 +198,7 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                                             </span>
                                         ))
                                     ) : (
-                                        <p className="text-xs text-gray-400 italic">No specialties listed</p>
+                                        <p className="text-xs text-gray-400 italic">{t('profile.noSpecialties')}</p>
                                     )}
                                 </div>
                             </div>
@@ -213,8 +215,8 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                             <Calendar className="w-5 h-5 text-emerald-600" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Availability</h3>
-                            <p className="text-xs text-gray-500 font-medium">Standard weekly schedule</p>
+                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('profile.availability')}</h3>
+                            <p className="text-xs text-gray-500 font-medium">{t('profile.availabilitySubtitle')}</p>
                         </div>
                     </div>
                     {!readOnly && (
@@ -253,10 +255,10 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                                                 : 'bg-gray-50 text-gray-300 border border-gray-100'
                                             } ${isEditingAvail ? 'hover:scale-110 active:scale-95' : 'cursor-default'}`}
                                         >
-                                            {day.substring(0, 1)}
+                                            {t(`profile.${day.toLowerCase()}`).substring(0, 1)}
                                         </button>
                                         <span className={`text-[8px] font-bold uppercase ${isAvailable ? 'text-emerald-600' : 'text-gray-300'}`}>
-                                            {day.substring(0, 3)}
+                                            {t(`profile.${day.toLowerCase()}`).substring(0, 3)}
                                         </span>
                                     </div>
                                 );
@@ -268,19 +270,19 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-gray-400" />
-                                <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">Preferred Time</span>
+                                <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">{t('profile.preferredTime')}</span>
                             </div>
                             {isEditingAvail ? (
                                 <div className="flex bg-gray-100 p-1 rounded-lg">
-                                    {['matinal', 'afternoon', 'full_day'].map(t => (
+                                    {['matinal', 'afternoon', 'full_day'].map(slot => (
                                         <button
-                                            key={t}
-                                            onClick={() => setTempTime(t as any)}
+                                            key={slot}
+                                            onClick={() => setTempTime(slot as any)}
                                             className={`px-2 py-1 rounded-md text-[8px] font-black uppercase transition-all ${
-                                                tempTime === t ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                                                tempTime === slot ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
                                             }`}
                                         >
-                                            {t.replace('_', ' ')}
+                                            {t(`profile.${slot}`)}
                                         </button>
                                     ))}
                                 </div>
@@ -290,7 +292,7 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                                     member.availability_time === 'afternoon' ? 'bg-indigo-100 text-indigo-700' :
                                     'bg-blue-100 text-blue-700'
                                 }`}>
-                                    {member.availability_time?.replace('_', ' ') || 'Not Specified'}
+                                    {member.availability_time ? t(`profile.${member.availability_time}`) : t('profile.notSpecified')}
                                 </span>
                             )}
                         </div>

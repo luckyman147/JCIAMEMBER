@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface MemberBioProps {
     description?: string;
@@ -8,6 +9,7 @@ interface MemberBioProps {
 }
 
 export default function MemberBio({ description, onUpdate, readOnly = false }: MemberBioProps) {
+    const { t } = useTranslation();
     const [localDescription, setLocalDescription] = useState(description || "");
 
     const handleBlur = () => {
@@ -22,7 +24,7 @@ export default function MemberBio({ description, onUpdate, readOnly = false }: M
                 <div className="p-2 bg-purple-50 rounded-lg">
                     <FileText className="w-4 h-4 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">Bio & Notes</h3>
+                <h3 className="text-lg font-bold text-gray-900">{t('profile.bio')}</h3>
             </div>
 
             <div className="space-y-4">
@@ -31,7 +33,7 @@ export default function MemberBio({ description, onUpdate, readOnly = false }: M
                     className={`w-full border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all resize-none leading-relaxed ${
                         readOnly ? 'bg-gray-50/50 text-gray-600 cursor-default' : 'bg-white text-gray-900'
                     }`}
-                    placeholder={readOnly ? "No bio provided yet." : "Write a professional summary or add internal notes..."}
+                    placeholder={readOnly ? t('profile.noBio') : t('profile.editBioPlaceholder')}
                     value={localDescription}
                     onChange={(e) => setLocalDescription(e.target.value)}
                     onBlur={handleBlur}
@@ -39,7 +41,7 @@ export default function MemberBio({ description, onUpdate, readOnly = false }: M
                 />
                 {!readOnly && (
                     <p className="text-[10px] text-gray-400 italic">
-                        Your bio is automatically saved when you click outside the text area.
+                        {t('profile.autoSaveHint')}
                     </p>
                 )}
             </div>

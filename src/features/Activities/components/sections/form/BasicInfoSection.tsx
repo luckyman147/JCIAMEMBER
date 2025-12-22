@@ -3,6 +3,7 @@ import type { UseFormRegister, FieldErrors } from 'react-hook-form'
 import {  Type } from 'lucide-react'
 import { FormInput, FormSection, FormSelect } from '../../../../../components'
 import type { ActivityFormValues } from '../../../schemas/activitySchema'
+import { useTranslation } from 'react-i18next'
 
 interface BasicInfoSectionProps {
   register: UseFormRegister<ActivityFormValues>
@@ -11,14 +12,15 @@ interface BasicInfoSectionProps {
 }
 
 export default function BasicInfoSection({ register, errors, isEditMode = false }: BasicInfoSectionProps) {
+  const { t } = useTranslation()
   return (
-    <FormSection title="Basic Information">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <FormSection title={t('activities.basicInfo')}>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 text-start">
         <div className="col-span-2">
           <FormInput
             id="name"
-            label="Activity Name *"
-            placeholder="e.g., Annual General Meeting"
+            label={`${t('activities.name')} *`}
+            placeholder={t('activities.namePlaceholder')}
             register={register('name')}
             error={errors.name}
           />
@@ -27,8 +29,8 @@ export default function BasicInfoSection({ register, errors, isEditMode = false 
         <div className="col-span-2">
           <FormInput
             id="description"
-            label="Description (Optional)"
-            placeholder="Describe the activity..."
+            label={t('activities.descriptionOptional')}
+            placeholder={t('activities.descriptionPlaceholder')}
             register={register('description')}
             isTextarea
           />
@@ -36,12 +38,12 @@ export default function BasicInfoSection({ register, errors, isEditMode = false 
 
         <FormSelect
           id="type"
-          label={isEditMode ? "Type (Cannot be changed)" : "Type *"}
+          label={isEditMode ? t('activities.typeFixed') : `${t('activities.type')} *`}
           icon={<Type className="h-5 w-5 text-gray-400" />}
           options={[
-            { value: 'event', label: 'Event' },
-            { value: 'formation', label: 'Formation' },
-            { value: 'meeting', label: 'Meeting' }
+            { value: 'event', label: t('activities.events') },
+            { value: 'formation', label: t('activities.formations') },
+            { value: 'meeting', label: t('activities.meetings') }
           ]}
           register={register('type')}
           disabled={isEditMode}
@@ -49,7 +51,7 @@ export default function BasicInfoSection({ register, errors, isEditMode = false 
 
         <FormInput
           id="activity_points"
-          label="Points *"
+          label={`${t('activities.points')} *`}
           type="number"
           register={register('activity_points')}
           error={errors.activity_points}

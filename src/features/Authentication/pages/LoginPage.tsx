@@ -4,14 +4,17 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth.context'
 import AuthForm from '../components/AuthForm'
 import supabase from '../../../utils/supabase'
-
-const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-})
+import { useTranslation } from 'react-i18next'
 
 export default function Login() {
   const { signIn, googleSignIn } = useAuth()
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+
+  const loginSchema = z.object({
+    email: z.string().email(t('auth.invalidEmailFormat')),
+    password: z.string().min(6, t('auth.passwordMinLength')),
+  })
 
   const [form, setForm] = useState({
     email: '',
@@ -27,7 +30,6 @@ export default function Login() {
       setErrors({ ...errors, [e.target.name]: '' })
     }
   }
-const navigate = useNavigate()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 

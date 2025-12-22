@@ -5,11 +5,13 @@ import { toast } from 'sonner'
 import Navbar from '../../../Global_Components/navBar'
 import CandidatesList from '../components/CandidatesList'
 import TemplatesList from '../components/TemplatesList'
+import { useTranslation } from 'react-i18next'
 
 import { useCandidates, useTemplates, useAllEvaluations, useCreateCandidate, useUpdateCandidate, useDeleteCandidate, useDeleteTemplate } from '../hooks/useRecruitment'
 
 
 export default function RecruitmentPage() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<'candidates' | 'templates'>('candidates')
   
   const { data: rawCandidates = [], isLoading: candidatesLoading } = useCandidates()
@@ -67,31 +69,31 @@ export default function RecruitmentPage() {
     try {
       if (editingCandidate) {
           await updateCandidateMutation.mutateAsync({ id: editingCandidate.id, updates: formData })
-          toast.success('Candidate updated')
+          toast.success(t('recruitment.candidateUpdated'))
       } else {
           await createCandidateMutation.mutateAsync({
             ...formData,
             status: 'pending',
           })
-          toast.success('Candidate added')
+          toast.success(t('recruitment.candidateAdded'))
       }
       setShowModal(false)
     } catch (error) {
       console.error('Error saving candidate:', error)
-      toast.error('Failed to save candidate')
+      toast.error(t('recruitment.saveFailed'))
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-          <main className="md:ml-64 pt-16 md:pt-6">
+          <main className="md:ms-64 pt-16 md:pt-6">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Recruitment Dashboard</h1>
-            <p className="text-gray-500">Manage candidates and evaluation templates</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('recruitment.title')}</h1>
+            <p className="text-gray-500">{t('recruitment.subtitle')}</p>
           </div>
           
           <div className="mt-4 md:mt-0 flex bg-white rounded-lg p-1 shadow-sm border border-gray-200">
@@ -103,7 +105,7 @@ export default function RecruitmentPage() {
                   : 'text-gray-600 hover:text-gray-900'
                 }`}
             >
-              Candidates
+              {t('recruitment.candidates')}
             </button>
             <button
               onClick={() => setActiveTab('templates')}
@@ -111,9 +113,9 @@ export default function RecruitmentPage() {
                 activeTab === 'templates' 
                 ? 'bg-blue-50 text-blue-700' 
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
-              Templates
+              {t('recruitment.templates')}
             </button>
           </div>
         </div>
@@ -126,7 +128,7 @@ export default function RecruitmentPage() {
                     className="flex items-center gap-2 bg-(--color-myPrimary) text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                     <UserPlus className="w-4 h-4" />
-                    Add Candidate
+                    {t('recruitment.addCandidate')}
                 </button>
              </div>
 
@@ -148,10 +150,10 @@ export default function RecruitmentPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
-                <h2 className="text-xl font-bold mb-4">{editingCandidate ? 'Edit Candidate' : 'Add New Candidate'}</h2>
+                <h2 className="text-xl font-bold mb-4">{editingCandidate ? t('recruitment.editCandidate') : t('recruitment.addNewCandidate')}</h2>
                 <form onSubmit={handleSaveCandidate} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                        <label className="block text-sm font-medium text-gray-700">{t('recruitment.fullname')}</label>
                         <input 
                             required
                             type="text" 
@@ -161,7 +163,7 @@ export default function RecruitmentPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <label className="block text-sm font-medium text-gray-700">{t('recruitment.email')}</label>
                         <input 
                             required
                             type="email" 
@@ -171,7 +173,7 @@ export default function RecruitmentPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <label className="block text-sm font-medium text-gray-700">{t('recruitment.phone')}</label>
                         <input 
                             required
                             type="tel" 
@@ -186,20 +188,20 @@ export default function RecruitmentPage() {
                             onClick={() => setShowModal(false)}
                             className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </button>
                         <button 
                             type="submit"
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
-                            {editingCandidate ? 'Update Candidate' : 'Add Candidate'}
+                            {editingCandidate ? t('recruitment.updateCandidate') : t('recruitment.addCandidate')}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
       )}
-                            </main>
+                             </main>
     </div>
   )
 }

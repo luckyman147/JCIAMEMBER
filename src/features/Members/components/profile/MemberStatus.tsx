@@ -1,4 +1,4 @@
-
+import { useTranslation } from 'react-i18next';
 
 interface MemberStatusProps {
     isValidated: boolean;
@@ -15,6 +15,7 @@ export default function MemberStatus({
     onCotisationChange,
     readOnly = false
 }: MemberStatusProps) {
+    const { t } = useTranslation();
     
 const safeCotisation: boolean[] = Array.isArray(cotisation) 
     ? cotisation 
@@ -29,14 +30,14 @@ const safeCotisation: boolean[] = Array.isArray(cotisation)
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Membership Status</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('profile.membershipStatus')}</h3>
             
             <div className="space-y-6">
                 {/* Validation Toggle */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="font-medium text-gray-700">Validation</p>
-                        <p className="text-sm text-gray-500">Is this member officially validated?</p>
+                        <p className="font-medium text-gray-700">{t('profile.validation')}</p>
+                        <p className="text-sm text-gray-500">{t('profile.validationQuestion')}</p>
                     </div>
                     <button 
                         onClick={() => !readOnly && onValidationChange(!isValidated)}
@@ -51,7 +52,7 @@ const safeCotisation: boolean[] = Array.isArray(cotisation)
 
                 {/* Cotisation Checkboxes */}
                 <div>
-                    <p className="font-medium text-gray-700 mb-2">Cotisation</p>
+                    <p className="font-medium text-gray-700 mb-2">{t('profile.cotisation')}</p>
                     <div className="flex gap-4">
                         <label className={`flex items-center gap-2 p-3 rounded-md flex-1 border ${readOnly ? 'bg-gray-50 border-gray-100 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'}`}>
                             <input 
@@ -61,7 +62,7 @@ const safeCotisation: boolean[] = Array.isArray(cotisation)
                                 disabled={readOnly}
                                 className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                             />
-                            <span className="text-sm font-medium text-gray-700">Semester 1</span>
+                            <span className="text-sm font-medium text-gray-700">{t('profile.semester1')}</span>
                         </label>
                         
                         <label className={`flex items-center gap-2 p-3 rounded-md flex-1 border ${readOnly ? 'bg-gray-50 border-gray-100 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'}`}>
@@ -72,7 +73,7 @@ const safeCotisation: boolean[] = Array.isArray(cotisation)
                                 disabled={readOnly}
                                 className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                             />
-                            <span className="text-sm font-medium text-gray-700">Semester 2</span>
+                            <span className="text-sm font-medium text-gray-700">{t('profile.semester2')}</span>
                         </label>
                     </div>
                 </div>

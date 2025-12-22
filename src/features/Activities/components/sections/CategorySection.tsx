@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { activityService } from '../../services/activityService'
 import { createCategory, type Category } from '../../../Members/services/members.service'
 import { Tag } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface CategorySectionProps {
   selectedCategoryIds: number[]
@@ -14,6 +15,7 @@ export default function CategorySection({
   onCategoriesChange,
   disabled = false 
 }: CategorySectionProps) {
+  const { t } = useTranslation()
   const [availableCategories, setAvailableCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   
@@ -51,7 +53,7 @@ export default function CategorySection({
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {
-      setCreateError("Category name cannot be empty")
+      setCreateError(t('profile.categoryNameEmpty'))
       return
     }
     
@@ -71,9 +73,9 @@ export default function CategorySection({
       }
     } catch (error: any) {
       if (error.message === 'Category already exists') {
-        setCreateError("A category with this name already exists")
+        setCreateError(t('profile.categoryExists'))
       } else {
-        setCreateError("Failed to create category")
+        setCreateError(t('profile.categoryCreateFailed'))
       }
     } finally {
       setCreating(false)
@@ -87,17 +89,17 @@ export default function CategorySection({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-white">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-white dark:bg-slate-800 dark:border-slate-700">
+      <div className="flex items-center gap-2 mb-4 text-start">
         <Tag className="h-5 w-5 text-gray-500" />
-        <h3 className="text-lg font-medium text-gray-900">Categories</h3>
-        <span className="text-sm text-gray-500">(Optional)</span>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('activities.categoriesTitle')}</h3>
+        <span className="text-sm text-gray-500">{t('activities.optional')}</span>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 text-start">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600">
-            Select one or more categories for this activity
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {t('activities.selectCategoriesDesc')}
           </p>
           {!showCreateInput && (
             <button
@@ -109,7 +111,7 @@ export default function CategorySection({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Category
+              {t('activities.addCategory')}
             </button>
           )}
         </div>
@@ -132,8 +134,8 @@ export default function CategorySection({
                   }
                   if (e.key === 'Escape') handleCancelCreate()
                 }}
-                placeholder="Enter category name..."
-                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder={t('activities.addCategoryPlaceholder') || t('profile.addCategory')}
+                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 autoFocus
                 disabled={creating}
               />
@@ -143,7 +145,7 @@ export default function CategorySection({
                 disabled={creating || !newCategoryName.trim()}
                 className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {creating ? "..." : "Create"}
+                {creating ? "..." : t('profile.create')}
               </button>
               <button
                 type="button"
@@ -151,7 +153,7 @@ export default function CategorySection({
                 disabled={creating}
                 className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 transition-colors"
               >
-                Cancel
+                {t('profile.cancel')}
               </button>
             </div>
             {createError && (
@@ -161,7 +163,7 @@ export default function CategorySection({
         )}
 
         {loading ? (
-          <div className="text-sm text-gray-500">Loading categories...</div>
+          <div className="text-sm text-gray-500">{t('activities.loadingCategories')}</div>
         ) : (
           <div className="flex flex-wrap gap-2">
             {availableCategories.map(cat => (
@@ -183,14 +185,14 @@ export default function CategorySection({
               </button>
             ))}
             {availableCategories.length === 0 && (
-              <span className="text-sm text-gray-500">No categories available. Create one!</span>
+              <span className="text-sm text-gray-500">{t('activities.noCategories')}</span>
             )}
           </div>
         )}
 
         {selectedCategoryIds.length > 0 && (
           <p className="text-xs text-gray-500">
-            {selectedCategoryIds.length} categor{selectedCategoryIds.length === 1 ? 'y' : 'ies'} selected
+            {t('activities.categoriesSelected', { count: selectedCategoryIds.length })}
           </p>
         )}
       </div>

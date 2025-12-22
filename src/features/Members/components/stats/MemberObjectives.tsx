@@ -3,6 +3,7 @@ import { Target, CheckCircle, Circle, Trophy, Plus, Trash2, XCircle, Minus, X, S
 import { objectivesService } from '../../services/objectivesService'
 import type { UserObjectifInfos } from '../../types/objectives'
 import CreateObjectifForm from '../objectives/CreateObjectifForm'
+import { useTranslation } from "react-i18next";
 
 interface MemberObjectivesProps {
   memberId: string;
@@ -10,6 +11,7 @@ interface MemberObjectivesProps {
 }
 
 export default function MemberObjectives({ memberId, isAdmin = false }: MemberObjectivesProps) {
+  const { t } = useTranslation();
   const [objectivesData, setObjectivesData] = useState<UserObjectifInfos[]>([])
   const [loading, setLoading] = useState(true)
   const [showAvailable, setShowAvailable] = useState(false)
@@ -37,27 +39,27 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
       await fetchData() // Refresh to move it to assigned list
       setShowAvailable(false)
     } catch (error) {
-      alert("Failed to assign objective")
+      alert(t('profile.assignObjectiveFailed'))
     }
   }
 
   const handleUnassign = async (objectiveId: string) => {
-    if (!window.confirm("Are you sure you want to remove this goal from your list? Stats will be lost.")) return
+    if (!window.confirm(t('profile.unassignObjectiveConfirm'))) return
     try {
       await objectivesService.unassignObjective(memberId, objectiveId)
       await fetchData()
     } catch (error) {
-      alert("Failed to unassign objective")
+      alert(t('profile.unassignObjectiveFailed'))
     }
   }
 
   const handleDeletePermanent = async (objectiveId: string) => {
-    if (!window.confirm("Are you sure you want to PERMANENTLY delete this objective? This affects all users.")) return
+    if (!window.confirm(t('profile.deleteObjectiveConfirm'))) return
     try {
       await objectivesService.deleteObjective(objectiveId)
       await fetchData()
     } catch (error) {
-      alert("Failed to delete objective")
+      alert(t('profile.deleteObjectiveFailed'))
     }
   }
 
@@ -106,7 +108,7 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Target className="w-5 h-5 text-purple-500" />
-            Objectives
+            {t('profile.objectivesTitle')}
           </h3>
           <div className="flex gap-2">
             {isAdmin && (
@@ -116,14 +118,14 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
                 className="text-xs font-medium px-3 py-1.5 me-2 ms-2 bg-(--color-myPrimary) text-white  rounded-lg transition-colors flex items-center gap-1"
                 >
                 <Plus className="w-3 h-3" />
-                New System Goal
+                {t('profile.newSystemGoal')}
                 </button>
                 <button
                 onClick={() => setShowAvailable(!showAvailable)}
                 className="text-xs font-medium px-3 py-1.5 bg-(--color-mySecondary) text-white  rounded-lg transition-colors flex items-center gap-1"
                 >
                 {showAvailable ? <XCircle className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                {showAvailable ? 'Close List' : 'Add to My Goals'}
+                {showAvailable ? t('profile.closeList') : t('profile.addToMyGoals')}
                 </button>
               </>
             )}
@@ -132,19 +134,19 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
 
         {/* Quick Stats */}
         <div className="flex gap-4">
-          <QuickStat icon={CheckCircle} value={completedCount} label="Completed" color="green" />
-          <QuickStat icon={Circle} value={inProgressCount} label="In Progress" color="blue" />
-          <QuickStat icon={Trophy} value={totalPoints} label="Pts Earned" color="yellow" />
+          <QuickStat icon={CheckCircle} value={completedCount} label={t('profile.completed')} color="green" />
+          <QuickStat icon={Circle} value={inProgressCount} label={t('profile.inProgress')} color="blue" />
+          <QuickStat icon={Trophy} value={totalPoints} label={t('profile.ptsEarned')} color="yellow" />
         </div>
       </div>
 
       {/* Available Objectives Section */}
       {showAvailable && (
         <div className="p-4 bg-blue-50 dark:bg-slate-900/50 border-b border-blue-100 dark:border-slate-700">
-          <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">Available System Goals</p>
-          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+          <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">{t('profile.availableSystemGoals')}</p>
+          <div className="space-y-2 max-h-60 overflow-y-auto pe-1">
             {availableObjectives.length === 0 ? (
-              <p className="text-sm text-slate-500">No new goals available.</p>
+              <p className="text-sm text-slate-500">{t('profile.noNewGoalsAvailable')}</p>
             ) : (
               availableObjectives.map(info => (
                 <div key={info.objectif.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-slate-700 hover:border-blue-400 transition-colors">
@@ -156,21 +158,21 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
                        {info.objectif.title!=null ? (info.objectif.title) : 
                          (info.objectif.groupObjectif) + ": " + info.objectif.objectifActionType + " " + info.objectif.feature}
                       </span>
-                       <span className="text-xs text-slate-500">Target: {info.objectif.target || 1}</span>
+                       <span className="text-xs text-slate-500">{t('profile.target')}: {info.objectif.target || 1}</span>
                     </div>
-                    <span className="text-xs text-purple-600 dark:text-purple-400 font-bold ml-auto mr-4">+{info.objectif.points} pts</span>
+                    <span className="text-xs text-purple-600 dark:text-purple-400 font-bold ms-auto me-4">+{info.objectif.points} pts</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleAssign(info.objectif.id)}
                       className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
-                      Start
+                      {t('profile.start')}
                     </button>
                     <button
                       onClick={() => handleDeletePermanent(info.objectif.id)}
                       className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"
-                      title="Permanently Delete from System"
+                      title={t('profile.permanentlyDeleteObjective')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -187,8 +189,8 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
         {assignedObjectives.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-slate-400">
             <Target className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-            <p>No objectives assigned yet.</p>
-            <p className="text-sm">Click "Add to My Goals" to get started.</p>
+            <p>{t('profile.noObjectivesAssigned')}</p>
+            <p className="text-sm">{t('profile.clickAddToMyGoals')}</p>
           </div>
         ) : (
           assignedObjectives.map(info => (
@@ -209,7 +211,7 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
           <div className="bg-white dark:bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
             <button 
               onClick={() => setIsCreateModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              className="absolute top-4 end-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
             >
               <X className="w-6 h-6" />
             </button>
@@ -253,6 +255,7 @@ function ObjectiveCard({ info, isAdmin, onUnassign, onUpdate }: {
   onUnassign: () => void;
   onUpdate: (newProgress: number) => void;
 }) {
+  const { t } = useTranslation();
   const { objectif, userObjectif } = info
   if (!userObjectif) return null // Should not happen in this list
   
@@ -281,7 +284,7 @@ function ObjectiveCard({ info, isAdmin, onUnassign, onUpdate }: {
             <DifficultyBadge difficulty={objectif.difficulty || null} />
             {isCompleted && (
               <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                ✓ Complete
+                ✓ {t('profile.statusComplete')}
               </span>
             )}
           </div>
@@ -308,7 +311,7 @@ function ObjectiveCard({ info, isAdmin, onUnassign, onUpdate }: {
                 >
                   <Minus className="w-3 h-3" />
                 </button>
-                <span className="text-xs text-slate-500">Update Progress</span>
+                <span className="text-xs text-slate-500">{t('profile.updateProgress')}</span>
                 <button 
                   onClick={() => onUpdate(Math.min(target, userObjectif.currentProgress + 1))}
                   className="p-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
@@ -333,7 +336,7 @@ function ObjectiveCard({ info, isAdmin, onUnassign, onUpdate }: {
              <button 
               onClick={onUnassign}
               className="text-slate-400 hover:text-red-500 transition-colors p-1"
-              title="Removing goal"
+              title={t('profile.removingGoal')}
              >
               <X className="w-4 h-4" />
              </button>
@@ -345,6 +348,7 @@ function ObjectiveCard({ info, isAdmin, onUnassign, onUpdate }: {
 }
 
 function DifficultyBadge({ difficulty }: { difficulty: string | null }) {
+  const { t } = useTranslation();
   if (!difficulty) return null
   
   const colors: Record<string, string> = {
@@ -359,7 +363,7 @@ function DifficultyBadge({ difficulty }: { difficulty: string | null }) {
 
   return (
     <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${colors[normalizedDiff]}`}>
-      {difficulty}
+      {t(`profile.difficulty${normalizedDiff}`)}
     </span>
   )
 }

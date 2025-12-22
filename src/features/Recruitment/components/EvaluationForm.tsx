@@ -1,5 +1,6 @@
 import { Star } from 'lucide-react'
 import type { Question } from '../models/types'
+import { useTranslation } from 'react-i18next'
 
 interface EvaluationFormProps {
     questions: Question[]
@@ -10,18 +11,19 @@ interface EvaluationFormProps {
 }
 
 export default function EvaluationForm({ questions, scores, textAnswers, onScoreChange, onTextAnswerChange }: EvaluationFormProps) {
+    const { t, i18n } = useTranslation()
     
     return (
         <div className="space-y-6">
             {questions.map((q, idx) => (
-                <div key={q.id} className="p-4 bg-gray-50 rounded-lg">
+                <div key={q.id} className="p-4 bg-gray-50 rounded-lg text-start">
                     <div className="flex justify-between items-start mb-2">
                         <span className="font-medium text-gray-900 flex gap-2">
                             <span className="text-gray-500">{idx + 1}.</span>
                             {q.text}
                         </span>
                         <span className="text-xs font-semibold bg-gray-200 text-gray-600 px-2 py-1 rounded">
-                            Max: {q.maxScore}
+                            {t('recruitment.max')}: {q.maxScore}
                         </span>
                     </div>
                     <div className="mt-2">
@@ -38,7 +40,7 @@ export default function EvaluationForm({ questions, scores, textAnswers, onScore
                                         />
                                         <div className="flex-1 flex justify-between">
                                             <span>{opt.label}</span>
-                                            <span className="text-gray-500 text-sm">{opt.score} pts</span>
+                                            <span className="text-gray-500 text-sm whitespace-nowrap">{opt.score} pts</span>
                                         </div>
                                     </label>
                                 ))}
@@ -86,33 +88,33 @@ export default function EvaluationForm({ questions, scores, textAnswers, onScore
                                                 />
                                                 <div className="flex-1 flex justify-between">
                                                     <span>{opt.label}</span>
-                                                    <span className="text-gray-500 text-sm">{opt.score} pts</span>
+                                                    <span className="text-gray-500 text-sm whitespace-nowrap">{opt.score} pts</span>
                                                 </div>
                                             </label>
                                         );
                                     });
                                 })()}
-                                <div className="text-xs text-gray-400 text-right">
-                                    Current: {scores[q.id] || 0} pts
+                                <div className="text-xs text-gray-400 text-end">
+                                    {t('recruitment.currentScore', { count: scores[q.id] || 0 })}
                                 </div>
                             </div>
                         ) : q.type === 'text' ? (
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                                        Candidate Answer / Notes
+                                        {t('recruitment.candidateAnswer')}
                                     </label>
                                     <textarea
                                         rows={3}
                                         value={textAnswers[q.id] || ''}
                                         onChange={(e) => onTextAnswerChange(q.id, e.target.value)}
                                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm"
-                                        placeholder="Record candidate's answer here..."
+                                        placeholder={t('recruitment.answerPlaceholder')}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                                        Score (Max: {q.maxScore})
+                                        {t('recruitment.score')} ({t('recruitment.max')}: {q.maxScore})
                                     </label>
                                     <input
                                         type="number"
@@ -121,7 +123,7 @@ export default function EvaluationForm({ questions, scores, textAnswers, onScore
                                         value={scores[q.id] === undefined ? '' : scores[q.id]}
                                         onChange={(e) => onScoreChange(q.id, parseInt(e.target.value) || 0, q.maxScore)}
                                         className="w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-1"
-                                        placeholder="Score"
+                                        placeholder={t('recruitment.score')}
                                     />
                                 </div>
                             </div>
@@ -141,7 +143,7 @@ export default function EvaluationForm({ questions, scores, textAnswers, onScore
                                         <Star className="w-8 h-8 fill-current" />
                                     </button>
                                 ))}
-                                <span className="text-sm font-medium text-gray-600 ml-2">
+                                <span className={`text-sm font-medium text-gray-600 ${i18n.dir() === 'rtl' ? 'mr-2' : 'ml-2'}`}>
                                     {scores[q.id] || 0} / 5
                                 </span>
                             </div>
@@ -153,7 +155,7 @@ export default function EvaluationForm({ questions, scores, textAnswers, onScore
                                 value={scores[q.id] === undefined ? '' : scores[q.id]}
                                 onChange={(e) => onScoreChange(q.id, parseInt(e.target.value) || 0, q.maxScore)}
                                 className="w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-1"
-                                placeholder="Score"
+                                placeholder={t('recruitment.score')}
                             />
                         )}
                     </div>

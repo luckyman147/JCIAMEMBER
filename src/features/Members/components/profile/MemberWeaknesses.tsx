@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface MemberWeaknessesProps {
     weaknesses: string[];
@@ -15,6 +16,7 @@ const WEAKNESS_OPTIONS = [
 ];
 
 export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly = false }: MemberWeaknessesProps) {
+    const { t } = useTranslation();
     const [newItem, setNewItem] = useState("");
 
     const handleAddCustom = (e: React.KeyboardEvent) => {
@@ -43,8 +45,8 @@ export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly =
                     <AlertCircle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Weaknesses</h3>
-                    <p className="text-xs text-gray-500">Areas for development & growth</p>
+                    <h3 className="text-lg font-bold text-gray-900">{t('profile.weaknessesTitle')}</h3>
+                    <p className="text-xs text-gray-500">{t('profile.weaknessesSubtitle')}</p>
                 </div>
             </div>
             
@@ -64,14 +66,14 @@ export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly =
                         </span>
                     ))}
                     {weaknesses.length === 0 && (
-                        <p className="text-sm text-gray-400 italic py-2">No areas for improvement noted.</p>
+                        <p className="text-sm text-gray-400 italic py-2">{t('profile.noWeaknesses')}</p>
                     )}
                 </div>
 
                 {!readOnly && (
                     <div className="space-y-3 mt-4">
                         <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quick Select</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('profile.quickSelect')}</label>
                             <select 
                                 onChange={(e) => {
                                     handleSelectOption(e.target.value);
@@ -79,7 +81,7 @@ export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly =
                                 }}
                                 className="w-full px-3 py-2 text-xs border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white outline-none transition-all cursor-pointer"
                             >
-                                <option value="">Choose an area to improve...</option>
+                                <option value="">{t('profile.chooseAreaImprove')}</option>
                                 {WEAKNESS_OPTIONS.filter(opt => !weaknesses.includes(opt)).map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
                                 ))}
@@ -87,19 +89,19 @@ export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly =
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Or Type Custom</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('profile.orTypeCustom')}</label>
                             <div className="relative">
                                 <input
                                     type="text"
                                     value={newItem}
                                     onChange={(e) => setNewItem(e.target.value)}
                                     onKeyDown={handleAddCustom}
-                                    placeholder="Add a weakness..."
+                                    placeholder={t('profile.addWeakness')}
                                     className="w-full pl-3 pr-10 py-2 text-sm border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
                                 />
                                 <div className="absolute right-2 top-1.5">
                                    <kbd className="px-2 py-1 text-[10px] font-semibold text-gray-400 bg-white border border-gray-200 rounded-md shadow-sm">
-                                        Enter
+                                        {t('profile.pressEnter')}
                                    </kbd>
                                 </div>
                             </div>

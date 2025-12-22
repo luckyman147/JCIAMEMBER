@@ -4,8 +4,10 @@ import { getTeams } from '../../Teams/services/teams.service';
 import type { Team } from '../../Teams/types';
 import { Users, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function TeamsOverview() {
+    const { t } = useTranslation();
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -33,16 +35,16 @@ export default function TeamsOverview() {
                     <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                         <Users className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-gray-900 text-lg">Active Teams</h3>
+                    <h3 className="font-bold text-gray-900 text-lg">{t('home.activeTeams')}</h3>
                 </div>
                 <Link to="/teams" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-                    View All <ArrowRight className="w-4 h-4" />
+                    {t('home.viewAll')} <ArrowRight className="w-4 h-4" />
                 </Link>
             </div>
 
             <div className="space-y-4 flex-1">
                 {teams.length === 0 ? (
-                    <p className="text-gray-500 text-sm italic">No teams created.</p>
+                    <p className="text-gray-500 text-sm italic">{t('common.noTeamsCreated')}</p>
                 ) : (
                     teams.map(team => (
                     <Link key={team.id} to={`/teams/${team.id}`} className="block group">
@@ -50,7 +52,7 @@ export default function TeamsOverview() {
                              <div className="flex justify-between items-start mb-2">
                                  <h4 className="font-semibold text-gray-900 line-clamp-1">{team.name}</h4>
                                  <span className="text-xs font-medium text-gray-600 bg-white px-2 py-0.5 rounded border border-gray-200">
-                                     {team.member_count} Members
+                                     {team.member_count} {t('common.members')}
                                  </span>
                              </div>
                              <p className="text-xs text-gray-500 line-clamp-2">{team.description || 'No description'}</p>

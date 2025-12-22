@@ -1,16 +1,18 @@
 import { Calendar, MapPin, Video, DollarSign, ArrowRight, Users } from 'lucide-react'
 import type { Activity } from '../models/Activity'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 interface ActivityCardProps {
   activity: Activity
 }
 
 export default function ActivityCard({ activity }: ActivityCardProps) {
+  const { t, i18n } = useTranslation()
   const startDate = new Date(activity.activity_begin_date)
   
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(i18n.language, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -52,16 +54,21 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
           alt={activity.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute top-4 right-4">
+        <div className={`absolute top-4 ${i18n.dir() === 'rtl' ? 'left-4' : 'right-4'} flex flex-col gap-2 items-end`}>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getTypeColor(activity.type)}`}>
-            {activity.type}
+            {t(`profile.${activity.type}`)}
           </span>
+          {new Date(activity.activity_end_date) < new Date() && (
+            <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-red-500 text-white shadow-sm animate-pulse">
+              {t('activities.expired')}
+            </span>
+          )}
         </div>
         {activity.is_paid && (
-             <div className="absolute top-4 left-4">
+             <div className={`absolute top-4 ${i18n.dir() === 'rtl' ? 'right-4' : 'left-4'}`}>
              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 flex items-center gap-1">
                <DollarSign className="w-3 h-3" />
-               {activity.is_paid && activity.price! > 0 ? `$${activity.price}` : 'Paid'}
+               {activity.is_paid && activity.price! > 0 ? `$${activity.price}` : t('activities.paid')}
              </span>
            </div>
         )}
@@ -73,9 +80,9 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
           {activity.name}
         </h3>
         
-        <div className="space-y-3 mb-6 flex-1">
+        <div className="space-y-3 mb-6 flex-1 text-start">
           <p className="text-gray-600 text-sm line-clamp-3">
-            {activity.description || 'No description provided.'}
+            {activity.description || t('activities.noDescription')}
           </p>
           
           <div className="flex items-center justify-between">
@@ -97,7 +104,7 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
               <MapPin className="w-4 h-4 text-red-500" />
             )}
             <span className="truncate">
-              {activity.is_online ? 'Online Event' : (activity.activity_address || 'Location TBD')}
+              {activity.is_online ? t('activities.onlineEvent') : (activity.activity_address || t('activities.locationTBD'))}
             </span>
           </div>
         </div>
@@ -105,13 +112,13 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
         {/* Footer Actions */}
         <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
            <div className="text-sm font-medium text-gray-500">
-             {activity.activity_points > 0 ? `${activity.activity_points} Points` : ''}
+             {activity.activity_points > 0 ? t('activities.points', { count: activity.activity_points }) : ''}
            </div>
            
            <div 
-             className="inline-flex items-center gap-1 text-blue-600 group-hover:text-blue-700 font-semibold text-sm transition-colors"
+             className="inline-flex items-center gap-1 text-(--color-myPrimary) group-hover:text-(--color-myPrimary) font-semibold text-sm transition-colors"
            >
-             View Details <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+             {t('activities.viewDetails')} <ArrowRight className={`w-4 h-4 transition-transform ${i18n.dir() === 'rtl' ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} ${i18n.dir() === 'rtl' ? 'rotate-180' : ''}`} />
            </div>
         </div>
       </div>

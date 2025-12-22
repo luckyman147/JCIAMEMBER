@@ -1,5 +1,6 @@
 import { useActivityForm } from '../hooks/useActivityForm'
 import type { ActivityFormValues } from '../schemas/activitySchema'
+import { useTranslation } from 'react-i18next'
 
 // Section Components - all from barrel file
 import {
@@ -47,7 +48,7 @@ export default function ActivityForm() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-          <main className="md:ml-64 pt-16 md:pt-6">
+          <main className="md:ms-64 pt-16 md:pt-6">
 
       <div className="max-w-4xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -112,15 +113,16 @@ export default function ActivityForm() {
 
 // Simple header component
 function FormHeader({ isEditMode }: { isEditMode: boolean }) {
+  const { t } = useTranslation();
   return (
-    <div className="px-4 sm:px-8 py-4 sm:py-6 bg-gradient-to-r from-(--color-myPrimary) to-(--color-mySecondary) text-white">
+    <div className="px-4 sm:px-8 py-4 sm:py-6 bg-gradient-to-r from-(--color-myPrimary) to-(--color-mySecondary) text-white text-start">
       <h1 className="text-2xl sm:text-3xl font-bold">
-        {isEditMode ? 'Edit Activity' : 'Create New Activity'}
+        {isEditMode ? t('activities.editActivity') : t('activities.createActivity')}
       </h1>
       <p className="mt-2 text-sm sm:text-base text-blue-100">
         {isEditMode 
-          ? 'Update the details of your activity.' 
-          : 'Fill in the details to organize a new event, formation, or meeting.'}
+          ? t('activities.updateSubtitle') 
+          : t('activities.createSubtitle')}
       </p>
     </div>
   )

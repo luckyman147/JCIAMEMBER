@@ -4,6 +4,7 @@ import { DollarSign } from 'lucide-react'
 import type { UseFormRegister, FieldErrors } from 'react-hook-form'
 import { FormSection, FormCheckbox, FormInput } from '../../../../../components'
 import type { ActivityFormValues } from '../../../schemas/activitySchema'
+import { useTranslation } from 'react-i18next'
 
 interface PaymentSectionProps {
   register: UseFormRegister<ActivityFormValues>
@@ -12,12 +13,13 @@ interface PaymentSectionProps {
 }
 
 export default function PaymentSection({ register, errors, isPaid }: PaymentSectionProps) {
+  const { t } = useTranslation()
   return (
-    <FormSection title="Payment">
-      <div className="space-y-4">
+    <FormSection title={t('activities.payment')}>
+      <div className="space-y-4 text-start">
         <FormCheckbox
           id="is_paid"
-          label="This is a paid activity"
+          label={t('activities.isPaidActivity')}
           register={register('is_paid')}
         />
 
@@ -25,7 +27,7 @@ export default function PaymentSection({ register, errors, isPaid }: PaymentSect
           <div className="w-full sm:w-1/2 md:w-1/3">
             <FormInput
               id="price"
-              label="Price *"
+              label={`${t('activities.price')} *`}
               type="number"
               step="0.01"
               placeholder="0.00"

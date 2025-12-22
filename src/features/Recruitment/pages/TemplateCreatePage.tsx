@@ -5,8 +5,10 @@ import { recruitmentService } from '../services/recruitmentService'
 import { toast } from 'sonner'
 import type { Question } from '../models/types'
 import QuestionEditor from '../components/QuestionEditor'
+import { useTranslation } from 'react-i18next'
 
 export default function TemplateCreatePage() {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>() // Check for ID to enable Edit Mode
   const isEditMode = Boolean(id)
@@ -39,7 +41,7 @@ export default function TemplateCreatePage() {
               })))
           }
       } catch (error) {
-          toast.error('Failed to load template')
+          toast.error(t('recruitment.saveFailed'))
           console.error(error)
       } finally {
           setLoading(false)
@@ -55,7 +57,7 @@ export default function TemplateCreatePage() {
 
   const removeQuestion = (id: string) => {
     if (questions.length === 1) {
-      toast.error('Template must have at least one question')
+      toast.error(t('recruitment.atLeastOneQuestion'))
       return
     }
     setQuestions(prev => prev.filter(q => q.id !== id))
@@ -69,25 +71,25 @@ export default function TemplateCreatePage() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      toast.error('Please enter a template title')
+      toast.error(t('recruitment.enterTemplateTitle'))
       return
     }
     
     // Validate questions
     const validQuestions = questions.filter(q => q.text.trim() !== '')
     if (validQuestions.length === 0) {
-      toast.error('Please add at least one valid question')
+      toast.error(t('recruitment.addValidQuestion'))
       return
     }
 
     if (questions.some(q => !q.text.trim())) {
-        toast.error('Please fill in all question texts')
+        toast.error(t('recruitment.fillAllQuestions'))
         return
     }
     
     // Validate options for choice questions
     if (questions.some(q => q.type === 'choice' && (!q.options || q.options.length < 2 || q.options.some(opt => !opt.label.trim())))) {
-        toast.error('Choice questions must have at least 2 options and all options must have a label')
+        toast.error(t('recruitment.choiceValidation'))
         return
     }
 
@@ -101,37 +103,39 @@ export default function TemplateCreatePage() {
       
       if (isEditMode && id) {
            await recruitmentService.updateTemplate(id, templateData)
+           toast.success(t('recruitment.templateUpdated'))
       } else {
            await recruitmentService.saveTemplate(templateData)
+           toast.success(t('recruitment.templateCreated'))
       }
 
-      toast.success(`Template ${isEditMode ? 'updated' : 'created'} successfully`)
       navigate('/recruitment')
     } catch (error) {
-        
-        if  (isEditMode)
-            toast.error(`Failed to update template: ${error instanceof Error ? error.message : String(error)}`)
+        if (isEditMode)
+            toast.error(t('recruitment.templateUpdateFailed'))
         else 
-            toast.error(`Failed to create template: ${error instanceof Error ? error.message : String(error)}`)
+            toast.error(t('recruitment.templateCreateFailed'))
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading && isEditMode && !title) return <div className="p-8 text-center">Loading template...</div>
+  if (loading && isEditMode && !title) return <div className="p-8 text-center">{t('recruitment.loadingTemplate')}</div>
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
             <button 
                 onClick={() => navigate('/recruitment')}
                 className="flex items-center text-gray-600 hover:text-gray-900"
             >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
+                <ArrowLeft className={`w-4 h-4 ${i18n.dir() === 'rtl' ? 'ml-2 rotate-180' : 'mr-2'}`} />
+                {t('recruitment.backToDashboard')}
             </button>
-            <h1 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Edit' : 'Create'} Evaluation Template</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                {isEditMode ? t('recruitment.editTemplate') : t('recruitment.createTemplate')}
+            </h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -140,13 +144,13 @@ export default function TemplateCreatePage() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <Target className="w-5 h-5 text-blue-500" />
-                        Basic Info
+                        {t('recruitment.basicInfo')}
                     </h2>
                     
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Template Title
+                                {t('recruitment.templateTitle')}
                             </label>
                             <input
                                 type="text"
@@ -159,7 +163,7 @@ export default function TemplateCreatePage() {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Description
+                                {t('recruitment.templateDescription')}
                             </label>
                             <textarea
                                 value={description}
@@ -178,7 +182,7 @@ export default function TemplateCreatePage() {
                     className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm transition-colors"
                 >
                     <Save className="w-5 h-5" />
-                    {loading ? 'Saving...': isEditMode ? 'Update template' : 'Save Template'}
+                    {loading ? t('recruitment.saving'): isEditMode ? t('recruitment.updateTemplate') : t('recruitment.saveTemplate')}
                 </button>
             </div>
 
@@ -188,14 +192,14 @@ export default function TemplateCreatePage() {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold flex items-center gap-2">
                             <HelpCircle className="w-5 h-5 text-purple-500" />
-                            Questions ({questions.length})
+                            {t('recruitment.questions')} ({questions.length})
                         </h2>
                         <button
                             onClick={addQuestion}
                             className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                         >
                             <Plus className="w-4 h-4" />
-                            Add Question
+                            {t('recruitment.addQuestion')}
                         </button>
                     </div>
 

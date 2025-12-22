@@ -2,6 +2,7 @@
 import { FormSection, FileUpload } from '../../../../../components'
 import type { AgendaItem } from '../../../models/MeetingAgenda'
 import MeetingAgendaComponent from './MeetingAgenda'
+import { useTranslation } from 'react-i18next'
 
 interface MeetingSectionProps {
   agenda: AgendaItem[]
@@ -21,16 +22,17 @@ export default function MeetingSection({
   pvAttachment,
   disabled = false 
 }: MeetingSectionProps) {
+  const { t } = useTranslation()
   return (
-    <FormSection title="Meeting Details">
-      <div className="space-y-6">
+    <FormSection title={t('activities.meetingDetails')}>
+      <div className="space-y-6 text-start">
         <MeetingAgendaComponent
           agenda={agenda}
           onChange={onAgendaChange}
           disabled={disabled}
         />
         <FileUpload
-          label="PV Attachments (Optional)"
+          label={t('activities.pvAttachmentsLabel')}
           accept="document"
           onFileSelect={(files) => pvAttachment.setFile(files)}
           onFileRemove={pvAttachment.clearFiles}

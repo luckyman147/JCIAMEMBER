@@ -5,6 +5,7 @@ import { Plus, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { useMemberTasks, useUpdateMemberTask } from "../hooks/useTasks";
 import type { MemberTask } from "../types";
+import { useTranslation } from "react-i18next";
 
 interface MemberTasksListProps {
     memberId: string;
@@ -12,6 +13,7 @@ interface MemberTasksListProps {
 }
 
 export default function MemberTasksList({ memberId, isAdmin = false }: MemberTasksListProps) {
+    const { t } = useTranslation();
     const { data: tasks = [], isLoading: loading, refetch } = useMemberTasks(memberId);
     const updateMutation = useUpdateMemberTask();
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -20,7 +22,7 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
         try {
             await updateMutation.mutateAsync({ id, updates });
         } catch (error) {
-            toast.error("Failed to update task progress");
+            toast.error(t('profile.updateFailed'));
         }
     };
 
@@ -30,9 +32,9 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
                 <div>
                     <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                         <ListChecks className="w-6 h-6 text-blue-600" />
-                        Assigned Tasks
+                        {t('profile.assignedTasks')}
                     </h2>
-                    <p className="text-gray-500 text-sm mt-1">Track member progress and assignments</p>
+                    <p className="text-gray-500 text-sm mt-1">{t('profile.trackMemberProgress')}</p>
                 </div>
                 {isAdmin && (
                     <button
@@ -40,7 +42,7 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
                         className="flex items-center gap-2 px-4 py-2 bg-(--color-myPrimary) text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
-                        Give Task
+                        {t('profile.giveTask')}
                     </button>
                 )}
             </div>
@@ -56,8 +58,8 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <ListChecks className="w-6 h-6 text-gray-400" />
                     </div>
-                    <h3 className="text-gray-900 font-medium mb-1">No tasks assigned yet</h3>
-                    <p className="text-gray-500 text-sm">Assign a task to this member to start tracking progress.</p>
+                    <h3 className="text-gray-900 font-medium mb-1">{t('profile.noTasksAssigned')}</h3>
+                    <p className="text-gray-500 text-sm">{t('profile.assignTaskPrompt')}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6">

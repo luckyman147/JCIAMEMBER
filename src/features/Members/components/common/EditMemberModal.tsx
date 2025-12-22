@@ -6,12 +6,8 @@ import { getRoles } from '../../services/members.service'
 import AvatarImageSection from '../profile/avatarImageComponents'
 import { useAuth } from '../../../Authentication/auth.context'
 import { EXECUTIVE_LEVELS } from '../../../../utils/roles'
+import { useTranslation } from "react-i18next";
 
-// Placeholder for your Supabase/Auth context hook
-// You will need to implement this to get the user ID for file path storage.
-// const { user } = useAuth();
-
-// --- Component Interface (Same) ---
 interface EditMemberModalProps {
   member: Member
   isOpen: boolean
@@ -25,7 +21,7 @@ export default function EditMemberModal({
   onClose,
   onSave
 }: EditMemberModalProps) {
-  /* LEFT: AVATAR + INFO */
+  const { t } = useTranslation();
   const { role: currentUserRole, user } = useAuth()
   const canEditExclusive = EXECUTIVE_LEVELS.includes(currentUserRole?.toLowerCase() || '')
   
@@ -61,9 +57,6 @@ export default function EditMemberModal({
     }
   }, [isOpen])
 
-  // --- Image Preview for Uploaded File ---
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -73,21 +66,18 @@ export default function EditMemberModal({
       const updates: Partial<Member> = {};
 
       if (isOwnProfile || canEditExclusive) {
-          // 1. Upload new avatar if a file was selected in the component
-          // Check if useFileUpload has a file
           if (avatarImage.file && avatarImage.file.length > 0) {
                const result = await uploadAvatarImage(avatarImage.file[0])
                if (!result.success || !result.url) {
-                 throw new Error(result.error || 'Failed to upload activity image')
+                 throw new Error(result.error || 'Failed to upload image')
                }
                imageUrl = result.url
           }
 
-          // 2. Save other profile updates
           updates.fullname = fullname;
           updates.phone = phone;
           updates.birth_date = birthday;
-          updates.avatar_url = imageUrl || member.avatar_url; // Keep existing if no new upload
+          updates.avatar_url = imageUrl || member.avatar_url;
       }
 
       if (canEditExclusive) {
@@ -95,11 +85,9 @@ export default function EditMemberModal({
       }
 
       await onSave(updates)
-
       onClose()
     } catch (error) {
       console.error('Save failed:', error)
-      // Handle error display
     } finally {
       setLoading(false)
     }
@@ -108,15 +96,15 @@ export default function EditMemberModal({
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0  bg-opacity-50 flex items-center justify-center p-4 z-50'>
+    <div className='fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm'>
       <div className='bg-white rounded-lg shadow-xl w-full max-w-md'>
         <div className='p-6 border-b border-gray-100 flex justify-between items-center'>
             <div>
               <h2 className='text-xl font-semibold text-gray-900'>
-                {isOwnProfile ? 'Edit Your Profile' : 'Edit Member Profile'}
+                {isOwnProfile ? t('profile.editYourProfile') : t('profile.editMemberProfile')}
               </h2>
               {!isOwnProfile && !canEditExclusive && (
-                  <p className="text-sm text-gray-500">You do not have permission to edit this profile.</p>
+                  <p className="text-sm text-gray-500">{t('profile.noEditPermission')}</p>
               )}
             </div>
           <button
@@ -128,15 +116,13 @@ export default function EditMemberModal({
         </div>
 
         <form onSubmit={handleSubmit} className='p-6 space-y-4'>
-          {/* --- Image Upload Field --- */}
           {(isOwnProfile || canEditExclusive) && (
              <AvatarImageSection fileUpload={avatarImage} />
           )}
 
-
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Full Name
+              {t('auth.fullname')}
             </label>
 
             <input
@@ -151,7 +137,7 @@ export default function EditMemberModal({
 
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Phone
+              {t('auth.phone')}
             </label>
 
             <input
@@ -165,7 +151,7 @@ export default function EditMemberModal({
 
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Birthday
+              {t('auth.birthday')}
             </label>
             <input
               type='date'
@@ -179,7 +165,7 @@ export default function EditMemberModal({
           {canEditExclusive && (
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Role
+                {t('profile.role')}
               </label>
 
               <select
@@ -205,14 +191,14 @@ export default function EditMemberModal({
               onClick={onClose}
               className='px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border rounded-md transition-colors'
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type='submit'
               disabled={loading}
-              className='px-4 py-2 text-sm font-medium text-white bg-(--color-myPrimary)  rounded-md disabled:opacity-50 transition-colors'
+              className='px-4 py-2 text-sm font-medium text-white bg-(--color-myPrimary) rounded-md disabled:opacity-50 transition-colors'
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? t('profile.saving') : t('common.save')}
             </button>
           </div>
         </form>

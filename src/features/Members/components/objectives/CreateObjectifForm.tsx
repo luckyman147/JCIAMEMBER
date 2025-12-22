@@ -15,8 +15,10 @@ import {
   isPrivacyNullForGroup,
 } from '../../constants/objectives';
 import { objectivesService } from '../../services/objectivesService';
+import { useTranslation } from "react-i18next";
 
 const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<Partial<Objectif>>({
     groupObjectif: undefined,
     objectifActionType: undefined,
@@ -70,7 +72,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.groupObjectif || !formData.objectifActionType || !formData.feature) {
-      setError("Please fill in all required fields.");
+      setError(t('profile.fillRequiredFields'));
       return;
     }
 
@@ -89,10 +91,10 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
         target: 1,
         points: 0
       });
-      alert('Objective created successfully!');
+      alert(t('profile.objectiveCreatedSuccess'));
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      setError(err.message || 'Failed to create objective');
+      setError(err.message || t('profile.deleteObjectiveFailed')); // Fallback
     } finally {
       setLoading(false);
     }
@@ -110,7 +112,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
 
   return (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-      <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6">Create New Objective</h2>
+      <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6">{t('profile.createNewObjective')}</h2>
       
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm">
@@ -121,14 +123,14 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Group Selection */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Group</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('common.group')}</label>
           <select 
             className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             value={formData.groupObjectif || ''}
             onChange={(e) => handleGroupChange(e.target.value as GroupObjectif)}
             required
           >
-            <option value="">Select Group</option>
+            <option value="">{t('common.select')}</option>
             {Object.values(GroupObjectif).map(g => (
               <option key={g} value={g}>{g}</option>
             ))}
@@ -138,7 +140,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Action Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Action Type</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('common.action')}</label>
             <select 
               className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50"
               value={formData.objectifActionType || ''}
@@ -146,7 +148,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
               disabled={!formData.groupObjectif}
               required
             >
-              <option value="">Select Action</option>
+              <option value="">{t('common.select')}</option>
               {availableActions.map(a => (
                 <option key={a} value={a}>{a}</option>
               ))}
@@ -155,7 +157,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
 
           {/* Feature Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Feature</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('common.feature')}</label>
             <select 
               className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50"
               value={formData.feature || ''}
@@ -163,7 +165,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
               disabled={!formData.objectifActionType}
               required
             >
-              <option value="">Select Feature</option>
+              <option value="">{t('common.select')}</option>
               {availableFeatures.map(f => (
                 <option key={f} value={f}>{f}</option>
               ))}
@@ -174,13 +176,13 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Difficulty */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Difficulty</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('common.difficulty')}</label>
             <select 
               className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               value={formData.difficulty || ''}
               onChange={(e) => setFormData(p => ({ ...p, difficulty: e.target.value as ObjectifDifficulty }))}
             >
-              <option value="">None / Auto</option>
+              <option value="">{t('common.auto')}</option>
               {Object.values(ObjectifDifficulty).map(d => (
                 <option key={d} value={d}>{d}</option>
               ))}
@@ -189,14 +191,14 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
 
           {/* Privacy */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Privacy</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('common.privacy')}</label>
             <select 
               className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50"
               value={formData.privacy || ''}
               onChange={(e) => setFormData(p => ({ ...p, privacy: e.target.value as PrivacyType }))}
               disabled={isPrivacyDisabled}
             >
-              <option value="">Default (Public)</option>
+              <option value="">{t('common.public')}</option>
               {Object.values(PrivacyType).map(p => (
                 <option key={p} value={p}>{p}</option>
               ))}
@@ -207,7 +209,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            {/* Points */}
            <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Points Reward</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('profile.pointsReward')}</label>
             <input 
               type="number"
               min="0"
@@ -219,21 +221,21 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
 
            {/* Target Count */}
            <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Target Count</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('profile.targetCount')}</label>
             <input 
               type="number"
               min="1"
               className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               value={formData.target}
               onChange={(e) => setFormData(p => ({ ...p, target: parseInt(e.target.value) || 1 }))}
-              placeholder="How many times?"
+              placeholder={t('profile.target')}
             />
           </div>
         </div>
 
         {/* Cible (Targets) */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Target Roles (Cible)</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t('profile.targetRoles')}</label>
           <div className="flex flex-wrap gap-2">
             {Object.values(CibleType).map(role => (
               <button
@@ -258,7 +260,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
             disabled={loading}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating Objective...' : 'Create Objective'}
+            {loading ? t('profile.creatingObjective') : t('profile.createObjective')}
           </button>
         </div>
 

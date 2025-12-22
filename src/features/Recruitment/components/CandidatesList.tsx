@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import type { Candidate } from '../models/types'
 import { recruitmentService } from '../services/recruitmentService'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface CandidatesListProps {
     candidates: Candidate[]
@@ -15,20 +16,21 @@ type ViewMode = 'list' | 'grid'
 type SortOption = 'date_desc' | 'date_asc' | 'score_desc' | 'score_asc'
 
 export default function CandidatesList({ candidates, onDelete, onEdit }: CandidatesListProps) {
+    const { t, i18n } = useTranslation()
     const [viewMode, setViewMode] = useState<ViewMode>('list')
     const [filterStatus, setFilterStatus] = useState<string>('all')
     const [sortBy, setSortBy] = useState<SortOption>('date_desc')
     const [isGrouped, setIsGrouped] = useState(false)
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this candidate?')) return
+        if (!window.confirm(t('recruitment.deleteConfirm'))) return
         try {
             await recruitmentService.deleteCandidate(id)
             onDelete(id)
-            toast.success('Candidate deleted')
+            toast.success(t('recruitment.deleted'))
         } catch (error) {
             console.error(error)
-            toast.error('Failed to delete candidate')
+            toast.error(t('recruitment.deleteFailed'))
         }
     }
 
@@ -81,11 +83,11 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                         </div>
                         <div>
                             <h3 className="font-semibold text-gray-900">{candidate.fullname}</h3>
-                            <p className="text-xs text-gray-500">{new Date(candidate.created_at).toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-500">{new Date(candidate.created_at).toLocaleDateString(i18n.language)}</p>
                         </div>
                     </div>
                     <span className={`px-2 py-0.5 text-xs font-semibold rounded-full uppercase ${getStatusColor(candidate.status)}`}>
-                        {candidate.status}
+                        {t(`recruitment.${candidate.status}`)}
                     </span>
                 </div>
                 
@@ -98,7 +100,7 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                     </div>
                     {candidate.status !== 'pending' && (
                          <div className="text-sm font-medium text-gray-900 mt-2">
-                            🏆 Score: {candidate.total_score ?? '-'} / {candidate.max_possible_score ?? '?'}
+                             {t('recruitment.score')}: {candidate.total_score ?? '-'} / {candidate.max_possible_score ?? '?'}
                         </div>
                     )}
                 </div>
@@ -106,15 +108,15 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
 
             <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
                  <div className="flex gap-2">
-                    <button onClick={() => onEdit(candidate)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
+                    <button onClick={() => onEdit(candidate)} className="p-1 text-gray-400 hover:text-blue-600" title={t('common.edit')}>
                         <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(candidate.id)} className="p-1 text-gray-400 hover:text-red-600" title="Delete">
+                    <button onClick={() => handleDelete(candidate.id)} className="p-1 text-gray-400 hover:text-red-600" title={t('common.delete')}>
                         <Trash2 className="w-4 h-4" />
                     </button>
                  </div>
                  <Link to={`/recruitment/candidates/${candidate.id}`} className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                    Evaluate <ChevronRight className="w-4 h-4" />
+                     {t('recruitment.evaluate')} <ChevronRight className={`w-4 h-4 ${i18n.dir() === 'rtl' ? 'rotate-180' : ''}`} />
                  </Link>
             </div>
         </div>
@@ -127,19 +129,19 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                     <div className="flex-shrink-0 h-10 w-10 rounded-full bg-(--color-myPrimary) flex items-center justify-center text-white font-bold">
                         {candidate.fullname.substring(0, 2).toUpperCase()}
                     </div>
-                    <div className="ml-4">
+                    <div className="ms-4 text-start">
                         <div className="text-sm font-medium text-gray-900">{candidate.fullname}</div>
-                        <div className="text-xs text-gray-400">{new Date(candidate.created_at).toLocaleDateString()}</div>
+                        <div className="text-xs text-gray-400">{new Date(candidate.created_at).toLocaleDateString(i18n.language)}</div>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap">
+            <td className="px-6 py-4 whitespace-nowrap text-start">
                 <div className="text-sm text-gray-900">{candidate.email}</div>
                 <div className="text-sm text-gray-500">{candidate.phone}</div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-center">
                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(candidate.status)}`}>
-                    {candidate.status.toUpperCase()}
+                    {t(`recruitment.${candidate.status}`).toUpperCase()}
                 </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
@@ -151,19 +153,19 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                     <span className="text-gray-400">-</span>
                 )}
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                 <div className="flex items-center justify-end gap-3">
                     <button 
                         onClick={() => onEdit(candidate)}
                         className="text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Edit"
+                        title={t('common.edit')}
                     >
                         <Pencil className="w-4 h-4" />
                     </button>
                     <button 
                         onClick={() => handleDelete(candidate.id)}
                         className="text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete"
+                        title={t('common.delete')}
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
@@ -172,7 +174,7 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                         to={`/recruitment/candidates/${candidate.id}`} 
                         className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
                     >
-                        Evaluate <ChevronRight className="w-4 h-4" />
+                        {t('recruitment.evaluate')} <ChevronRight className={`w-4 h-4 ${i18n.dir() === 'rtl' ? 'rotate-180' : ''}`} />
                     </Link>
                 </div>
             </td>
@@ -186,32 +188,32 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     {/* Status Filter */}
                     <div className="relative flex items-center">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Filter className={`absolute ${i18n.dir() === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400`} />
                         <select 
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 hover:bg-white transition-colors cursor-pointer appearance-none"
+                            className={`${i18n.dir() === 'rtl' ? 'pr-9 pl-4' : 'pl-9 pr-4'} py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 hover:bg-white transition-colors cursor-pointer appearance-none`}
                         >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="evaluated">Evaluated</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="rejected">Rejected</option>
+                            <option value="all">{t('recruitment.allStatus')}</option>
+                            <option value="pending">{t('recruitment.pending')}</option>
+                            <option value="evaluated">{t('recruitment.evaluated')}</option>
+                            <option value="accepted">{t('recruitment.accepted')}</option>
+                            <option value="rejected">{t('recruitment.rejected')}</option>
                         </select>
                     </div>
 
                     {/* Sort */}
                      <div className="relative flex items-center">
-                        <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <ArrowUpDown className={`absolute ${i18n.dir() === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400`} />
                         <select 
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as SortOption)}
-                            className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 hover:bg-white transition-colors cursor-pointer appearance-none"
+                            className={`${i18n.dir() === 'rtl' ? 'pr-9 pl-4' : 'pl-9 pr-4'} py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 hover:bg-white transition-colors cursor-pointer appearance-none`}
                         >
-                            <option value="date_desc">Newest First</option>
-                            <option value="date_asc">Oldest First</option>
-                            <option value="score_desc">Highest Score</option>
-                            <option value="score_asc">Lowest Score</option>
+                            <option value="date_desc">{t('recruitment.newestFirst')}</option>
+                            <option value="date_asc">{t('recruitment.oldestFirst')}</option>
+                            <option value="score_desc">{t('recruitment.highestScore')}</option>
+                            <option value="score_asc">{t('recruitment.lowestScore')}</option>
                         </select>
                     </div>
                 </div>
@@ -225,10 +227,10 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                             ? 'bg-blue-50 border-blue-200 text-blue-700' 
                             : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                         }`}
-                        title="Group by Status"
+                        title={t('recruitment.group')}
                     >
                         <Layers className="w-4 h-4" />
-                        <span className="hidden sm:inline">Group</span>
+                        <span className="hidden sm:inline">{t('recruitment.group')}</span>
                     </button>
 
                     <div className="h-6 w-px bg-gray-200 mx-2"></div>
@@ -242,7 +244,6 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                                 ? 'bg-white text-blue-600 shadow-sm' 
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
-                            title="List View"
                         >
                             <List className="w-4 h-4" />
                         </button>
@@ -253,7 +254,6 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                                 ? 'bg-white text-blue-600 shadow-sm' 
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
-                            title="Grid View"
                         >
                             <LayoutGrid className="w-4 h-4" />
                         </button>
@@ -262,7 +262,7 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
             </div>
 
             {/* Content */}
-             <div className="space-y-8">
+             <div className="space-y-8 text-start">
                 {Object.keys(groups).map((groupName) => {
                     const groupCandidates = groups[groupName]
                     if (groupCandidates.length === 0) return null
@@ -272,7 +272,7 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                             {isGrouped && (
                                 <h3 className="text-lg font-semibold text-gray-700 capitalize flex items-center gap-2">
                                     <span className={`w-2 h-8 rounded-full ${getStatusColor(groupName).split(' ')[0]}`}></span>
-                                    {groupName} 
+                                    {groupName === 'all' ? t('recruitment.allStatus') : t(`recruitment.${groupName}`)} 
                                     <span className="text-gray-400 text-sm font-normal">({groupCandidates.length})</span>
                                 </h3>
                             )}
@@ -295,11 +295,11 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                                             <table className="min-w-full divide-y divide-gray-200">
                                                 <thead className="bg-gray-50">
                                                     <tr>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Contact</th>
-                                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                        <th className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">{t('recruitment.candidates')}</th>
+                                                        <th className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('recruitment.email')} / {t('recruitment.phone')}</th>
+                                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.actions')}</th>
+                                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('recruitment.score')}</th>
+                                                        <th className="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.actions')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -319,8 +319,8 @@ export default function CandidatesList({ candidates, onDelete, onEdit }: Candida
                         <div className="text-gray-400 mb-2">
                             <Filter className="w-8 h-8 mx-auto opacity-50" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">No candidates found</h3>
-                        <p className="text-gray-500">Try adjusting your filters or search criteria.</p>
+                        <h3 className="text-lg font-medium text-gray-900">{t('recruitment.noCandidates')}</h3>
+                        <p className="text-gray-500">{t('recruitment.noCandidatesSubtitle')}</p>
                     </div>
                 )}
             </div>

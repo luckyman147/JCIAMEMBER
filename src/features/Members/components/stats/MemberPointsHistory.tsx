@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { History, Calendar } from 'lucide-react'
 import { getPointsHistory } from '../../services/members.service'
 import type { PointsHistoryEntry } from '../../types'
+import { useTranslation } from "react-i18next";
 
 interface MemberPointsHistoryProps {
   memberId: string
 }
 
 export default function MemberPointsHistory({ memberId }: MemberPointsHistoryProps) {
+  const { t, i18n } = useTranslation();
   const [history, setHistory] = useState<PointsHistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [limit, setLimit] = useState(10)
@@ -29,7 +31,7 @@ export default function MemberPointsHistory({ memberId }: MemberPointsHistoryPro
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'fr' ? 'fr-FR' : 'en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -44,29 +46,29 @@ export default function MemberPointsHistory({ memberId }: MemberPointsHistoryPro
       <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <History className="w-5 h-5 text-gray-500" />
-          Points History
+          {t('profile.pointsHistory')}
         </h3>
-        <span className="text-xs text-gray-500">{history.length} entries</span>
+        <span className="text-xs text-gray-500">{history.length} {t('profile.entries')}</span>
       </div>
 
       <div className="overflow-x-auto">
         {loading ? (
            <div className="p-8 text-center text-gray-500 dark:text-slate-400">
              <div className="animate-spin w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full mx-auto mb-2"></div>
-             Loading history...
+             {t('profile.loadingHistory')}
            </div>
         ) : history.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-slate-400">
-             <p>No points history found.</p>
+             <p>{t('profile.noPointsHistoryFound')}</p>
           </div>
         ) : (
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-start">
             <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-slate-900/50 dark:text-slate-400">
               <tr>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Source</th>
-                <th className="px-4 py-3">Description</th>
-                <th className="px-4 py-3 text-right">Points</th>
+                <th className="px-4 py-3">{t('profile.date')}</th>
+                <th className="px-4 py-3">{t('profile.source')}</th>
+                <th className="px-4 py-3">{t('common.description')}</th>
+                <th className="px-4 py-3 text-end">{t('profile.points')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
@@ -91,7 +93,7 @@ export default function MemberPointsHistory({ memberId }: MemberPointsHistoryPro
                   <td className="px-4 py-3 text-gray-900 dark:text-white max-w-xs truncate" title={entry.description}>
                     {entry.description}
                   </td>
-                  <td className={`px-4 py-3 text-right font-bold ${entry.points > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  <td className={`px-4 py-3 text-end font-bold ${entry.points > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                 {entry.points > 0 ? "+" : ""}    {entry.points}
                   </td>
                 </tr>
@@ -107,7 +109,7 @@ export default function MemberPointsHistory({ memberId }: MemberPointsHistoryPro
             onClick={() => setLimit(prev => prev + 10)}
             className="text-xs text-blue-600 hover:text-blue-700 font-medium"
           >
-            Show More
+            {t('profile.showMore')}
           </button>
         </div>
       )}

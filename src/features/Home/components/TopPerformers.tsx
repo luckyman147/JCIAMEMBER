@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { getMembers } from '../../Members/services/members.service'
 import type { Member } from '../../Members/types'
 import { Trophy, Medal, Crown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export default function TopPerformers() {
+  const { t } = useTranslation()
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -39,7 +41,7 @@ export default function TopPerformers() {
           <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
         <h3 className="font-bold text-gray-900 text-base sm:text-lg">
-          Top Performers
+          {t('home.topPerformers')}
         </h3>
       </div>
 
@@ -91,7 +93,7 @@ export default function TopPerformers() {
             {/* POINTS */}
             <div className="flex-shrink-0">
               <span className="inline-flex items-center px-2 py-1 rounded text-white font-bold text-xs" style={{ backgroundColor: 'var(--color-myPrimary)' }}>
-                {member.points} pts
+                {member.points} {t('home.points')}
               </span>
             </div>
           </div>

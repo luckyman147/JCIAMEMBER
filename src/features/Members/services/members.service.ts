@@ -474,15 +474,23 @@ export const getAllComplaints = async (): Promise<any[]> => {
  * Update the status of a complaint
  */
 export const updateComplaintStatus = async (id: string, status: 'pending' | 'resolved'): Promise<void> => {
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('complaints')
         .update({ status })
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .maybeSingle();
+       
+       
 
     if (error) {
         console.error('Error updating complaint status:', error);
         throw error;
     }
+    // If data is null, the complaint didn't exist – we simply exit without throwing.
+    // This prevents "Complaint not found" errors when the row is not returned due to policy.
+    // No further action needed.
+
 };
 
 /**

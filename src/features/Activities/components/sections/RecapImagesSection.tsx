@@ -1,12 +1,13 @@
-
 import { FileUpload, FormSection } from '../../../../components'
 import type { UseFileUploadReturn } from '../../hooks/useFileUpload'
+import { useTranslation } from 'react-i18next'
 
 interface RecapImagesSectionProps {
   fileUpload: UseFileUploadReturn
 }
 
 export default function RecapImagesSection({ fileUpload }: RecapImagesSectionProps) {
+  const { t } = useTranslation()
   const handleRemove = (index: number) => {
     if (index < fileUpload.urls.length) {
       // Remove from URLs
@@ -19,13 +20,13 @@ export default function RecapImagesSection({ fileUpload }: RecapImagesSectionPro
   }
 
   return (
-    <FormSection title="Recap Images">
-      <div className="space-y-2">
-        <p className="text-sm text-gray-600 mb-4">
-          Upload multiple images to document this activity (photos from the event, formation, or meeting)
+    <FormSection title={t('activities.recapImagesSectionLabel')}>
+      <div className="space-y-2 text-start">
+        <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
+          {t('activities.recapImagesDescription')}
         </p>
         <FileUpload
-          label="Activity Photos"
+          label={t('activities.activityPhotos')}
           accept="image"
           multiple={true}
           onFileSelect={(files) => fileUpload.setFile([...fileUpload.file, ...files])}

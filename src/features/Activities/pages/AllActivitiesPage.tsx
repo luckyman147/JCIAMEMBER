@@ -8,10 +8,12 @@ import { Plus, Search, Filter, Calendar } from "lucide-react";
 import { useAuth } from "../../../features/Authentication/auth.context";
 import { useActivities } from "../hooks/useActivities";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
+import { useTranslation } from "react-i18next";
 
 export default function AllActivitiesPage() {
     const { activities, loading } = useActivities();
     const { role } = useAuth();
+    const { t, i18n } = useTranslation();
 
     const hasAdvancedAccess = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
 
@@ -44,21 +46,21 @@ export default function AllActivitiesPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Navbar />
-                <main className="md:ml-64 pt-16 md:pt-6">
+                <main className="md:ms-64 pt-16 md:pt-6">
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Activities & Events</h1>
-                        <p className="text-gray-500 mt-1">Manage and track all organizational activities</p>
+                    <div className="text-start">
+                        <h1 className="text-3xl font-bold text-gray-900">{t('activities.title')}</h1>
+                        <p className="text-gray-500 mt-1">{t('activities.subtitle')}</p>
                     </div>
                     {hasAdvancedAccess && (
                         <Link 
                             to="/activities/new"
                             className="inline-flex items-center gap-2 bg-(--color-myPrimary) text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
                         >
-                            <Plus className="w-5 h-5" /> Create Activity
+                            <Plus className="w-5 h-5" /> {t('activities.createActivity')}
                         </Link>
                     )}
                 </div>
@@ -71,11 +73,11 @@ export default function AllActivitiesPage() {
                 {/* Filters Bar */}
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between sticky top-20 z-10 transition-all">
                    <div className="flex-1 w-full relative">
-                        <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                        <Search className={`absolute ${i18n.dir() === 'rtl' ? 'right-3' : 'left-3'} top-2.5 w-5 h-5 text-gray-400`} />
                         <input 
                             type="text" 
-                            placeholder="Search activities..." 
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder={t('activities.search')} 
+                            className={`w-full ${i18n.dir() === 'rtl' ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -84,30 +86,30 @@ export default function AllActivitiesPage() {
                    <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                         {/* Type Filter */}
                         <div className="relative min-w-[140px]">
-                            <Filter className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                            <Filter className={`absolute ${i18n.dir() === 'rtl' ? 'right-3' : 'left-3'} top-2.5 w-4 h-4 text-gray-500`} />
                             <select 
-                                className="w-full pl-9 pr-4 py-2 border rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                                className={`w-full ${i18n.dir() === 'rtl' ? 'pr-9 pl-4' : 'pl-9 pr-4'} py-2 border rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer`}
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value as any)}
                             >
-                                <option value="all">All Types</option>
-                                <option value="event">Events</option>
-                                <option value="meeting">Meetings</option>
-                                <option value="formation">Formations</option>
+                                <option value="all">{t('activities.allTypes')}</option>
+                                <option value="event">{t('activities.events')}</option>
+                                <option value="meeting">{t('activities.meetings')}</option>
+                                <option value="formation">{t('activities.formations')}</option>
                             </select>
                         </div>
 
                         {/* Date Filter */}
                          <div className="relative min-w-[140px]">
-                            <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                            <Calendar className={`absolute ${i18n.dir() === 'rtl' ? 'right-3' : 'left-3'} top-2.5 w-4 h-4 text-gray-500`} />
                             <select 
-                                className="w-full pl-9 pr-4 py-2 border rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                                className={`w-full ${i18n.dir() === 'rtl' ? 'pr-9 pl-4' : 'pl-9 pr-4'} py-2 border rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer`}
                                 value={dateFilter}
                                 onChange={(e) => setDateFilter(e.target.value as any)}
                                 >
-                                <option value="all">All Dates</option>
-                                <option value="upcoming">Upcoming</option>
-                                <option value="past">Past</option>
+                                <option value="all">{t('activities.allDates')}</option>
+                                <option value="upcoming">{t('activities.upcoming')}</option>
+                                <option value="past">{t('activities.past')}</option>
                             </select>
                         </div>
                    </div>
@@ -123,13 +125,13 @@ export default function AllActivitiesPage() {
                 ) : filteredActivities.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
                         <Calendar className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">No activities found</h3>
-                        <p className="text-gray-500 mt-1">Try adjusting your filters or create a new activity.</p>
+                        <h3 className="text-lg font-medium text-gray-900">{t('activities.noActivities')}</h3>
+                        <p className="text-gray-500 mt-1">{t('activities.noActivitiesSubtitle')}</p>
                         <button 
                             onClick={() => { setSearchTerm(''); setSelectedType('all'); setDateFilter('all'); }}
                             className="mt-4 text-blue-600 font-medium hover:underline"
                             >
-                            Clear Filters
+                            {t('activities.clearFilters')}
                         </button>
                     </div>
                 ) : (

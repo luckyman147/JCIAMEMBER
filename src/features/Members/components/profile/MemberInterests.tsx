@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../../utils/roles";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface MemberInterestsProps {
     memberId: string;
@@ -19,6 +20,7 @@ interface MemberInterestsProps {
 }
 
 export default function MemberInterests({ memberId, readOnly = false }: MemberInterestsProps) {
+    const { t } = useTranslation();
     const { role } = useAuth();
     const canDeleteGlobal = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
     
@@ -80,15 +82,15 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
     const handleDeleteCategory = async (category: Category) => {
         if (!canDeleteGlobal) return;
         
-        const confirmed = window.confirm(`Permanently delete the category "${category.name}" for EVERYONE?`);
+        const confirmed = window.confirm(t('profile.categoryDeleteConfirm', { name: category.name }));
         if (!confirmed) return;
 
         try {
             await deleteGlobalCategory(category.id);
             setAvailableCategories(prev => prev.filter(c => c.id !== category.id));
-            toast.success(`Category "${category.name}" deleted`);
+            toast.success(t('profile.categoryDeleted', { name: category.name }));
         } catch (error) {
-            toast.error("Failed to delete category");
+            toast.error(t('profile.categoryDeleteFailed'));
         }
     };
 
@@ -111,7 +113,7 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
 
     const handleCreateCategory = async () => {
         if (!newCategoryName.trim()) {
-            setCreateError("Category name cannot be empty");
+            setCreateError(t('profile.categoryNameEmpty'));
             return;
         }
         
@@ -126,7 +128,7 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                 setShowCreateInput(false);
             }
         } catch (error: any) {
-            setCreateError(error.message === 'Category already exists' ? "A category with this name already exists" : "Failed to create category");
+            setCreateError(error.message === 'Category already exists' ? t('profile.categoryExists') : t('profile.categoryCreateFailed'));
         } finally {
             setCreating(false);
         }
@@ -140,9 +142,9 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                         <Tag className="w-4 h-4 text-blue-600" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900">Interests</h3>
+                        <h3 className="text-lg font-bold text-gray-900">{t('profile.interests')}</h3>
                         {canDeleteGlobal && (
-                            <p className="text-[10px] text-gray-400 font-medium italic">Long press to delete category</p>
+                            <p className="text-[10px] text-gray-400 font-medium italic">{t('profile.longPressDelete')}</p>
                         )}
                     </div>
                 </div>
@@ -151,7 +153,7 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                         onClick={() => setShowCreateInput(true)}
                         className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4"
                     >
-                        + Add New
+                        {t('profile.addNew')}
                     </button>
                 )}
             </div>
@@ -165,7 +167,7 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                                 value={newCategoryName}
                                 onChange={(e) => setNewCategoryName(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
-                                placeholder="Add interest..."
+                                placeholder={t('profile.addInterestPlaceholder')}
                                 className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
                                 autoFocus
                             />
@@ -175,13 +177,13 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                                     disabled={creating || !newCategoryName.trim()}
                                     className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50 transition-all shadow-sm active:scale-95"
                                 >
-                                    {creating ? "..." : "Create"}
+                                    {creating ? t('profile.creating') : t('profile.create')}
                                 </button>
                                 <button 
                                     onClick={() => setShowCreateInput(false)} 
                                     className="px-3 py-1.5 text-[10px] font-bold text-gray-500 bg-gray-100/80 hover:bg-gray-200 rounded-lg transition-all"
                                 >
-                                    Cancel
+                                    {t('profile.cancel')}
                                 </button>
                             </div>
                         </div>
@@ -197,10 +199,13 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                 {loading ? (
                     <div className="flex items-center gap-2 text-sm text-gray-400">
                         <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent animate-spin rounded-full"></div>
-                        <span>Loading...</span>
+                        <span>{t('common.loading')}</span>
                     </div>
                 ) : (
                     <div className="flex flex-wrap gap-2">
+                        {availableCategories.length === 0 && (
+                            <p className="text-sm text-gray-400 italic py-2">{t('profile.noInterests')}</p>
+                        )}
                         {availableCategories.map(cat => {
                             const isPressing = pressingId === cat.id;
                             return (
@@ -220,7 +225,7 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                                     } ${readOnly ? 'cursor-default' : 'active:scale-95'} ${isPressing ? 'scale-110 !border-red-500 !text-red-600 ring-2 ring-red-100' : ''}`}
                                 >
                                     {isPressing && (
-                                        <div className="absolute -top-1 -right-1">
+                                        <div className="absolute -top-1 -end-1">
                                             <Trash2 className="w-3 h-3 text-red-500 animate-bounce" />
                                         </div>
                                     )}

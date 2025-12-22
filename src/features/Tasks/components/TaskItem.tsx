@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { MemberTask } from "../types";
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface TaskItemProps {
     assignment: MemberTask;
@@ -10,6 +11,7 @@ interface TaskItemProps {
 }
 
 export default function TaskItem({ assignment, onUpdate, readOnly = false }: TaskItemProps) {
+    const { t } = useTranslation();
     const [updating, setUpdating] = useState(false);
     
     const task = assignment.task;
@@ -80,25 +82,25 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                     {task.team && (
                         <div className="mt-2">
                              <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
-                                Team: {task.team.name}
+                                {t('profile.team')}: {task.team.name}
                             </span>
                         </div>
                     )}
                 </div>
                 <div className="flex flex-col items-end">
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        task.status === 'completed' ? 'bg-green-100 text-green-700' :
-                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                        assignment.status === 'completed' ? 'bg-green-100 text-green-700' :
+                        assignment.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                         'bg-gray-100 text-gray-600'
                     }`}>
-                        {task.status?.replace('_', ' ') || 'To Do'}
+                        {t(`profile.${assignment.status || 'todo'}`)}
                     </span>
                 </div>
             </div>
 
             <div className="mt-4">
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>Progress</span>
+                    <span>{t('profile.progress')}</span>
                     <span className="font-semibold">{assignment.progress_percentage}%</span>
                 </div>
                 
@@ -112,7 +114,7 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
 
                 {isSubtaskTracking && task.subtasks && task.subtasks.length > 0 ? (
                     <div className="space-y-2 mt-4">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Checklist</p>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">{t('profile.checklist')}</p>
                         {task.subtasks.map((subtask) => {
                             const isDone = assignment.completed_subtask_ids?.includes(subtask.id);
                             return (
@@ -135,7 +137,7 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                 ) : (
                     // Manual Tracking Slider
                     <div className="mt-4">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">Update Progress</label>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">{t('profile.updateProgress')}</label>
                         <input 
                             type="range"
                             min="0"
@@ -174,7 +176,7 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                         className="mt-6 w-full py-2 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-100 hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
                     >
                         <Check className="w-3.5 h-3.5" />
-                        Mark as Complete
+                        {t('profile.markAsComplete')}
                     </button>
                 )}
             </div>

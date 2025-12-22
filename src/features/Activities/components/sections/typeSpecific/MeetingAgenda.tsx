@@ -1,5 +1,6 @@
 import { Plus, Trash2, Clock } from 'lucide-react'
 import { calculateTotalTime, createAgendaItem, type AgendaItem } from '../../../models/MeetingAgenda'
+import { useTranslation } from 'react-i18next'
 
 interface MeetingAgendaProps {
   agenda: AgendaItem[]
@@ -8,6 +9,7 @@ interface MeetingAgendaProps {
 }
 
 export default function MeetingAgenda({ agenda, onChange, disabled = false }: MeetingAgendaProps) {
+  const { t, i18n } = useTranslation()
   const handleAddItem = () => {
     onChange([...agenda, createAgendaItem()])
   }
@@ -29,24 +31,24 @@ export default function MeetingAgenda({ agenda, onChange, disabled = false }: Me
   const minutes = totalMinutes % 60
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-start">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
-          Meeting Agenda
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('activities.meetingAgendaLabel')}
         </label>
         {totalMinutes > 0 && (
-          <div className="flex items-center text-sm text-gray-600">
-            <Clock className="h-4 w-4 mr-1" />
-            Total: {hours > 0 ? `${hours}h ` : ''}{minutes}min
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <Clock className={`h-4 w-4 ${i18n.dir() === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+            {t('activities.total')}: {hours > 0 ? `${hours}h ` : ''}{minutes}{t('activities.min')}
           </div>
         )}
       </div>
 
       <div className="space-y-3">
         {agenda.length === 0 ? (
-          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-            <p className="text-sm text-gray-500">No agenda items yet</p>
-            <p className="text-xs text-gray-400 mt-1">Click "Add Agenda Item" to start</p>
+          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg dark:border-slate-700">
+            <p className="text-sm text-gray-500">{t('activities.noAgendaItems')}</p>
+            <p className="text-xs text-gray-400 mt-1">{t('activities.clickToAddAgenda')}</p>
           </div>
         ) : (
           agenda.map((item, index) => (
@@ -60,9 +62,9 @@ export default function MeetingAgenda({ agenda, onChange, disabled = false }: Me
                   type="text"
                   value={item.title}
                   onChange={(e) => handleUpdateItem(item.id, 'title', e.target.value)}
-                  placeholder="Agenda item title..."
+                  placeholder={t('activities.agendaItemTitlePlaceholder')}
                   disabled={disabled}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 />
                 
                 <div className="flex items-center gap-2">
@@ -74,9 +76,9 @@ export default function MeetingAgenda({ agenda, onChange, disabled = false }: Me
                     min="0"
                     placeholder="0"
                     disabled={disabled}
-                    className="w-24 px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-24 px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                   />
-                  <span className="text-sm text-gray-600">minutes</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('activities.min')}</span>
                 </div>
               </div>
 
@@ -98,10 +100,10 @@ export default function MeetingAgenda({ agenda, onChange, disabled = false }: Me
         type="button"
         onClick={handleAddItem}
         disabled={disabled}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 text-gray-700 rounded-lg hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 text-gray-700 rounded-lg hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:text-gray-400 dark:hover:bg-slate-800"
       >
         <Plus className="h-5 w-5" />
-        Add Agenda Item
+        {t('activities.addAgendaItem')}
       </button>
     </div>
   )

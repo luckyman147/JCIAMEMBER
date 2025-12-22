@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { FormInput, FormSelect } from '../../../components'
 import { Filter, X, Calendar, Clock } from 'lucide-react'
 import type { ActivityFilterDTO } from '../../Activities/dto/ActivityDTOs'
+import { useTranslation } from 'react-i18next'
 
 interface ActivitiesFilterProps {
   onFilterChange: (filters: ActivityFilterDTO) => void
@@ -20,6 +21,7 @@ interface FilterFormValues extends Omit<ActivityFilterDTO, 'startDate' | 'endDat
 }
 
 export default function ActivitiesFilter({ onFilterChange }: ActivitiesFilterProps) {
+  const { t } = useTranslation()
   const { register, watch, reset } = useForm<FilterFormValues>()
   const lastFiltersRef = useRef<string>('')
   
@@ -86,26 +88,26 @@ export default function ActivitiesFilter({ onFilterChange }: ActivitiesFilterPro
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <Filter className="w-5 h-5 text-blue-500" />
-          Filter Activities
+          {t('home.filterTitle')}
         </h3>
         <button 
           onClick={handleReset}
           className="text-sm text-gray-500 hover:text-red-500 flex items-center gap-1 transition-colors"
         >
           <X className="w-4 h-4" />
-          Clear Filters
+          {t('home.clearFilters')}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <FormSelect
           id="type"
-          label="Activity Type"
+          label={t('home.activityType')}
           options={[
-            { value: '', label: 'All Types' },
-            { value: 'event', label: 'Events' },
-            { value: 'formation', label: 'Formations' },
-            { value: 'meeting', label: 'Meetings' }
+            { value: '', label: t('home.allTypes') },
+            { value: 'event', label: t('home.events') },
+            { value: 'formation', label: t('home.formations') },
+            { value: 'meeting', label: t('home.meetings') }
           ]}
           register={register('type')}
         />
@@ -114,14 +116,14 @@ export default function ActivitiesFilter({ onFilterChange }: ActivitiesFilterPro
         <div className="space-y-2">
             <FormInput
                 id="startDateDate"
-                label="From Date"
+                label={t('home.fromDate')}
                 type="date"
                 icon={<Calendar className="text-gray-400" size={16} />}
                 register={register('startDateDate')}
             />
              <FormInput
                 id="startDateTime"
-                label="Time"
+                label={t('home.time')}
                 type="time"
                 icon={<Clock className="text-gray-400" size={16} />}
                 register={register('startDateTime')}
@@ -132,14 +134,14 @@ export default function ActivitiesFilter({ onFilterChange }: ActivitiesFilterPro
         <div className="space-y-2">
             <FormInput
                 id="endDateDate"
-                label="To Date"
+                label={t('home.toDate')}
                 type="date"
                 icon={<Calendar className="text-gray-400" size={16} />}
                 register={register('endDateDate')}
             />
             <FormInput
                 id="endDateTime"
-                label="Time"
+                label={t('home.time')}
                 type="time"
                 icon={<Clock className="text-gray-400" size={16} />}
                 register={register('endDateTime')}
@@ -154,7 +156,7 @@ export default function ActivitiesFilter({ onFilterChange }: ActivitiesFilterPro
                     {...register('is_online')} 
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="is_online" className="text-sm text-gray-700">Online Only</label>
+                <label htmlFor="is_online" className="text-sm text-gray-700">{t('home.onlineOnly')}</label>
             </div>
              <div className="flex items-center gap-2">
                 <input 
@@ -163,7 +165,7 @@ export default function ActivitiesFilter({ onFilterChange }: ActivitiesFilterPro
                     {...register('is_paid')} 
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="is_paid" className="text-sm text-gray-700">Paid Activities</label>
+                <label htmlFor="is_paid" className="text-sm text-gray-700">{t('home.paidActivities')}</label>
             </div>
         </div>
       </div>

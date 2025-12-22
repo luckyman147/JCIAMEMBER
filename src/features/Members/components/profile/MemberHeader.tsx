@@ -4,6 +4,7 @@ import type { Member } from '../../types'
 import EditMemberModal from '../common/EditMemberModal'
 import { useAuth } from '../../../Authentication/auth.context'
 import { EXECUTIVE_LEVELS } from '../../../../utils/roles'
+import { useTranslation } from 'react-i18next'
 
 interface MemberHeaderProps {
   member: Member
@@ -18,10 +19,12 @@ export default function MemberHeader({
   onUpdate,
   onDelete
 }: MemberHeaderProps) {
+  const { t, i18n } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
-  /* LEFT: AVATAR + INFO */
   const { user, role } = useAuth()
   const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '')
+
+  const currentLocale = i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'fr' ? 'fr-FR' : 'en-US';
 
   // Allow edit if it's own profile OR if user has executive role
   const canEditProfile = (user && user.id === member.id) || isExecutive
@@ -31,25 +34,33 @@ export default function MemberHeader({
 
   // Profile completion check
   const completenessChecks = [
-    { label: 'Photo', value: !!member.avatar_url },
-    { label: 'Phone', value: !!member.phone },
-    { label: 'Birthday', value: !!member.birth_date },
-    { label: 'Bio', value: !!member.description },
-    { label: 'Strengths', value: (member.strengths?.length || 0) > 0 },
-    { label: 'Weaknesses', value: (member.weaknesses?.length || 0) > 0 },
-    { label: 'Job Title', value: !!member.job_title },
-    { label: 'Specialties', value: (member.specialties?.length || 0) > 0 },
-    { label: 'Availability', value: (member.availability_days?.length || 0) > 0 },
+    { label: t('profile.photo'), value: !!member.avatar_url },
+    { label: t('profile.phone'), value: !!member.phone },
+    { label: t('profile.birthday'), value: !!member.birth_date },
+    { label: t('profile.bio'), value: !!member.description },
+    { label: t('profile.strengths'), value: (member.strengths?.length || 0) > 0 },
+    { label: t('profile.weaknesses'), value: (member.weaknesses?.length || 0) > 0 },
+    { label: t('profile.jobTitle'), value: !!member.job_title },
+    { label: t('profile.specialties'), value: (member.specialties?.length || 0) > 0 },
+    { label: t('profile.availability'), value: (member.availability_days?.length || 0) > 0 },
   ];
 
   const missingFields = completenessChecks.filter(c => !c.value).map(c => c.label);
   const completionPercentage = Math.round(((completenessChecks.length - missingFields.length) / completenessChecks.length) * 100);
 
+  const getOrdinalSuffix = (pos: string) => {
+    if (i18n.language !== 'en') return ''; // Simplified for non-English
+    if (pos === '1') return 'st';
+    if (pos === '2') return 'nd';
+    if (pos === '3') return 'rd';
+    return 'th';
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {isOwnProfile && missingFields.length > 0 && (
           <div className="relative overflow-hidden bg-white border border-blue-100 p-5 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 blur-3xl" />
+              <div className="absolute top-0 end-0 w-32 h-32 bg-blue-50/50 rounded-full -me-16 -mt-16 blur-3xl opacity-50" />
               
               <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
@@ -58,13 +69,13 @@ export default function MemberHeader({
                       </div>
                       <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-black text-gray-900 uppercase tracking-wider">Elevate Your Profile</p>
+                            <p className="text-sm font-black text-gray-900 uppercase tracking-wider">{t('profile.elevateProfile')}</p>
                             <span className="bg-(--color-myAccent) text-white px-2 py-0.5 rounded-full text-[10px] font-black border border-blue-100">
-                                {completionPercentage}% COMPLETE
+                                {completionPercentage}% {t('profile.complete')}
                             </span>
                           </div>
                           <p className="text-xs text-gray-500 font-medium max-w-md italic">
-                            Adding your professional expertise and availability helps the organization assign you to the best-fitting teams and projects.
+                            {t('profile.professionalHelp')}
                           </p>
                           <div className="flex flex-wrap gap-1.5 pt-1">
                              {missingFields.slice(0, 4).map(field => (
@@ -74,7 +85,7 @@ export default function MemberHeader({
                              ))}
                              {missingFields.length > 4 && (
                                <span className="text-[9px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
-                                 & {missingFields.length - 4} more
+                                 & {missingFields.length - 4} {t('profile.more')}
                                </span>
                              )}
                           </div>
@@ -82,20 +93,18 @@ export default function MemberHeader({
                   </div>
                   <button 
                     onClick={() => {
-                        // Scroll to the professional section since that's often what's missing
                         window.scrollTo({ top: 100, behavior: 'smooth' });
                         setIsEditing(true);
                     }}
-                    className="flex-shrink-0 bg-(--color-mySecondary)  text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-gray-200 active:scale-95 flex items-center gap-2"
+                    className="flex-shrink-0 bg-(--color-mySecondary) text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-gray-200 active:scale-95 flex items-center gap-2"
                   >
-                    Finish Profile
+                    {t('profile.finishProfile')}
                     <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center">
                         <CheckCircle2 className="w-3 h-3" />
                     </div>
                   </button>
               </div>
 
-              {/* Progress Bar Backdrop */}
               <div className="mt-4 h-1.5 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100/50">
                   <div 
                     className="h-full bg-gradient-to-r from-(--color-mySecondary) to-(--color-myAccent) rounded-full transition-all duration-1000 ease-out"
@@ -107,9 +116,7 @@ export default function MemberHeader({
 
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
-        {/* LEFT: AVATAR + INFO */}
         <div className="flex items-center gap-4">
-          {/* Avatar */}
           <div className="h-20 w-20 sm:h-32 sm:w-32 rounded-3xl bg-gray-200 overflow-hidden flex items-center justify-center border-4 border-white shadow-xl flex-shrink-0 relative group">
             {member.avatar_url ? (
               <img
@@ -133,7 +140,6 @@ export default function MemberHeader({
             )}
           </div>
 
-          {/* Text */}
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
               {member.fullname}
@@ -142,16 +148,18 @@ export default function MemberHeader({
             <div className="text-gray-500 text-sm flex flex-col sm:flex-row sm:items-center sm:gap-2 truncate">
               {member.email && <span className="truncate">{member.email}</span>}
               {member.phone && (
-                <span className=" sm:inline">• {member.phone}</span>
+                <span className="sm:inline">
+                   {i18n.dir() === 'rtl' ? `• ${member.phone}` : `• ${member.phone}`}
+                </span>
               )}
             </div>
 
             {member.birth_date && (
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-gray-500 text-xs">Birthday:</span>
+                <span className="text-gray-500 text-xs">{t('profile.birthday')}:</span>
                 <span className="font-bold text-white bg-[var(--color-myAccent)] px-2 py-1 rounded-full text-xs">
                   🎂{' '}
-                  {new Date(member.birth_date).toLocaleDateString('en-US', {
+                  {new Date(member.birth_date).toLocaleDateString(currentLocale, {
                     month: 'short',
                     day: '2-digit',
                     year: 'numeric'
@@ -162,17 +170,15 @@ export default function MemberHeader({
           </div>
         </div>
 
-        {/* RIGHT: ACTIONS + RANK */}
         <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
           <div className="flex items-center gap-2">
             {canEditProfile && (
               <button
                 onClick={() => setIsEditing(true)}
                 className="text-gray-400 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 transition"
-                title="Edit Profile"
+                title={t('profile.editProfile')}
               >
-                
-    <svg
+                <svg
                   xmlns='http://www.w3.org/2000/svg'
                   fill='none'
                   viewBox='0 0 24 24'
@@ -185,7 +191,8 @@ export default function MemberHeader({
                     strokeLinejoin='round'
                     d='m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10'
                   />
-                </svg>            </button>
+                </svg>
+              </button>
             )}
 
             {isExecutive && !isOwnProfile && (
@@ -193,18 +200,18 @@ export default function MemberHeader({
                   <button
                       onClick={() => onUpdate && onUpdate({ is_banned: !member.is_banned })}
                       className={`p-2 rounded-full transition ${member.is_banned ? 'text-red-600 bg-red-50' : 'text-gray-400 hover:text-red-600 hover:bg-gray-100'}`}
-                      title={member.is_banned ? "Unban Member" : "Ban Member"}
+                      title={member.is_banned ? t('profile.unbanMember') : t('profile.banMember')}
                   >
                       <Ban className="w-5 h-5" />
                   </button>
                   <button
                       onClick={() => {
-                          if(window.confirm('Are you sure you want to delete this member? This action cannot be undone.')) {
+                          if(window.confirm(t('profile.deleteMemberConfirm'))) {
                               onDelete && onDelete();
                           }
                       }}
                       className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-gray-100 transition"
-                      title="Delete Member"
+                      title={t('profile.deleteMember')}
                   >
                       <Trash2 className="w-5 h-5" />
                   </button>
@@ -220,23 +227,16 @@ export default function MemberHeader({
                 }`}
               >
                 {rankPosition}
-                {rankPosition === '1'
-                  ? 'st'
-                  : rankPosition === '2'
-                  ? 'nd'
-                  : rankPosition === '3'
-                  ? 'rd'
-                  : 'th'}
+                {getOrdinalSuffix(rankPosition)}
               </span>
             )}
           </div>
 
           <span className="text-xs text-gray-400 uppercase tracking-wider hidden md:block">
-            Current Rank
+            {t('profile.currentRank')}
           </span>
         </div>
 
-        {/* EDIT MODAL */}
         {canEditProfile && isEditing && (
           <EditMemberModal
             member={member}

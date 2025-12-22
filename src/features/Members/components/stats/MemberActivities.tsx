@@ -5,7 +5,9 @@ import type { Activity } from '../../../Activities/models/Activity'; // Use type
 import { Calendar, Star, MessageSquare, Award, XCircle, CheckCircle, PieChart, Activity as ActivityIcon, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import supabase from '../../../../utils/supabase';
+import { useTranslation } from "react-i18next";
 
+// Localization and state management for member activities
 interface MemberActivitiesProps {
   memberId: string;
 }
@@ -31,6 +33,7 @@ interface ServiceParticipation {
 }
 
 const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
+  const { t } = useTranslation();
   const [historyItems, setHistoryItems] = useState<ActivityHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +48,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
         // 1. Get Member to find join date and preferences
         const member = await getMemberById(memberId);
         if (!member) {
-          setError("Member not found");
+          setError(t('profile.memberNotFound'));
           setLoading(false);
           return;
         }
@@ -143,7 +146,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
         setHistoryItems(mergedItems);
       } catch (err: any) {
         console.error("Failed to load activity history", err);
-        setError("Failed to load activity history.");
+        setError(t('profile.failedLoadHistory'));
       } finally {
         setLoading(false);
       }
@@ -173,9 +176,9 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
       <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-start">
           <Calendar className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activity History</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('profile.activityHistory')}</h3>
         </div>
         
         <div className="flex items-center gap-2">
@@ -184,7 +187,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
             className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${showCharts ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
           >
             <PieChart className="w-4 h-4" />
-            {showCharts ? 'Hide Stats' : 'Show Stats'}
+            {showCharts ? t('profile.hideStats') : t('profile.showStats')}
           </button>
           <div className="flex p-1 bg-gray-100 dark:bg-slate-700/50 rounded-lg">
             <button
@@ -195,7 +198,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
                   : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
               }`}
             >
-              Attended ({attendedCount})
+              {t('profile.attendedCount', { count: attendedCount })}
             </button>
             <button
               onClick={() => setActiveTab('absent')}
@@ -205,7 +208,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
                   : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
               }`}
             >
-              Absent ({missedCount})
+              {t('profile.absentCount', { count: missedCount })}
             </button>
             <button
               onClick={() => setActiveTab('future')}
@@ -215,7 +218,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
                   : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
               }`}
             >
-              Future ({futureCount})
+              {t('profile.futureCount', { count: futureCount })}
             </button>
           </div>
         </div>
@@ -224,15 +227,15 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
 
       {/* Presence Statistics Navigation */}
       <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 text-start">
             <div>
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Attendance Analytics</h4>
-                <p className="text-xs text-gray-500 dark:text-slate-400">Track your involvement levels across different time periods.</p>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">{t('profile.attendanceAnalytics')}</h4>
+                <p className="text-xs text-gray-500 dark:text-slate-400">{t('profile.trackInvolvement')}</p>
             </div>
             <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:block">Total Rate:</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:block">{t('profile.totalRate')}</span>
                 <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-black">
-                    {Math.round((attendedCount / (attendedCount + missedCount || 1)) * 100)}% Presence
+                    {t('profile.presenceRate', { percent: Math.round((attendedCount / (attendedCount + missedCount || 1)) * 100) })}
                 </div>
             </div>
          </div>
@@ -249,7 +252,7 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
                 {/* Impact/Ratings Line Chart */}
                 <div className="bg-gray-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-800">
                     <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-6 flex items-center gap-2">
-                        <ActivityIcon className="w-4 h-4 text-orange-500" /> Member Impact Trend
+                        <ActivityIcon className="w-4 h-4 text-orange-500" /> {t('profile.memberImpactTrend')}
                     </h4>
                     <ImpactLineChart items={historyItems} />
                 </div>
@@ -271,9 +274,12 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
 // --- Sub-Components ---
 
 const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
+    const { t, i18n } = useTranslation();
     const [period, setPeriod] = useState<'month' | 'trimester' | 'year' | 'custom'>('month');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
+
+    const currentLocale = i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'fr' ? 'fr-FR' : 'en-US';
 
     // Pre-calculated periods
     const getGroupedData = () => {
@@ -287,26 +293,30 @@ const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
         if (period === 'month') {
             const start = new Date(now.getFullYear(), now.getMonth(), 1);
             filteredAttended = attended.filter(i => new Date(i.activity.activity_begin_date) >= start);
-            groupBy = (d) => `Day ${d.getDate()}`;
+            groupBy = (d) => `${t('profile.day')} ${d.getDate()}`;
             // Simple: just days of current month
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            buckets = Array.from({length: daysInMonth}, (_, i) => `Day ${i + 1}`);
+            buckets = Array.from({length: daysInMonth}, (_, i) => `${t('profile.day')} ${i + 1}`);
         } else if (period === 'trimester') {
             const start = new Date();
             start.setMonth(now.getMonth() - 3);
             filteredAttended = attended.filter(i => new Date(i.activity.activity_begin_date) >= start);
-            groupBy = (d) => d.toLocaleString('default', { month: 'short' });
+            groupBy = (d) => d.toLocaleString(currentLocale, { month: 'short' });
             buckets = [];
             for(let i=3; i>=0; i--) {
                 const d = new Date();
                 d.setMonth(now.getMonth() - i);
-                buckets.push(d.toLocaleString('default', { month: 'short' }));
+                buckets.push(d.toLocaleString(currentLocale, { month: 'short' }));
             }
         } else if (period === 'year') {
             const start = new Date(now.getFullYear(), 0, 1);
             filteredAttended = attended.filter(i => new Date(i.activity.activity_begin_date) >= start);
-            groupBy = (d) => d.toLocaleString('default', { month: 'short' });
-            buckets = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            groupBy = (d) => d.toLocaleString(currentLocale, { month: 'short' });
+            // Localized months list
+            buckets = Array.from({ length: 12 }, (_, i) => {
+                const d = new Date(now.getFullYear(), i, 1);
+                return d.toLocaleString(currentLocale, { month: 'short' });
+            });
         } else {
             // Custom
             const start = customStart ? new Date(customStart) : new Date(0);
@@ -315,8 +325,8 @@ const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
                 const d = new Date(i.activity.activity_begin_date);
                 return d >= start && d <= end;
             });
-            groupBy = (d) => d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
-            // Sort by date for custom
+            groupBy = (d) => d.toLocaleDateString(currentLocale, { month: 'short', day: 'numeric' });
+            
             const sortedDates = filteredAttended
                 .map(i => new Date(i.activity.activity_begin_date))
                 .sort((a,b) => a.getTime() - b.getTime());
@@ -340,7 +350,7 @@ const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
         <div className="flex-1 flex flex-col min-h-[200px]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" /> Count of Presences
+                    <CheckCircle className="w-4 h-4 text-green-500" /> {t('profile.countOfPresences')}
                 </h4>
                 <div className="flex p-1 bg-gray-200 dark:bg-slate-800 rounded-lg overflow-x-auto">
                     {(['month', 'trimester', 'year', 'custom'] as const).map(p => (
@@ -351,7 +361,7 @@ const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
                                 period === p ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
-                            {p}
+                            {t(`profile.${p}`)}
                         </button>
                     ))}
                 </div>
@@ -379,7 +389,7 @@ const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
                     <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative h-full justify-end">
                         {d.count > 0 && (
                             <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-bold rounded py-1 px-2 z-20 whitespace-nowrap">
-                                {d.count} Activities
+                                {d.count} {t('profile.activitiesCount', { count: d.count })}
                             </div>
                         )}
                         <div 
@@ -394,7 +404,7 @@ const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
             </div>
             {data.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-100 dark:border-slate-800 rounded-xl">
-                    <span className="text-[10px] font-bold text-gray-400">No presences found for this range</span>
+                    <span className="text-[10px] font-bold text-gray-400">{t('profile.noPresencesInRange')}</span>
                 </div>
             )}
         </div>
@@ -402,6 +412,7 @@ const PresenceHistoryChart = ({ items }: { items: ActivityHistoryItem[] }) => {
 };
 
 const ImpactLineChart = ({ items }: { items: ActivityHistoryItem[] }) => {
+    const { t, i18n } = useTranslation();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     // 1. Filter attended items with ratings & sort by date ascending
@@ -412,7 +423,7 @@ const ImpactLineChart = ({ items }: { items: ActivityHistoryItem[] }) => {
     if (ratedItems.length < 2) {
         return (
             <div className="flex-1 flex items-center justify-center text-xs text-gray-400 italic min-h-[120px]">
-                Not enough rated activities to show trend.
+                {t('profile.notEnoughDataTrend')}
             </div>
         );
     }
@@ -473,6 +484,7 @@ const ImpactLineChart = ({ items }: { items: ActivityHistoryItem[] }) => {
                     strokeLinecap="round" 
                     strokeLinejoin="round" 
                     className="drop-shadow-sm"
+                    style={{ transformOrigin: 'center', transform: i18n.dir() === 'rtl' ? 'scaleX(-1)' : 'none' }}
                 />
 
                 {/* Data Points */}
@@ -527,7 +539,7 @@ const ImpactLineChart = ({ items }: { items: ActivityHistoryItem[] }) => {
                 </div>
             )}
             
-            <div className="absolute bottom-0 right-0 text-[10px] text-gray-400">Latest →</div>
+            <div className="absolute bottom-0 end-0 text-[10px] text-gray-400">{t('profile.latest')}</div>
         </div>
     );
 };
@@ -558,14 +570,18 @@ const ErrorDisplay = ({ message }: { message: string }) => (
     </div>
 );
 
-const EmptyState = () => (
-    <div className="p-8 text-center text-gray-500 dark:text-slate-400">
-        <Calendar className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-        <p>No activities found in this section.</p>
-    </div>
-);
+const EmptyState = () => {
+    const { t } = useTranslation();
+    return (
+        <div className="p-8 text-center text-gray-500 dark:text-slate-400">
+            <Calendar className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
+            <p>{t('profile.noActivitiesFound')}</p>
+        </div>
+    );
+};
 
 const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => {
+    const { t, i18n } = useTranslation();
     const participantCount = item.activity.activity_participants?.[0]?.count || 0;
     
     return (
@@ -573,7 +589,7 @@ const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => {
             <div className="p-4 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors relative group">
                 <div className="flex gap-4">
                     {/* Visual Indicator Line */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                    <div className={`absolute start-0 top-0 bottom-0 w-1 ${
                         item.status === 'attended' ? 'bg-green-500' : 
                         item.status === 'recommended' ? 'bg-amber-400' : 'bg-red-400'
                     }`} />
@@ -592,7 +608,7 @@ const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => {
                             </div>
                         )}
                         {/* Status Overlay Icon */}
-                        <div className="absolute bottom-1 right-1">
+                        <div className="absolute bottom-1 end-1">
                             {item.status === 'attended' ? (
                                 <CheckCircle className="w-4 h-4 text-green-500 bg-white rounded-full" />
                             ) : item.status === 'recommended' ? (
@@ -606,7 +622,7 @@ const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => {
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h4 className={`font-medium truncate pr-2 ${
+                                <h4 className={`font-medium truncate pe-2 ${
                                     item.status !== 'missed' 
                                     ? 'text-gray-900 dark:text-white' 
                                     : 'text-gray-500 dark:text-slate-400'
@@ -619,18 +635,18 @@ const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => {
                                         item.activity.type === 'meeting' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
                                         'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
                                     }`}>
-                                        {item.activity.type}
+                                        {t(`profile.${item.activity.type}`)}
                                     </span>
                                     <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
                                         <Users className="w-3 h-3 text-blue-500" />
                                         {participantCount}
                                     </div>
                                     <span className="text-xs text-slate-500">
-                                        {new Date(item.activity.activity_begin_date).toLocaleDateString()}
+                                        {new Date(item.activity.activity_begin_date).toLocaleDateString(i18n.language)}
                                     </span>
                                     {item.status === 'recommended' && (
                                         <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-bold uppercase">
-                                            Matched your interests
+                                            {t('profile.matchedInterests')}
                                         </span>
                                     )}
                                 </div>
@@ -658,7 +674,7 @@ const ActivityCard = ({ item }: { item: ActivityHistoryItem }) => {
                                                 className={`w-3 h-3 ${i < item.participation!.rate! ? 'fill-current' : 'text-gray-300 dark:text-slate-600'}`} 
                                             />
                                         ))}
-                                        <span className="text-xs text-slate-500 ml-1">Rating</span>
+                                        <span className="text-xs text-slate-500 ms-1">{t('profile.rating')}</span>
                                     </div>
                                 )}
                                 {item.participation.notes && (

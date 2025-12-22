@@ -1,4 +1,5 @@
 import { Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface FormActionsProps {
   isEditMode: boolean
@@ -14,6 +15,7 @@ export default function FormActions({
   onCancel 
 }: FormActionsProps) {
   const isSubmitting = loading || uploading
+  const { t, i18n } = useTranslation()
 
   return (
     <div className="pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
@@ -22,7 +24,7 @@ export default function FormActions({
         onClick={onCancel}
         className="w-full sm:w-auto bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
-        Cancel
+        {t('profile.cancel')}
       </button>
       <button
         type="submit"
@@ -31,11 +33,11 @@ export default function FormActions({
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-            {uploading ? 'Uploading...' : (isEditMode ? 'Updating...' : 'Creating...')}
+            <Loader2 className={`animate-spin h-4 w-4 ${i18n.dir() === 'rtl' ? 'ml-2' : '-ml-1 mr-2'}`} />
+            {uploading ? t('activities.uploading') : (isEditMode ? t('activities.updating') : t('activities.creating'))}
           </>
         ) : (
-          isEditMode ? 'Update Activity' : 'Create Activity'
+          isEditMode ? t('activities.updateActivity') : t('activities.createActivity')
         )}
       </button>
     </div>
