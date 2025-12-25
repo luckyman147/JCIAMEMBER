@@ -17,6 +17,7 @@ import {
     MemberLifestyle,
     MemberEngagementPrefs,
     MemberPersonality,
+    MemberAdvisor,
 } from "../components";
 import Navbar from "../../../Global_Components/navBar";
 import MemberPointsHistory from "../components/stats/profile/MemberPointsHistory";
@@ -109,7 +110,7 @@ export default function MemberDetailsPage() {
                                 onUpdate={handleUpdate}
                                 readOnly={!isOwnProfile && !canEdit}
                             />
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                                 <MemberSocialInfo 
                                     member={member} 
                                     onUpdate={handleUpdate}
@@ -120,11 +121,7 @@ export default function MemberDetailsPage() {
                                     onUpdate={handleUpdate}
                                     readOnly={!isOwnProfile && !canEdit}
                                 />
-                                <MemberLifestyle 
-                                    member={member} 
-                                    onUpdate={handleUpdate}
-                                    readOnly={!isOwnProfile && !canEdit}
-                                />
+                           
                             </div>
                         </div>
 
@@ -144,23 +141,37 @@ export default function MemberDetailsPage() {
                                     onPointsChange={(pts) => handleUpdate({ points: pts })}
                                     readOnly={!canEdit}
                                 />
-                            </div>
-
-                            {/* Middle Column (Info & Activities) */}
-                            <div className="space-y-8 lg:col-span-1">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <MemberInterests 
-                                        memberId={member.id}
-                                        readOnly={!isOwnProfile && !canEdit}
-                                    />
-                                    <MemberBio 
+                                        <MemberBio 
                                         description={member.description}
                                         onUpdate={(desc) => handleUpdate({ description: desc })}
                                         readOnly={!isOwnProfile && !canEdit}
                                     />
-                               
-                                </div>
+                                
                             </div>
+
+                            {/* Middle Column (Info & Activities) */}
+                            <div className="space-y-8 lg:col-span-1">
+                                <div className=" grid-cols-2 sm:grid-cols-2 gap-4">
+                                    <MemberInterests 
+                                        memberId={member.id}
+                                        readOnly={!isOwnProfile && !canEdit}
+                                    />
+                              <div className="sm:col-span-2 mt-6"> 
+                                        <MemberAdvisor 
+                                            member={member}
+                                            onUpdate={handleUpdate}
+                                            canEdit={canEdit}
+                                        />
+                                    </div>
+                                    
+                                </div>
+                               <MemberLifestyle 
+                                    member={member} 
+                                    onUpdate={handleUpdate}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                            </div>
+                            
 
                             <div className="lg:col-span-2 mb-1">
                                 <MemberPersonality 

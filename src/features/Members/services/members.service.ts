@@ -30,7 +30,10 @@ export const getMembers = async (): Promise<Member[]> => {
             cotisation_status,
             strengths,
             weaknesses,
-            personality_type
+            personality_type,
+            estimated_volunteering_hours,
+            advisor_id,
+            advisor:advisor_id(id, fullname, avatar_url)
         `);
         // We filter by role 'member' ideally, but here we fetch all and can filter in frontend or query
         // Assuming roles relation is set up. 
@@ -51,7 +54,8 @@ export const getMembers = async (): Promise<Member[]> => {
         strengths: item.strengths || [],
         weaknesses: item.weaknesses || [],
         preferred_categories: item.preferred_categories || [],
-        complaints: item.complaints || []
+        complaints: item.complaints || [],
+        advisor: Array.isArray(item.advisor) ? item.advisor[0] : item.advisor
     }));
 };
 
@@ -91,7 +95,11 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
             preferred_committee,
             preferred_activity_type,
             preferred_meal,
-            personality_type
+            personality_type,
+            estimated_volunteering_hours,
+            advisor_id,
+            advisor:advisor_id(id, fullname, avatar_url),
+            advisees:profiles!advisor_id(id, fullname, avatar_url)
         `)
         .eq('id', id)
         .single();
@@ -122,12 +130,17 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
         preferred_committee: data.preferred_committee,
         preferred_activity_type: data.preferred_activity_type,
         preferred_meal: data.preferred_meal,
-        personality_type: data.personality_type
+        personality_type: data.personality_type,
+        estimated_volunteering_hours: data.estimated_volunteering_hours,
+        advisor_id: data.advisor_id,
+        advisor: (Array.isArray(data.advisor) ? data.advisor[0] : data.advisor) as Partial<Member>,
+        advisees: (Array.isArray(data.advisees) ? data.advisees : (data.advisees ? [data.advisees] : [])) as Partial<Member>[]
     };
 };
 
 export const updateMember = async (id: string, updates: Partial<Member>) => {
     try {
+        console.log('UpdateMember called with:', { id, updates });
         // 1. Get Current User & Permissions
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
@@ -159,9 +172,10 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
         const selfFields = [
             'fullname', 'phone', 'birth_date', 'description', 'avatar_url', 
             'strengths', 'weaknesses', 'job_title', 'specialties', 
-            'availability_days', 'availability_time',
+            'availability_days', 'availability_time', 'estimated_volunteering_hours',
             'astrological_sign', 'preferred_social_media', 'social_media_link',
-            'preferred_committee', 'preferred_activity_type', 'preferred_meal', 'personality_type'
+            'preferred_committee', 'preferred_activity_type', 'preferred_meal', 'personality_type',
+            'advisor_id'
         ];
         
         // Fields ONLY high-level users can update
@@ -210,6 +224,7 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
         }
 
         // 5. Execute Database Update
+        console.log('Executing update with payload:', finalPayload);
         const { data, error } = await supabase
             .from('profiles')
             .update(finalPayload)

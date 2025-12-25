@@ -51,6 +51,10 @@ export interface Member {
     preferred_activity_type?: string;
     preferred_meal?: string;
     personality_type?: 'Dominant' | 'Influence' | 'Steadiness' | 'Conscientious';
+    estimated_volunteering_hours?: number;
+    advisor_id?: string;
+    advisor?: Partial<Member>;
+    advisees?: Partial<Member>[];
 }
 
 export interface ActivityLog {

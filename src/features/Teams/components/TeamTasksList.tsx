@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getTeamTasks } from "../services/teams.service";
 import { deleteTask, updateTask, completeAllTaskAssignments } from "../../Tasks/services/tasks.service";
 import type { Task } from "../../Tasks/types";
-import { FileText } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../Authentication/auth.context";
 import EditTaskModal from "./modals/EditTaskModal";
@@ -32,7 +32,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
     const [loading, setLoading] = useState(true);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
-    const [view, setView] = useState<'list' | 'kanban'>('kanban');
+    const [view, setView] = useState<'list' | 'kanban' | 'table'>('kanban');
     const [creationStatus, setCreationStatus] = useState<'todo' | 'in_progress' | 'completed'>('todo');
 
     useEffect(() => {
@@ -129,6 +129,75 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                             onUpdate={loadTasks}
                         />
                     ))}
+                </div>
+            ) : view === 'table' ? (
+                <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50/50 border-b border-gray-100">
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Task</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Start Date</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Deadline</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Points</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {tasks.map(task => {
+                                    const isExpired = task.deadline && task.status !== 'completed' && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
+                                    return (
+                                        <tr key={task.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div>
+                                                    <div className="font-bold text-gray-900 text-sm">{task.title}</div>
+                                                    <div className="text-[10px] text-gray-400 line-clamp-1 max-w-[200px]">{task.description}</div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                    task.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                                                    task.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
+                                                    'bg-slate-50 text-slate-600'
+                                                }`}>
+                                                    {task.status?.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-gray-500 font-medium">
+                                                {task.start_date ? new Date(task.start_date).toLocaleDateString() : '-'}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className={`text-xs font-bold ${isExpired ? 'text-red-600' : 'text-gray-500'}`}>
+                                                        {task.deadline ? new Date(task.deadline).toLocaleDateString() : '-'}
+                                                    </span>
+                                                    {isExpired && (
+                                                        <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter w-fit shadow-sm">Expired</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-amber-600 font-bold text-sm">{task.points}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => setEditingTask(task)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                                                        <FileText className="w-4 h-4" />
+                                                    </button>
+                                                    {isAdmin && (
+                                                        <button onClick={() => handleDelete(task.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             ) : (
                 <DragDropContext onDragEnd={onDragEnd}>

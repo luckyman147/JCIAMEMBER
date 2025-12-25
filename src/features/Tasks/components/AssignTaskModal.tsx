@@ -22,6 +22,8 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
     const [points, setPoints] = useState<number>(0);
     const [description, setDescription] = useState("");
     const [trackingType, setTrackingType] = useState<'manual' | 'subtasks'>('subtasks');
+    const [startDate, setStartDate] = useState<string>("");
+    const [deadline, setDeadline] = useState<string>("");
     
     const handleTrackingTypeChange = (type: 'manual' | 'subtasks') => {
         setTrackingType(type);
@@ -84,6 +86,8 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
                 points,
                 description,
                 status: 'todo',
+                start_date: startDate || undefined,
+                deadline: deadline || undefined,
                 subtasks: trackingType === 'subtasks' ? subtasks : []
             }, trackingType);
             
@@ -128,6 +132,8 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
         setSubtasks([]);
         setTrackingType('subtasks');
         setSelectedTaskId(null);
+        setStartDate("");
+        setDeadline("");
     };
 
     const filteredTasks = availableTasks.filter(t => 
@@ -245,6 +251,27 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 font-bold text-xs uppercase">Start Date</label>
+                                    <input 
+                                        type="date"
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 font-bold text-xs uppercase">Deadline</label>
+                                    <input 
+                                        type="date"
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-red-600 font-bold"
+                                        value={deadline}
+                                        onChange={(e) => setDeadline(e.target.value)}
+                                    />
+                                </div>
                             </div>
 
                             <div>

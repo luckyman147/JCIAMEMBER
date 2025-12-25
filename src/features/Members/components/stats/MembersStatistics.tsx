@@ -8,7 +8,8 @@ import { PreferenceStats } from './dashboard/PreferenceStats';
 import { MemberTalentStats } from './dashboard/MemberTalentStats';
 import { CotisationStats } from './dashboard/CotisationStats';
 import { AvailabilityStats } from './dashboard/AvailabilityStats';
-import { Zap, Heart, CreditCard, Calendar, Target, Brain } from 'lucide-react';
+import { VolunteeringStats } from './dashboard/VolunteeringStats';
+import { Zap, Heart, CreditCard, Calendar, Target, Brain, Clock } from 'lucide-react';
 
 interface MembersStatisticsProps {
     members: Member[];
@@ -29,9 +30,7 @@ export default function MembersStatistics({ members, tasks = [] }: MembersStatis
                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.demographicsTitle', 'Community Overview')}</h2>
                 </div>
                 <DemographicStats members={members} />
-                <div className="mt-8">
-                    <PersonalityStats members={members} />
-                </div>
+              
             </section>
 
             {/* 2. Talent & Growth Potential */}
@@ -40,16 +39,27 @@ export default function MembersStatistics({ members, tasks = [] }: MembersStatis
                     <Target className="w-5 h-5 text-amber-500" />
                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.talentGrowthTitle', 'Talent & Growth Hub')}</h2>
                 </div>
-                <MemberTalentStats members={members} />
+                <MemberTalentStats members={members} /> 
+                 <div className="mt-8">
+                    <PersonalityStats members={members} />
+                </div>
             </section>
 
             {/* 3. Engagement & Performance */}
-            <section className="space-y-4">
+            <section className="space-y-6">
                 <div className="flex items-center gap-3 border-l-4 border-emerald-500 pl-4 py-1">
                     <Zap className="w-5 h-5 text-emerald-500" />
                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.performanceTitle', 'Task Performance')}</h2>
                 </div>
                 <EngagementStats members={members} tasks={tasks} />
+                
+                <div className="mt-8">
+                    <div className="flex items-center border-l-4 border-(--color-mySecondary) pl-4 py-1 gap-3 mb-6">
+                        <Clock className="w-5 h-5 text-(--color-mySecondary)" />
+                        <h3 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.volunteeringSection', 'Volunteering Commitment')}</h3>
+                    </div>
+                    <VolunteeringStats members={members} />
+                </div>
             </section>
 
             {/* 4. Availability */}

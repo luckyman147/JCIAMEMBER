@@ -26,6 +26,8 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
     const [title, setTitle] = useState(task.title);
     const [status, setStatus] = useState<'todo' | 'in_progress' | 'completed'>(task.status || 'todo');
     const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+    const [startDate, setStartDate] = useState(task.start_date || "");
+    const [deadline, setDeadline] = useState(task.deadline || "");
     
     // Read-only / Immutable state
     const [points, setPoints] = useState(task.points);
@@ -42,6 +44,8 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
             const initialType = task.subtasks && task.subtasks.length > 0 ? 'subtasks' : 'manual';
             setTrackingType(initialType);
             setSubtasks(task.subtasks || []);
+            setStartDate(task.start_date || "");
+            setDeadline(task.deadline || "");
             
             // Fetch assignments to sync selection
             loadAssignments();
@@ -71,7 +75,9 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
             // 1. Update core task fields (Name/Title and Status)
             await updateTask(task.id, {
                 title,
-                status
+                status,
+                start_date: startDate || undefined,
+                deadline: deadline || undefined
             });
 
             // 2. Reconcile Assignments
@@ -141,6 +147,27 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                                 <option value="in_progress">In Progress</option>
                                 <option value="completed">Completed</option>
                             </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Start Date</label>
+                                <input 
+                                    type="date"
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Deadline</label>
+                                <input 
+                                    type="date"
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-red-600 font-bold"
+                                    value={deadline}
+                                    onChange={(e) => setDeadline(e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

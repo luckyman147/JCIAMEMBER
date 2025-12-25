@@ -14,6 +14,8 @@ export interface Task {
     subtasks?: SubTaskDefinition[]; // The defined points/subtasks
     status: 'todo' | 'in_progress' | 'completed';
     created_at: string;
+    start_date?: string;
+    deadline?: string;
     assignments?: { member_id: string }[];
 }
 

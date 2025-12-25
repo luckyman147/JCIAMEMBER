@@ -19,7 +19,7 @@ export default function MemberBio({ description, onUpdate, readOnly = false }: M
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 ">
             <div className="flex items-center gap-2 mb-6">
                 <div className="p-2 bg-purple-50 rounded-lg">
                     <FileText className="w-4 h-4 text-purple-600" />
@@ -29,7 +29,7 @@ export default function MemberBio({ description, onUpdate, readOnly = false }: M
 
             <div className="space-y-4">
                 <textarea
-                    rows={6}
+                    rows={3}
                     className={`w-full border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all resize-none leading-relaxed ${
                         readOnly ? 'bg-gray-50/50 text-gray-600 cursor-default' : 'bg-white text-gray-900'
                     }`}

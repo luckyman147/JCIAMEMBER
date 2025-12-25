@@ -7,7 +7,7 @@ import ComplaintsOverview from "../../../Global_Components/ComplaintsOverview";
 import { useMembers, useAllPointsHistory } from "../hooks/useMembers";
 import { useAllMemberTasks } from "../../Tasks/hooks/useTasks";
 import AddMemberModal from "../components/AddMemberModal";
-import { UserPlus, Users, ShieldCheck, User } from "lucide-react";
+import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 
@@ -24,6 +24,7 @@ export default function MembersPage() {
     const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || "");
     const [searchTerm, setSearchTerm] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [showStats, setShowStats] = useState(true);
 
     const loading = membersLoading || historyLoading || tasksLoading;
 
@@ -53,13 +54,27 @@ export default function MembersPage() {
                    <h1 className="text-3xl font-bold text-gray-900">{t('members.title')}</h1>
                    <p className="text-gray-500 mt-1">{t('members.subtitle')}</p>
                 </div>
-                <button 
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-(--color-myAccent) text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 font-semibold"
-                >
-                    <UserPlus className="w-5 h-5" />
-                    {t('members.addMember')}
-                </button>
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setShowStats(!showStats)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-semibold text-sm border shadow-sm ${
+                            showStats 
+                            ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50' 
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                        }`}
+                        title={showStats ? t('profile.hideStats') : t('profile.showStats')}
+                    >
+                        {showStats ? <LayoutPanelTop className="w-4 h-4" /> : <LayoutPanelLeft className="w-4 h-4" />}
+                        {showStats ? t('profile.hideStats') : t('profile.showStats')}
+                    </button>
+                    <button 
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 bg-(--color-myAccent) text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 font-semibold"
+                    >
+                        <UserPlus className="w-5 h-5" />
+                        {t('members.addMember')}
+                    </button>
+                </div>
             </div>
 
             {/* Quick Stats Ribbon */}
@@ -110,12 +125,16 @@ export default function MembersPage() {
             )}
 
             {/* General Statistics */}
-            {!loading && members.length > 0 && <MembersStatistics members={members} tasks={allTaskAssignments} />}
-
-            {/* Growth Chart */}
-            <div className="mb-8">
-                <MembersGrowthChart history={history} />
-            </div>
+            {!loading && members.length > 0 && showStats && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                    <MembersStatistics members={members} tasks={allTaskAssignments} />
+                    
+                    {/* Growth Chart */}
+                    <div className="mb-8 mt-10">
+                        <MembersGrowthChart history={history} />
+                    </div>
+                </div>
+            )}
 
             {/* Search and Filter */}
             <div className="mb-6">
