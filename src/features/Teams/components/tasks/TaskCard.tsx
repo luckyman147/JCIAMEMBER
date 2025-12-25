@@ -1,7 +1,26 @@
-
 import type { Task } from "../../../Tasks/types";
-import { Edit2, Trash2, GripVertical } from "lucide-react";
+import { Edit2, Trash2, GripVertical, Calendar, Clock } from "lucide-react";
 import { TaskAssignmentsPreview } from "./TaskAssignmentsPreview";
+
+const formatDate = (dateStr: string) => {
+    try {
+        const date = new Date(dateStr);
+        return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+    } catch (e) {
+        return dateStr;
+    }
+};
+
+const isExpired = (deadline: string) => {
+    try {
+        const d = new Date(deadline);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0); // Start of today
+        return d > new Date(0) && d < now;
+    } catch (e) {
+        return false;
+    }
+};
 
 interface TaskCardProps {
     task: Task;
@@ -51,7 +70,29 @@ export const TaskCard = ({
                         </span>
                     )}
                 </div>
-                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{task.description}</p>
+                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3">{task.description}</p>
+                
+                <div className="flex flex-wrap gap-3 items-center">
+                    {task.start_date && (
+                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                            <Calendar className="w-3 h-3" />
+                            <span>{formatDate(task.start_date)}</span>
+                        </div>
+                    )}
+                    {task.deadline && (
+                        <div className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                            task.status !== 'completed' && isExpired(task.deadline)
+                                ? 'bg-red-50 text-red-600 ring-1 ring-red-100' 
+                                : 'text-gray-400'
+                        }`}>
+                            <Clock className="w-3 h-3" />
+                            <span>{formatDate(task.deadline)}</span>
+                            {task.status !== 'completed' && isExpired(task.deadline) && (
+                                <span className="ml-1 bg-red-600 text-white px-1 rounded text-[8px] uppercase tracking-tighter shadow-sm">Expired</span>
+                            )}
+                        </div>
+                    )}
+                </div>
                 
                 <div className="mt-4 pt-4 border-t border-gray-50">
                     <TaskAssignmentsPreview 

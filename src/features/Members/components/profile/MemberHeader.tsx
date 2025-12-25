@@ -43,6 +43,10 @@ export default function MemberHeader({
     { label: t('profile.jobTitle'), value: !!member.job_title },
     { label: t('profile.specialties'), value: (member.specialties?.length || 0) > 0 },
     { label: t('profile.availability'), value: (member.availability_days?.length || 0) > 0 },
+    { label: t('profile.volunteeringLabel'), value: (member.estimated_volunteering_hours || 0) > 0 },
+    { label: t('profile.socialMediaLabel'), value: !!member.preferred_social_media },
+    { label: t('profile.engagementLabel'), value: !!member.preferred_committee || !!member.preferred_activity_type },
+    { label: t('profile.lifestyleLabel'), value: !!member.astrological_sign || !!member.preferred_meal },
   ];
 
   const missingFields = completenessChecks.filter(c => !c.value).map(c => c.label);

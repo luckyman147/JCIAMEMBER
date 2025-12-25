@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Shield, Star, CheckCircle2, XCircle } from 'lucide-react';
 import type { Member } from '../types';
 import { getRankColor, getValidationStatusColor } from '../utils';
+import { useTranslation } from 'react-i18next';
 
 interface MembersListProps {
     members: Member[];
@@ -10,6 +11,7 @@ interface MembersListProps {
 }
 
 export default function MembersList({ members, loading }: MembersListProps) {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const table_classe = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
 
@@ -77,12 +79,13 @@ export default function MembersList({ members, loading }: MembersListProps) {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className={table_classe}>Position</th>
-                                    <th className={table_classe}>Member</th>
-                                    <th className={table_classe}>Status</th>
-                                    <th className={table_classe}>Role</th>
-                                    <th className={table_classe}>Points</th>
-                                    <th className={table_classe}>Cotisation</th>
+                                    <th className={table_classe}>#</th>
+                                    <th className={table_classe}>{t('profile.member', 'Member')}</th>
+                                    <th className={table_classe}>{t('profile.validation', 'Status')}</th>
+                                    <th className={table_classe}>{t('profile.role', 'Role')}</th>
+                                    <th className={table_classe}>{t('profile.totalPoints', 'Points')}</th>
+                                    <th className={table_classe}>{t('profile.volunteering', 'Volunteering')}</th>
+                                    <th className={table_classe}>{t('profile.cotisation', 'Cotisation')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -131,6 +134,9 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                                     <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
                                                     {member.points}
                                                 </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                                                {member.estimated_volunteering_hours || 0}{t('profile.hoursAbbr', 'h')}/{t('profile.week', 'week')}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {renderCotisationIndicator(s1, s2)}
@@ -198,7 +204,12 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.volunteering', 'Volunteering')}</span>
+                                        <span className="text-sm font-bold text-gray-900">{member.estimated_volunteering_hours || 0}{t('profile.hoursAbbr', 'h')}/{t('profile.week', 'week')}</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between border-t border-gray-50 pt-2">
                                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Cotisation Fee</span>
                                         {renderCotisationIndicator(s1, s2)}
                                     </div>

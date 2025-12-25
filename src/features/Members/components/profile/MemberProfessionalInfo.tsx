@@ -40,6 +40,7 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
     // Temp Availability State
     const [tempDays, setTempDays] = useState<string[]>(member.availability_days || []);
     const [tempTime, setTempTime] = useState(member.availability_time || 'matinal');
+    const [tempHours, setTempHours] = useState(member.estimated_volunteering_hours || 0);
 
     // Sync state when member prop changes (after an update)
     useEffect(() => {
@@ -47,6 +48,7 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
         setTempSpecialties(member.specialties || []);
         setTempDays(member.availability_days || []);
         setTempTime(member.availability_time || 'matinal');
+        setTempHours(member.estimated_volunteering_hours || 0);
     }, [member]);
 
     const handleSaveProf = () => {
@@ -60,7 +62,8 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
     const handleSaveAvail = () => {
         onUpdate?.({
             availability_days: tempDays,
-            availability_time: tempTime
+            availability_time: tempTime,
+            estimated_volunteering_hours: tempHours
         });
         setIsEditingAvail(false);
     };
@@ -293,6 +296,29 @@ export default function MemberProfessionalInfo({ member, onUpdate, readOnly = tr
                                     'bg-blue-100 text-blue-700'
                                 }`}>
                                     {member.availability_time ? t(`profile.${member.availability_time}`) : t('profile.notSpecified')}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-50">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                                <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">{t('profile.estimatedVolunteeringHours')}</span>
+                            </div>
+                            {isEditingAvail ? (
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    max="168"
+                                    className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-500"
+                                    value={tempHours}
+                                    onChange={(e) => setTempHours(parseInt(e.target.value) || 0)}
+                                />
+                            ) : (
+                                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                                    {member.estimated_volunteering_hours || 0} {t('profile.hoursAbbr', 'hrs')}
                                 </span>
                             )}
                         </div>
