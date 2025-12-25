@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, Calendar, Trophy, Target, BarChart2 } from 'lucide-react'
-import { getPointsHistory } from '../../services/members.service'
-import type { PointsHistoryEntry } from '../../types'
+import { getPointsHistory } from '../../../services/members.service'
+import type { PointsHistoryEntry } from '../../../types'
 import { useTranslation } from "react-i18next";
 
 interface MemberPointsProgressProps {

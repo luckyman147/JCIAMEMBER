@@ -130,9 +130,9 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
             onChange={(e) => handleGroupChange(e.target.value as GroupObjectif)}
             required
           >
-            <option value="">{t('common.select')}</option>
+            <option value="">{t('common.select', 'Select...')}</option>
             {Object.values(GroupObjectif).map(g => (
-              <option key={g} value={g}>{g}</option>
+              <option key={g} value={g}>{t(`objectives.group.${g}`, { defaultValue: g })}</option>
             ))}
           </select>
         </div>
@@ -148,9 +148,9 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
               disabled={!formData.groupObjectif}
               required
             >
-              <option value="">{t('common.select')}</option>
+              <option value="">{t('common.select', 'Select...')}</option>
               {availableActions.map(a => (
-                <option key={a} value={a}>{a}</option>
+                <option key={a} value={a}>{t(`objectives.action.${a}`, { defaultValue: a })}</option>
               ))}
             </select>
           </div>
@@ -165,9 +165,9 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
               disabled={!formData.objectifActionType}
               required
             >
-              <option value="">{t('common.select')}</option>
+              <option value="">{t('common.select', 'Select...')}</option>
               {availableFeatures.map(f => (
-                <option key={f} value={f}>{f}</option>
+                <option key={f} value={f}>{t(`objectives.feature.${f}`, { defaultValue: f })}</option>
               ))}
             </select>
           </div>
@@ -184,7 +184,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
             >
               <option value="">{t('common.auto')}</option>
               {Object.values(ObjectifDifficulty).map(d => (
-                <option key={d} value={d}>{d}</option>
+                <option key={d} value={d}>{t(`profile.difficulty${d}`, { defaultValue: d })}</option>
               ))}
             </select>
           </div>
@@ -200,7 +200,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
             >
               <option value="">{t('common.public')}</option>
               {Object.values(PrivacyType).map(p => (
-                <option key={p} value={p}>{p}</option>
+                <option key={p} value={p}>{t(`objectives.privacy.${p}`, { defaultValue: p })}</option>
               ))}
             </select>
           </div>
@@ -248,7 +248,7 @@ const CreateObjectifForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-400'
                 }`}
               >
-                {role}
+                {t(`objectives.role.${role}`, { defaultValue: role })}
               </button>
             ))}
           </div>

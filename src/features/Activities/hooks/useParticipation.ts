@@ -10,6 +10,7 @@ export interface Participant {
   is_temp: boolean
   rate: number | null
   notes: string | null
+  is_interested?: boolean
   registered_at: string
   member?: { id: string; fullname: string; points: number }
 }
@@ -111,16 +112,32 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
   }, [activityId, activityPoints, selectedMember, rate, notes, participants, resetForm])
 
   const handleDelete = useCallback(async (p: Participant) => {
-    if (!confirm('Remove participant?')) return
+    if (!confirm('Remove?')) return
     
     try {
-      await activityService.deleteParticipation(p.id, p.user_id, activityPoints)
+      await activityService.deleteParticipation(p.id, p.user_id, p.is_interested ? 0 : activityPoints)
       setParticipants(prev => prev.filter(x => x.id !== p.id))
       toast.success('Removed')
     } catch (error) {
       toast.error('Failed to remove')
     }
   }, [activityPoints])
+
+  const handleMarkAttendance = useCallback(async (p: Participant, status: 'present' | 'absent') => {
+    try {
+      if (status === 'present') {
+        await activityService.updateParticipation(p.id, { is_interested: false })
+        setParticipants(prev => prev.map(x => x.id === p.id ? { ...x, is_interested: false } : x))
+        toast.success(`${p.member?.fullname} marked as present`)
+      } else {
+        await activityService.deleteParticipation(p.id, p.user_id, 0)
+        setParticipants(prev => prev.filter(x => x.id !== p.id))
+        toast.success(`${p.member?.fullname} marked as absent`)
+      }
+    } catch (error) {
+      toast.error('Failed to update status')
+    }
+  }, [])
 
   // Edit Handlers
   const startEdit = useCallback((p: Participant) => {
@@ -200,6 +217,7 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
     toggleForm,
     handleAdd,
     handleDelete,
+    handleMarkAttendance,
     handleSelectMember,
     handleClearSelection,
     startEdit,

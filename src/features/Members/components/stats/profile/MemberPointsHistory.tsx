@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { History, Calendar } from 'lucide-react'
-import { getPointsHistory } from '../../services/members.service'
-import type { PointsHistoryEntry } from '../../types'
+import { getPointsHistory } from '../../../services/members.service'
+import type { PointsHistoryEntry } from '../../../types'
 import { useTranslation } from "react-i18next";
 
 interface MemberPointsHistoryProps {

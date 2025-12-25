@@ -27,7 +27,9 @@
     "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
     "registrationSuccess": "تم التسجيل بنجاح! الرجاء تسجيل الدخول للمتابعة.",
     "registrationFailed": "فشل إنشاء الحساب. الرجاء المحاولة مرة أخرى.",
-    "hasAccount": "لديك حساب بالفعل؟"
+    "hasAccount": "لديك حساب بالفعل؟",
+    "fastConnect": "اتصال سريع",
+    "continueWithGoogle": "المتابعة باستخدام Gmail"
   },
   "common": {
       "loading": "جاري التحميل...",
@@ -35,7 +37,10 @@
       "cancel": "إلغاء",
       "add": "إضافة",
       "edit": "تعديل",
+      "More": "المزيد",
       "delete": "حذف",
+
+      
       "actions": "إجراءات",
       "search": "بحث...",
     "welcome": "مرحباً بك مجدداً",
@@ -51,7 +56,21 @@
     "noPendingCandidates": "لا توجد مرشحين معلقين.",
     "members": "أعضاء",
     "evaluate": "تقييم",
-    "view": "عرض"
+    "view": "عرض",
+    "all": "الكل",
+    "resolved": "محلول",
+    "pending": "قيد الانتظار",
+    "resolve": "حل",
+    "setPending": "تعيين كمعلق",
+    "group": "مجموعة",
+    "action": "إجراء",
+    "feature": "ميزة",
+    "difficulty": "الصعوبة",
+    "privacy": "الخصوصية",
+    "select": "اختر...",
+    "auto": "تلقائي",
+    "public": "عام",
+    "semester": "فصل"
   },
   "home": {
     "heroTitle": "تمكين",
@@ -87,9 +106,52 @@
   "members": {
       "title": "الأعضاء",
       "subtitle": "إدارة أعضاء المنظمة وإحصائياتهم",
+      "socialMediaStats": "التواجد على وسائل التواصل الاجتماعي",
+      "activityStats": "تفضيلات الأنشطة",
+      "committeeStats": "تفضيلات اللجنة",
       "addMember": "إضافة عضو",
       "totalMembers": "إجمالي الأعضاء",
-      "leadership": "إشراف القيادة"
+      "leadership": "إشراف القيادة",
+      "demographicsTitle": "نظرة عامة على المجتمع",
+      "availabilityTitle": "التوفر والجدول الزمني",
+      "performanceTitle": "النشاط والأداء",
+      "financialsTitle": "رسوم العضوية",
+      "preferencesTitle": "الاهتمامات والتفضيلات",
+      "roles": "أدوار الأعضاء",
+      "status": "حالة العضوية",
+      "age": "توزيع العمر",
+      "occupations": "التوزيع المهني",
+      "filled": "مليء",
+      "notFilled": "غير مليء",
+      "pointsDistribution": "توزيع النقاط",
+      "timePreferences": "تفضيلات الوقت",
+      "weeklySchedule": "الجدول الأسبوعي",
+      "paidMembersList": "قائمة الأعضاء المدفوعين",
+      "fullyPaid": "مدفوع بالكامل",
+      "financialHealth": "الصحة المالية",
+      "semesterCollection": "تحصيل الفصل",
+      "cotisationLevels": "حالة رسوم العضوية",
+      "fullyPaidDesc": "الأعضاء الذين دفعوا كلا الفصلين",
+      "financialHealthDesc": "تتبع رسوم العضوية",
+      "noAgeData": "لا توجد بيانات عن العمر",
+      "noSocialData": "لا توجد بيانات عن وسائل التواصل الاجتماعي",
+      "noActivityData": "لا توجد بيانات عن النشاط",
+      "noCommitteeData": "لا توجد بيانات عن اللجنة",
+      "taskPerformance": "أداء المهام",
+      "totalDone": "إجمالي المنجز",
+      "meanPerMember": "المتوسط / للعضو",
+      "teamProductivity": "إنتاجية الفريق",
+      "teamProductivityDesc": "معدل الإنجاز المتوسط",
+      "tasksPerMember": "المهام لكل عضو",
+      "talentGrowthTitle": "مركز المواهب والنمو",
+      "strengthsDistribution": "نقاط القوة الرئيسية",
+      "talentDensitySubtitle": "المهارات الأكثر شيوعاً في المجتمع",
+      "weaknessesDistribution": "مجالات النمو",
+      "weaknessDensitySubtitle": "التحديات المشتركة التي يعمل عليها الأعضاء",
+      "noTalentData": "لا توجد بيانات مواهب متاحة بعد",
+      "personalityDistribution": "طيف الشخصية (DISC)",
+      "personalitySubtitle": "تحليل الأنماط السلوكية للمجتمع",
+      "assessed": "تم التقييم"
   },
   "profile": {
       "backToMembers": "العودة إلى الأعضاء",
@@ -102,6 +164,10 @@
       "complaintUpdated": "تم تحديث حالة الشكوى",
       "complaintDeleted": "تم حذف الشكوى بنجاح",
       "complaintFailed": "فشل تحديث الشكوى",
+      "bothSemesters": "كلا الفصلين",
+      "semester1Only": "الفصل الأول فقط",
+      "semester2Only": "الفصل الثاني فقط",
+      "notPaid": "غير مدفوع",
       "elevateProfile": "حسّن ملفك الشخصي",
       "complete": "مكتمل",
       "professionalHelp": "إضافة خبرتك المهنية وتوفرك يساعد المنظمة على تعيينك في أفضل الفرق والمشاريع المناسبة.",
@@ -302,10 +368,81 @@
       "deleteMember": "حذف العضو",
       "editProfile": "تعديل الملف الشخصي",
       "deleteMemberConfirm": "هل أنت متأكد من حذف هذا العضو؟ لا يمكن التراجع عن هذا الإجراء.",
+      "astrologicalSign": "البرج الفلكي",
+      "preferredSocialMedia": "منصة التواصل الاجتماعي المفضلة",
+      "socialMediaLink": "رابط منصة التواصل الاجتماعي",
+      "preferredCommittee": "اللجنة المفضلة",
+      "preferredActivityType": "نوع النشاط المفضل",
+      "preferredMeal": "الوجبة المفضلة",
+      "engagementTitle": "تفضيلات المشاركة",
+      "lifestyleTitle": "نمط الحياة والسمات",
+      "socialMedia": {
+        "facebook": "فيسبوك",
+        "instagram": "إنستغرام",
+        "linkedin": "لينكد إن",
+        "x": "إكس / تويتر",
+        "tiktok": "تيك توك",
+        "other": "أخرى"
+      },
+      "committees": {
+        "media": "الإعلام",
+        "sponsoring": "الاستشهار",
+        "programme": "البرنامج",
+        "logistique": "اللوجستيك",
+        "hr": "الموارد البشرية"
+      },
+      "activityTypes": {
+        "team_building": "بناء الفريق",
+        "event": "فعالية",
+        "meeting": "اجتماع",
+        "training": "تدريب"
+      },
+      "zodiac": {
+        "aries": "الحمل",
+        "taurus": "الثور",
+        "gemini": "الجوزاء",
+        "cancer": "السرطان",
+        "leo": "الأسد",
+        "virgo": "العذراء",
+        "libra": "الميزان",
+        "scorpio": "العقرب",
+        "sagittarius": "القوس",
+        "capricorn": "الجدي",
+        "aquarius": "الدلو",
+        "pisces": "الحوت"
+      },
       "difficultyBasic": "بسيط",
       "difficultyMedium": "متوسط",
       "difficultyHard": "صعب",
-      "difficultyExtreme": "قاسي"
+      "difficultyExtreme": "قاسي",
+      "join": "انضمام",
+      "joined": "تم الانضمام",
+      "joining": "جاري الانضمام...",
+      "joinFailed": "فشل الانضمام للنشاط",
+      "fillRequiredCibles": "يرجى اختيار دور مستهدف واحد على الأقل.",
+      "personalityTitle": "نوع الشخصية",
+      "personalitySubtitle": "تقييم ملف DISC",
+      "personalityDescription": "خصائص الأسلوب",
+      "chosen": "مختار",
+      "noPersonality": "لم يتم تقييم الشخصية بعد",
+      "disc": {
+          "Dominant": {
+              "name": "مهيمن",
+              "desc": "يركز على النتائج، مباشر وحاسم. يركز على تحقيق الأهداف."
+          },
+          "Influence": {
+              "name": "مؤثر",
+              "desc": "منفتح، متحمس ومقنع. يركز على الناس والإلهام."
+          },
+          "Steadiness": {
+              "name": "مستقر",
+              "desc": "صبور، موثوق وداعم. يركز على التعاون والانسجام."
+          },
+          "Conscientious": {
+              "name": "متفانٍ",
+              "desc": "تحليلي، منظم ودقيق. يركز على الجودة والدقة."
+          }
+      }
   },
   "teams": {
       "title": "الفرق والمجموعات",
@@ -329,6 +466,7 @@
       "templates": "النماذج",
       "addCandidate": "إضافة مرشح",
       "editCandidate": "تعديل المرشح",
+      "addNewQuestion": "إضافة سؤال جديد",
       "addNewCandidate": "إضافة مرشح جديد",
       "candidateUpdated": "تم تحديث المرشح",
       "candidateAdded": "تم إضافة المرشح",
@@ -551,6 +689,14 @@
     "avgAttendance": "متوسط الحضور",
     "distributionByType": "التوزيع حسب النوع",
     "activityTrends": "اتجاهات النشاط",
-    "avgAttendanceByType": "متوسط الحضور حسب النوع"
+    "avgAttendanceByType": "متوسط الحضور حسب النوع",
+    "interested": "مهتم",
+    "notInterested": "غير مهتم",
+    "markingInterest": "جاري التحديد...",
+    "interestedUsers": "المستخدمون المهتمون",
+    "markPresent": "تسجيل حضور",
+    "markAbsent": "تسجيل غياب",
+    "interestMarked": "تم تحديد الاهتمام بنجاح",
+    "interestFailed": "فشل في تحديد الاهتمام"
   }
 }

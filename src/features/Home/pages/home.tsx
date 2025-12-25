@@ -53,7 +53,7 @@ const Home = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <main className="md:ml-64 pt-16 md:pt-6">
+      <main className="md:ml-64 pt-16 md:pt-6 pb-20 md:pb-0">
         {/* Hero Section (Visible to guests) */}
         {!user && (
           <section className='bg-white border-b border-gray-100 py-20 px-4 sm:px-6 lg:px-8'>
@@ -78,6 +78,8 @@ const Home = () => {
                   {t('common.memberLogin')}
                 </Link>
               </div>
+
+             
             </div>
           </section>
         )}

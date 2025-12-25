@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronRight, Shield, Star }    from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronRight, Shield, Star, CheckCircle2, XCircle } from 'lucide-react';
 import type { Member } from '../types';
 import { getRankColor, getValidationStatusColor } from '../utils';
 
@@ -10,7 +10,28 @@ interface MembersListProps {
 }
 
 export default function MembersList({ members, loading }: MembersListProps) {
+    const navigate = useNavigate();
     const table_classe = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
+
+    const groupedMembers = React.useMemo(() => {
+        const groups: Record<string, Member[]> = {};
+        
+        // First sort by points globally (or per group later)
+        const sorted = [...members].sort((a, b) => (b.points || 0) - (a.points || 0));
+
+        sorted.forEach(member => {
+            const role = member.role || 'Member';
+            if (!groups[role]) {
+                groups[role] = [];
+            }
+            groups[role].push(member);
+        });
+
+        // Return as array of [role, members] sorted by some criteria? 
+        return Object.entries(groups)
+            .filter(([role]) => !['admin'].includes(role.toLowerCase()))
+            .sort((a, b) => a[0].localeCompare(b[0]));
+    }, [members]);
 
     if (loading) {
         return (
@@ -29,26 +50,18 @@ export default function MembersList({ members, loading }: MembersListProps) {
         );
     }
 
-    const groupedMembers = React.useMemo(() => {
-        const groups: Record<string, Member[]> = {};
-        
-        // First sort by points globally (or per group later)
-        const sorted = [...members].sort((a, b) => (b.points || 0) - (a.points || 0));
-
-        sorted.forEach(member => {
-            const role = member.role || 'Member';
-            if (!groups[role]) {
-                groups[role] = [];
-            }
-            groups[role].push(member);
-        });
-
-        // Return as array of [role, members] sorted by some criteria? 
-        // Maybe alphabetical or custom order. Let's do alphabetical for now.
-        return Object.entries(groups)
-            .filter(([role]) => ![ 'admin'].includes(role.toLowerCase()))
-            .sort((a, b) => a[0].localeCompare(b[0]));
-    }, [members]);
+    const renderCotisationIndicator = (semester1: boolean, semester2: boolean) => (
+        <div className="flex gap-2">
+            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${semester1 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                {semester1 ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                S1
+            </div>
+            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${semester2 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                {semester2 ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                S2
+            </div>
+        </div>
+    );
 
     return (
         <div className="space-y-8">
@@ -69,14 +82,19 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                     <th className={table_classe}>Status</th>
                                     <th className={table_classe}>Role</th>
                                     <th className={table_classe}>Points</th>
-                                    <th className={table_classe}>Actions</th>
+                                    <th className={table_classe}>Cotisation</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {roleMembers.map((member, index) => {
                                     const rank = index + 1;
+                                    const [s1, s2] = member.cotisation_status || [false, false];
                                     return (
-                                        <tr key={member.id} className="hover:bg-gray-50 transition-colors group">
+                                        <tr 
+                                            key={member.id} 
+                                            onClick={() => navigate(`/members/${member.id}`)}
+                                            className="hover:bg-blue-50/50 cursor-pointer transition-colors group"
+                                        >
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
                                                 #{rank}
                                             </td>
@@ -114,10 +132,8 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                                     {member.points}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-center text-sm font-bold">
-                                                <Link to={`/members/${member.id}`} className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-                                                    View <ChevronRight className="w-4 h-4" />
-                                                </Link>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {renderCotisationIndicator(s1, s2)}
                                             </td>
                                         </tr>
                                     );
@@ -130,8 +146,13 @@ export default function MembersList({ members, loading }: MembersListProps) {
                     <div className="md:hidden space-y-4">
                         {roleMembers.map((member, index) => {
                             const rank = index + 1;
+                            const [s1, s2] = member.cotisation_status || [false, false];
                             return (
-                                <div key={member.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                                <div 
+                                    key={member.id} 
+                                    onClick={() => navigate(`/members/${member.id}`)}
+                                    className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 active:bg-gray-50 cursor-pointer"
+                                >
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
@@ -151,33 +172,35 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                                 <p className="text-xs text-gray-500">{member.email}</p>
                                             </div>
                                         </div>
-                                        <Link to={`/members/${member.id}`} className="p-2 text-gray-400 hover:text-blue-600 active:bg-gray-50 rounded-full transition-colors">
+                                        <div className="p-2 text-gray-400 group-hover:text-blue-600 transition-colors">
                                             <ChevronRight className="w-5 h-5" />
-                                        </Link>
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 py-3 border-t border-b border-gray-50 mb-3">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-xs text-gray-500 uppercase tracking-wider">Role</span>
-                                            <div className={`self-start px-2 py-0.5 inline-flex items-center gap-1 text-xs font-semibold rounded-full border ${getRankColor(member.role)}`}>
-                                                <Shield className="w-3 h-3" />
-                                                {member.role}
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Role & Status</span>
+                                            <div className="flex flex-wrap gap-2">
+                                                <div className={`px-2 py-0.5 inline-flex items-center gap-1 text-[10px] font-semibold rounded-full border ${getRankColor(member.role)}`}>
+                                                    {member.role}
+                                                </div>
+                                                <span className={`px-2 py-0.5 inline-flex text-[10px] font-semibold rounded-full ${getValidationStatusColor(member.is_validated)}`}>
+                                                    {member.is_validated ? 'Validated' : 'Pending'}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-xs text-gray-500 uppercase tracking-wider">Status</span>
-                                            <span className={`self-start px-2 py-0.5 inline-flex text-xs font-semibold rounded-full ${getValidationStatusColor(member.is_validated)}`}>
-                                                {member.is_validated ? 'Validated' : 'Pending'}
-                                            </span>
+                                        <div className="flex flex-col gap-1 items-end text-right">
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Points</span>
+                                            <div className="flex items-center gap-1 text-sm font-bold text-gray-900">
+                                                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                                {member.points}
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-600">Total Points</span>
-                                        <div className="flex items-center gap-1 text-lg font-bold text-gray-900">
-                                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                            {member.points}
-                                        </div>
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Cotisation Fee</span>
+                                        {renderCotisationIndicator(s1, s2)}
                                     </div>
                                 </div>
                             );

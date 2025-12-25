@@ -15,7 +15,22 @@ export const getMembers = async (): Promise<Member[]> => {
             phone,
             is_validated,
             points,
-            roles!inner(name)
+            roles(name),
+            birth_date,
+            job_title,
+            specialties,
+            availability_days,
+            availability_time,
+            astrological_sign,
+            preferred_social_media,
+            social_media_link,
+            preferred_committee,
+            preferred_activity_type,
+            preferred_meal,
+            cotisation_status,
+            strengths,
+            weaknesses,
+            personality_type
         `);
         // We filter by role 'member' ideally, but here we fetch all and can filter in frontend or query
         // Assuming roles relation is set up. 
@@ -30,9 +45,11 @@ export const getMembers = async (): Promise<Member[]> => {
         ...item,
         role: item.roles?.name || 'member',
         // Ensure defaults
-        cotisation_status: item.cotisation_status || { semester1: false, semester2: false },
+        cotisation_status: item.cotisation_status || [false, false],
         is_validated: item.is_validated || false,
         points: item.points || 0,
+        strengths: item.strengths || [],
+        weaknesses: item.weaknesses || [],
         preferred_categories: item.preferred_categories || [],
         complaints: item.complaints || []
     }));
@@ -67,7 +84,14 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
             job_title,
             specialties,
             availability_days,
-            availability_time
+            availability_time,
+            astrological_sign,
+            preferred_social_media,
+            social_media_link,
+            preferred_committee,
+            preferred_activity_type,
+            preferred_meal,
+            personality_type
         `)
         .eq('id', id)
         .single();
@@ -80,7 +104,7 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
     return {
         ...data,
         role: (data.roles as any)?.name || 'member',
-        cotisation_status: data.cotisation_status || { semester1: false, semester2: false },
+        cotisation_status: data.cotisation_status || [false, false],
         is_validated: data.is_validated || false,
         points: data.points || 0,
         strengths: data.strengths || [],
@@ -91,7 +115,14 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
         job_title: data.job_title,
         specialties: data.specialties || [],
         availability_days: data.availability_days || [],
-        availability_time: data.availability_time || 'matinal'
+        availability_time: data.availability_time || 'matinal',
+        astrological_sign: data.astrological_sign,
+        preferred_social_media: data.preferred_social_media,
+        social_media_link: data.social_media_link,
+        preferred_committee: data.preferred_committee,
+        preferred_activity_type: data.preferred_activity_type,
+        preferred_meal: data.preferred_meal,
+        personality_type: data.personality_type
     };
 };
 
@@ -128,7 +159,9 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
         const selfFields = [
             'fullname', 'phone', 'birth_date', 'description', 'avatar_url', 
             'strengths', 'weaknesses', 'job_title', 'specialties', 
-            'availability_days', 'availability_time'
+            'availability_days', 'availability_time',
+            'astrological_sign', 'preferred_social_media', 'social_media_link',
+            'preferred_committee', 'preferred_activity_type', 'preferred_meal', 'personality_type'
         ];
         
         // Fields ONLY high-level users can update

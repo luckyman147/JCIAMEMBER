@@ -1,8 +1,8 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../features/Authentication/auth.context'
 import logo from '../assets/logo.png'
 import { useState, useRef, useEffect } from 'react'
-import { Menu, X, LogOut } from 'lucide-react'
+import { Menu, X, LogOut, Home, Calendar, Users, Target, User, PieChart } from 'lucide-react'
 import { EXECUTIVE_LEVELS } from '../utils/roles'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -11,6 +11,7 @@ export default function Sidebar() {
   const { t, i18n } = useTranslation();
   const { user, role, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
 
@@ -23,6 +24,13 @@ export default function Sidebar() {
     isActive
       ? `flex items-center gap-3 px-4 py-2 rounded-lg bg-(--color-myPrimary) text-white font-semibold transition-all ${isRTL ? 'flex-row-reverse' : ''}`
       : `flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-all ${isRTL ? 'flex-row-reverse' : ''}`
+
+  const mobileTabClass = (path: string) => {
+    const isActive = location.pathname === path || (path !== '/' && (location.pathname + '/').startsWith(path + '/'))
+    return `flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
+      isActive ? 'text-(--color-myPrimary)' : 'text-gray-400'
+    }`
+  }
 
   const handleLogout = async () => {
     try {
@@ -47,24 +55,78 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* MOBILE TOP BAR */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b z-50 flex items-center px-4 justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-        <img src={logo} className="h-10" />
-        <button onClick={() => setIsMobileOpen(true)}>
-          <Menu />
-        </button>
+      {/* MOBILE TOP HEADER */}
+      <div className={`md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b z-50 flex items-center px-4 justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <img src={logo} alt="Logo" className="h-10" />
+        <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+        </div>
+      </div>
+
+      {/* MOBILE BOTTOM NAVIGATION */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[60] safe-area-bottom">
+        <div className={`flex items-center justify-around h-16 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <Link to="/" className={mobileTabClass('/')}>
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-tighter">{t('nav.home')}</span>
+          </Link>
+          
+          <Link to="/activities" className={mobileTabClass('/activities')}>
+            <Calendar className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-tighter">{t('nav.activities')}</span>
+          </Link>
+
+          {user && hasExclusiveAccess && (
+            <Link to="/members" className={mobileTabClass('/members')}>
+              <Users className="w-5 h-5" />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">{t('nav.members')}</span>
+            </Link>
+          )}
+
+          {user && (
+            <Link to="/teams" className={mobileTabClass('/teams')}>
+              <Target className="w-5 h-5" />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">{t('nav.teams')}</span>
+            </Link>
+          )}
+
+          {user ? (
+            <Link to="/me" className={mobileTabClass('/me')}>
+                <div className="w-6 h-6 rounded-full bg-gray-100 border overflow-hidden">
+                    {isValidAvatarUrl ? (
+                         <img src={avatarUrl} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold">
+                            {user.user_metadata?.fullname?.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                </div>
+              <span className="text-[10px] font-bold uppercase tracking-tighter">{t('common.profile')}</span>
+            </Link>
+          ) : (
+            <Link to="/login" className={mobileTabClass('/login')}>
+              <User className="w-5 h-5" />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">{t('auth.login')}</span>
+            </Link>
+          )}
+
+          <button onClick={() => setIsMobileOpen(true)} className="flex flex-col items-center justify-center gap-1 flex-1 py-1 text-gray-400">
+             <Menu className="w-5 h-5" />
+             <span className="text-[10px] font-bold uppercase tracking-tighter">{t('common.more')}</span>
+          </button>
+        </div>
       </div>
 
       {/* OVERLAY (mobile) */}
       {isMobileOpen && (
-        <div className="fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity"></div>
+        <div className="fixed inset-0 bg-black/40 z-[70] md:hidden transition-opacity"></div>
       )}
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR (Desktop permanent, Mobile slide-in for 'More') */}
       <aside
         ref={sidebarRef}
         className={`
-          fixed top-0 ${isRTL ? 'right-0 border-l' : 'left-0 border-r'} h-full w-64 bg-white shadow-sm z-50
+          fixed top-0 ${isRTL ? 'right-0 border-l' : 'left-0 border-r'} h-full w-64 bg-white shadow-sm z-[80]
           transform transition-transform duration-300
           ${isMobileOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full' : '-translate-x-full')}
           md:translate-x-0
@@ -109,9 +171,11 @@ export default function Sidebar() {
         {/* NAV LINKS */}
         <nav className="flex-1 p-4 space-y-1">
           <NavLink to="/" className={navLinkClass}>
+             <Home className="w-4 h-4" />
             <span className="flex-1">{t('nav.home')}</span>
           </NavLink>
           <NavLink to="/activities" className={navLinkClass}>
+             <Calendar className="w-4 h-4" />
             <span className="flex-1">{t('nav.activities')}</span>
           </NavLink>
 
@@ -120,17 +184,21 @@ export default function Sidebar() {
               {hasExclusiveAccess && (
                 <>
                   <NavLink to="/recruitment" className={navLinkClass}>
+                     <PieChart className="w-4 h-4" />
                     <span className="flex-1">{t('nav.recruitment')}</span>
                   </NavLink>
                   <NavLink to="/members" end className={navLinkClass}>
+                     <Users className="w-4 h-4" />
                     <span className="flex-1">{t('nav.members')}</span>
                   </NavLink>
                 </>
               )}
               <NavLink to="/teams" className={navLinkClass}>
+                 <Target className="w-4 h-4" />
                 <span className="flex-1">{t('nav.teams')}</span>
               </NavLink>
               <NavLink to="/me" className={navLinkClass}>
+                 <User className="w-4 h-4" />
                 <span className="flex-1">{t('common.profile')}</span>
               </NavLink>
             </>
@@ -138,7 +206,7 @@ export default function Sidebar() {
         </nav>
 
         {/* FOOTER */}
-        <div className="p-4 border-t">
+        <div className="p-4 border-t mt-auto">
           {user ? (
             <button
               onClick={handleLogout}
@@ -170,3 +238,4 @@ export default function Sidebar() {
     </>
   )
 }
+

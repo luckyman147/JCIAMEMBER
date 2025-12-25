@@ -54,7 +54,7 @@ export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly =
                 <div className="flex flex-wrap gap-2">
                     {weaknesses.map((w, i) => (
                         <span key={i} className="group px-3 py-1.5 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-semibold flex items-center gap-2 animate-in fade-in zoom-in duration-300">
-                            {w}
+                            {t(`profile.weaknessOptions.${w}`, { defaultValue: w })}
                             {!readOnly && (
                                 <button 
                                     onClick={() => handleRemove(i)} 
@@ -74,18 +74,24 @@ export default function MemberWeaknesses({ weaknesses = [], onUpdate, readOnly =
                     <div className="space-y-3 mt-4">
                         <div className="flex flex-col gap-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('profile.quickSelect')}</label>
-                            <select 
-                                onChange={(e) => {
-                                    handleSelectOption(e.target.value);
-                                    e.target.value = "";
-                                }}
-                                className="w-full px-3 py-2 text-xs border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white outline-none transition-all cursor-pointer"
-                            >
-                                <option value="">{t('profile.chooseAreaImprove')}</option>
-                                {WEAKNESS_OPTIONS.filter(opt => !weaknesses.includes(opt)).map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                            </select>
+                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                                {WEAKNESS_OPTIONS.map(opt => {
+                                    const isSelected = weaknesses.includes(opt);
+                                    return (
+                                        <button
+                                            key={opt}
+                                            onClick={() => isSelected ? handleRemove(weaknesses.indexOf(opt)) : handleSelectOption(opt)}
+                                            className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all border ${
+                                                isSelected 
+                                                ? 'bg-red-600 text-white border-red-600' 
+                                                : 'bg-white text-gray-400 border-gray-200 hover:border-red-300 hover:text-red-600'
+                                            }`}
+                                        >
+                                            {t(`profile.weaknessOptions.${opt}`, { defaultValue: opt })}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         <div className="flex flex-col gap-2">

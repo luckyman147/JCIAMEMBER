@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
+import type { CotisationStatus } from '../../types';
 
 interface MemberStatusProps {
     isValidated: boolean;
-    cotisation: boolean[] | undefined;
+    cotisation: CotisationStatus | undefined;
     onValidationChange: (newStatus: boolean) => void;
-    onCotisationChange: (newCotisation: boolean[]) => void;
+    onCotisationChange: (newCotisation: CotisationStatus) => void;
     readOnly?: boolean;
 }
 
@@ -17,15 +18,12 @@ export default function MemberStatus({
 }: MemberStatusProps) {
     const { t } = useTranslation();
     
-const safeCotisation: boolean[] = Array.isArray(cotisation) 
-    ? cotisation 
-    : [false, false];
+    const safeCotisation: boolean[] = Array.isArray(cotisation) ? cotisation : [false, false];
 
-    const handleCotisationToggle = (sem: number) => {
- const updated = safeCotisation.map((value, index) =>
-        index === sem ? !value : value
-    );
-    onCotisationChange(updated);
+    const handleCotisationToggle = (index: number) => {
+        const updated = [...safeCotisation];
+        updated[index] = !updated[index];
+        onCotisationChange(updated);
     };
 
     return (

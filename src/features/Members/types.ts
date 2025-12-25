@@ -1,7 +1,4 @@
-export type CotisationStatus = {
-    semester1: boolean;
-    semester2: boolean;
-}
+export type CotisationStatus = boolean[];
 
 export type Role = string;
 
@@ -26,7 +23,7 @@ export interface Member {
     // Member specific fields
     
     points: number;
-    cotisation_status: boolean[];
+    cotisation_status: CotisationStatus;
     is_validated: boolean;
  
     
@@ -45,6 +42,15 @@ export interface Member {
     specialties?: string[];
     availability_days?: string[];
     availability_time?: 'matinal' | 'afternoon' | 'full_day';
+
+    // Personalization
+    astrological_sign?: string;
+    preferred_social_media?: string;
+    social_media_link?: string;
+    preferred_committee?: string;
+    preferred_activity_type?: string;
+    preferred_meal?: string;
+    personality_type?: 'Dominant' | 'Influence' | 'Steadiness' | 'Conscientious';
 }
 
 export interface ActivityLog {

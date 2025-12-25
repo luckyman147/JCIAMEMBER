@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Toaster } from 'sonner'
+
 import './App.css'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router/router'
+
 
 function App() {
   const { i18n } = useTranslation();
@@ -17,7 +18,6 @@ function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <Toaster richColors position='top-center' />
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { ActivityType } from "../models/Activity";
 import ActivityCard from "../components/ActivityCard";
@@ -9,13 +9,32 @@ import { useAuth } from "../../../features/Authentication/auth.context";
 import { useActivities } from "../hooks/useActivities";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 import { useTranslation } from "react-i18next";
+import { activityService } from "../services/activityService";
 
 export default function AllActivitiesPage() {
     const { activities, loading } = useActivities();
-    const { role } = useAuth();
+    const { role, user } = useAuth();
     const { t, i18n } = useTranslation();
+    const [userParticipations, setUserParticipations] = useState<Map<string, any>>(new Map());
 
     const hasAdvancedAccess = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
+
+    // Fetch user participations
+    useEffect(() => {
+        if (user) {
+            activityService.getMemberParticipations(user.id)
+                .then(participations => {
+                    const map = new Map();
+                    participations.forEach((p: any) => {
+                        if (p.activity?.id) {
+                            map.set(p.activity.id, { id: p.id, is_interested: p.is_interested || false });
+                        }
+                    });
+                    setUserParticipations(map);
+                })
+                .catch(err => console.error('Failed to load participations:', err));
+        }
+    }, [user]);
 
     // Filters
     const [searchTerm, setSearchTerm] = useState("");
@@ -138,7 +157,10 @@ export default function AllActivitiesPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {filteredActivities.map((activity: any) => (
                             <div key={activity.id}>
-                                <ActivityCard activity={activity} />
+                                <ActivityCard 
+                                    activity={activity} 
+                                    userParticipation={userParticipations.get(activity.id)}
+                                />
                             </div>
                         ))}
                     </div>

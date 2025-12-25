@@ -1,4 +1,4 @@
-import { Plus, Trash2, User, ChevronUp, Clock, MessageSquare, Edit2, Check, X, Star } from 'lucide-react'
+import { Plus, Trash2, User, ChevronUp, Clock, MessageSquare, Edit2, Check, X, Star, Heart } from 'lucide-react'
 import { useParticipation, type Participant } from '../hooks/useParticipation'
 import MemberSelector from './MemberSelector'
 import StarRating from './StarRating'
@@ -18,9 +18,12 @@ export default function ParticipationSection({ activityId, activityPoints }: Par
     selectedMember, memberSearch, rate, notes,
     editingId, editRate, editNotes,
     setMemberSearch, setRate, setNotes, setEditRate, setEditNotes,
-    toggleForm, handleAdd, handleDelete, handleSelectMember, handleClearSelection,
+    toggleForm, handleAdd, handleDelete, handleMarkAttendance, handleSelectMember, handleClearSelection,
     startEdit, cancelEdit, saveEdit
   } = useParticipation({ activityId, activityPoints })
+
+  const actualParticipants = participants.filter(p => !p.is_interested)
+  const interestedParticipants = participants.filter(p => p.is_interested)
 
   const { role } = useAuth()
   const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '')
@@ -28,7 +31,7 @@ export default function ParticipationSection({ activityId, activityPoints }: Par
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <Header 
-        count={participants.length} 
+        count={actualParticipants.length} 
         points={activityPoints} 
         showForm={showForm} 
         onToggle={toggleForm} 
@@ -54,7 +57,7 @@ export default function ParticipationSection({ activityId, activityPoints }: Par
       )}
 
       <ParticipantsList
-        participants={participants}
+        participants={actualParticipants}
         loading={loading}
         editingId={editingId}
         editRate={editRate}
@@ -67,6 +70,13 @@ export default function ParticipationSection({ activityId, activityPoints }: Par
         onDelete={handleDelete}
         canManage={isExecutive}
       />
+
+      {isExecutive && interestedParticipants.length > 0 && (
+        <InterestedList 
+          participants={interestedParticipants}
+          onMarkAttendance={handleMarkAttendance}
+        />
+      )}
     </div>
   )
 }
@@ -269,3 +279,41 @@ function EditRow({ p, rate, notes, onRateChange, onNotesChange, onSave, onCancel
     </div>
   )
 }
+function InterestedList({ participants, onMarkAttendance }: { 
+  participants: Participant[]
+  onMarkAttendance: (p: Participant, status: 'present' | 'absent') => void 
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="p-6 sm:p-8 bg-amber-50/30 border-t border-gray-100">
+      <h4 className="text-lg font-bold text-amber-900 mb-4 flex items-center gap-2">
+        <Heart className="w-5 h-5 text-amber-500 fill-amber-500" />
+        {t('activities.interestedUsers')}
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {participants.map(p => (
+          <div key={p.id} className="bg-white p-4 rounded-xl border border-amber-100 shadow-sm flex items-center justify-between">
+            <span className="font-bold text-gray-900">{p.member?.fullname}</span>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => onMarkAttendance(p, 'present')}
+                className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs font-bold transition-colors"
+              >
+                {t('activities.markPresent')}
+              </button>
+              <button 
+                onClick={() => onMarkAttendance(p, 'absent')}
+                className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-bold transition-colors"
+              >
+                {t('activities.markAbsent')}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+
+

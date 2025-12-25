@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Target, CheckCircle, Circle, Trophy, Plus, Trash2, XCircle, Minus, X, Star } from 'lucide-react'
-import { objectivesService } from '../../services/objectivesService'
-import type { UserObjectifInfos } from '../../types/objectives'
-import CreateObjectifForm from '../objectives/CreateObjectifForm'
+import { Target, CheckCircle, Circle, Trophy, Plus, Trash2, XCircle, Minus, X, Star, Users } from 'lucide-react'
+import { objectivesService } from '../../../services/objectivesService'
+import type { UserObjectifInfos } from '../../../types/objectives'
 import { useTranslation } from "react-i18next";
+import CreateObjectifForm from '../../objectives/CreateObjectifForm';
 
 interface MemberObjectivesProps {
   memberId: string;
@@ -158,7 +158,21 @@ export default function MemberObjectives({ memberId, isAdmin = false }: MemberOb
                        {info.objectif.title!=null ? (info.objectif.title) : 
                          (info.objectif.groupObjectif) + ": " + info.objectif.objectifActionType + " " + info.objectif.feature}
                       </span>
-                       <span className="text-xs text-slate-500">{t('profile.target')}: {info.objectif.target || 1}</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                         <span className="text-xs text-slate-500">{t('profile.target')}: {info.objectif.target || 1}</span>
+                         {(info.objectif.cible || []).length > 0 && (
+                            <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <Users className="w-3 h-3" />
+                                <div className="flex gap-1">
+                                    {info.objectif.cible.map(c => (
+                                        <span key={c} className="px-1 bg-slate-100 dark:bg-slate-700 rounded text-[10px]">
+                                            {t(`objectives.role.${c}`, { defaultValue: c })}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                         )}
+                      </div>
                     </div>
                     <span className="text-xs text-purple-600 dark:text-purple-400 font-bold ms-auto me-4">+{info.objectif.points} pts</span>
                   </div>
@@ -321,12 +335,25 @@ function ObjectiveCard({ info, isAdmin, onUnassign, onUpdate }: {
               </div>
             )}
 
-          {/* Meta */}
-          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-slate-400">
+          {/* Meta & Cibles */}
+          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500 dark:text-slate-400">
             {objectif.feature && <span className="px-2 py-0.5 bg-gray-100 dark:bg-slate-700 rounded">{objectif.feature}</span>}
             <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium">
               <Star className="w-3 h-3" />{objectif.points} pts
             </span>
+            
+            {(objectif.cible || []).length > 0 && (
+                <div className="flex items-center gap-1 ms-2 border-s border-gray-200 ps-2">
+                    <Users className="w-3 h-3 text-slate-400" />
+                    <div className="flex flex-wrap gap-1">
+                        {objectif.cible.map(c => (
+                            <span key={c} className="px-1.5 py-0.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px]">
+                                {t(`objectives.role.${c}`, { defaultValue: c })}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
           </div>
         </div>
 

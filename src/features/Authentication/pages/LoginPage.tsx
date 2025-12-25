@@ -5,9 +5,10 @@ import { useAuth } from '../auth.context'
 import AuthForm from '../components/AuthForm'
 import supabase from '../../../utils/supabase'
 import { useTranslation } from 'react-i18next'
+import GoogleSignInBadge from '../components/GoogleSignInBadge'
 
 export default function Login() {
-  const { signIn, googleSignIn } = useAuth()
+  const { signIn } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -128,18 +129,9 @@ export default function Login() {
       </div>
 
       {/* GOOGLE LOGIN BUTTON */}
-      <button
-        type='button'
-        onClick={googleSignIn}
-        className='w-full py-4 bg-white border border-gray-100 rounded-2xl flex justify-center items-center gap-3 font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 shadow-sm'
-      >
-        <img
-          src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
-          className='w-5 h-5'
-          alt="Google"
-        />
-        Continue with Google
-      </button>
+      <div className="flex justify-center">
+        <GoogleSignInBadge />
+      </div>
 
       {/* Register link */}
     

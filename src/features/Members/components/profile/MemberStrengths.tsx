@@ -52,9 +52,9 @@ export default function MemberStrengths({ strengths = [], onUpdate, readOnly = f
             
             <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
-                    {strengths.map((s, i) => (
+                            {strengths.map((s, i) => (
                         <span key={i} className="group px-3 py-1.5 bg-green-50 text-green-700 border border-green-100 rounded-lg text-xs font-semibold flex items-center gap-2 animate-in fade-in zoom-in duration-300">
-                            {s}
+                            {t(`profile.strengthOptions.${s}`, { defaultValue: s })}
                             {!readOnly && (
                                 <button 
                                     onClick={() => handleRemove(i)} 
@@ -74,18 +74,24 @@ export default function MemberStrengths({ strengths = [], onUpdate, readOnly = f
                     <div className="space-y-3 mt-4">
                         <div className="flex flex-col gap-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('profile.quickSelect')}</label>
-                            <select 
-                                onChange={(e) => {
-                                    handleSelectOption(e.target.value);
-                                    e.target.value = "";
-                                }}
-                                className="w-full px-3 py-2 text-xs border border-gray-100 rounded-xl bg-gray-50/50 focus:bg-white outline-none transition-all cursor-pointer"
-                            >
-                                <option value="">{t('profile.chooseCommonStrength')}</option>
-                                {STRENGTH_OPTIONS.filter(opt => !strengths.includes(opt)).map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                            </select>
+                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                                {STRENGTH_OPTIONS.map(opt => {
+                                    const isSelected = strengths.includes(opt);
+                                    return (
+                                        <button
+                                            key={opt}
+                                            onClick={() => isSelected ? handleRemove(strengths.indexOf(opt)) : handleSelectOption(opt)}
+                                            className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all border ${
+                                                isSelected 
+                                                ? 'bg-green-600 text-white border-green-600' 
+                                                : 'bg-white text-gray-400 border-gray-200 hover:border-green-300 hover:text-green-600'
+                                            }`}
+                                        >
+                                            {t(`profile.strengthOptions.${opt}`, { defaultValue: opt })}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         <div className="flex flex-col gap-2">

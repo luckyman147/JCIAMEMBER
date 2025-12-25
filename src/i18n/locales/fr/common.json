@@ -28,13 +28,16 @@
     "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
     "registrationSuccess": "Inscription réussie ! Veuillez vous connecter pour continuer.",
     "registrationFailed": "Échec de la création du compte. Veuillez réessayer.",
-    "hasAccount": "Vous avez déjà un compte ?"
+    "hasAccount": "Vous avez déjà un compte ?",
+    "fastConnect": "Connexion Rapide",
+    "continueWithGoogle": "Continuer avec Gmail"
   },
   "common": {
       "loading": "Chargement...",
       "save": "Enregistrer les modifications",
       "cancel": "Annuler",
       "add": "Ajouter",
+      "more": "Plus",
       "edit": "Modifier",
       "delete": "Supprimer",
       "actions": "Actions",
@@ -52,7 +55,21 @@
     "noPendingCandidates": "Aucun candidat en attente.",
     "members": "Membres",
     "evaluate": "Évaluer",
-    "view": "Voir"
+    "view": "Voir",
+    "all": "Tous",
+    "resolved": "Résolu",
+    "pending": "En attente",
+    "resolve": "Résoudre",
+    "setPending": "Mettre en attente",
+    "group": "Groupe",
+    "action": "Action",
+    "feature": "Fonctionnalité",
+    "difficulty": "Difficulté",
+    "privacy": "Confidentialité",
+    "select": "Sélectionner...",
+    "auto": "Auto",
+    "public": "Public",
+    "semester": "Semestre"
   },
   "home": {
     "heroTitle": "Autonomiser",
@@ -88,9 +105,52 @@
   "members": {
       "title": "Membres",
       "subtitle": "Gérez les membres de l'organisation et leurs statistiques",
+      "socialMediaStats": "Présence sur les réseaux sociaux",
+      "activityStats": "Préférences d'activités",
+      "committeeStats": "Préférences de comité",
       "addMember": "Ajouter un membre",
       "totalMembers": "Total des membres",
-      "leadership": "Supervision de la direction"
+      "leadership": "Supervision de la direction",
+      "demographicsTitle": "Aperçu de la communauté",
+      "availabilityTitle": "Disponibilité et emploi du temps",
+      "performanceTitle": "Activité et performance",
+      "financialsTitle": "Frais d'adhésion",
+      "preferencesTitle": "Intérêts et préférences",
+      "roles": "Rôles des membres",
+      "status": "Statut d'adhésion",
+      "age": "Répartition par âge",
+      "occupations": "Répartition professionnelle",
+      "filled": "Rempli",
+      "notFilled": "Non rempli",
+      "pointsDistribution": "Répartition des points",
+      "timePreferences": "Préférences horaires",
+      "weeklySchedule": "Emploi du temps hebdomadaire",
+      "paidMembersList": "Liste des membres payés",
+      "fullyPaid": "Entièrement payé",
+      "financialHealth": "Santé financière",
+      "semesterCollection": "Collecte du semestre",
+      "cotisationLevels": "Statut des frais d'adhésion",
+      "fullyPaidDesc": "Membres ayant payé les deux semestres",
+      "financialHealthDesc": "Suivi des frais d'adhésion",
+      "noAgeData": "Aucune donnée d'âge",
+      "noSocialData": "Aucune donnée sur les réseaux sociaux",
+      "noActivityData": "Aucune donnée d'activité",
+      "noCommitteeData": "Aucune donnée de comité",
+      "taskPerformance": "Performance des tâches",
+      "totalDone": "Total terminé",
+      "meanPerMember": "Moyenne / Mem.",
+      "teamProductivity": "Productivité de l'équipe",
+      "teamProductivityDesc": "Taux d'achèvement moyen",
+      "tasksPerMember": "Tâches par membre",
+      "talentGrowthTitle": "Centre de Talent & Croissance",
+      "strengthsDistribution": "Principales Forces",
+      "talentDensitySubtitle": "Compétences les plus communes dans la communauté",
+      "weaknessesDistribution": "Domaines de Croissance",
+      "weaknessDensitySubtitle": "Défis communs sur lesquels les membres travaillent",
+      "noTalentData": "Aucune donnée de talent disponible pour le moment",
+      "personalityDistribution": "Spectre de Personnalité (DISC)",
+      "personalitySubtitle": "Analyse des styles comportementaux de la communauté",
+      "assessed": "Évalué"
   },
   "profile": {
       "backToMembers": "Retour aux membres",
@@ -103,6 +163,10 @@
       "complaintUpdated": "Statut de la plainte mis à jour",
       "complaintDeleted": "Plainte supprimée avec succès",
       "complaintFailed": "Échec de la mise à jour de la plainte",
+      "bothSemesters": "Les deux semestres",
+      "semester1Only": "S1 uniquement",
+      "semester2Only": "S2 uniquement",
+      "notPaid": "Non payé",
       "elevateProfile": "Améliorez votre profil",
       "complete": "TERMINÉ",
       "professionalHelp": "L'ajout de votre expertise professionnelle et de votre disponibilité aide l'organisation à vous assigner aux équipes et aux projets les mieux adaptés.",
@@ -305,10 +369,81 @@
       "deleteMember": "Supprimer le membre",
       "editProfile": "Modifier le profil",
       "deleteMemberConfirm": "Êtes-vous sûr de vouloir supprimer ce membre ? Cette action est irréversible.",
+      "astrologicalSign": "Signe Astrologique",
+      "preferredSocialMedia": "Réseau Social Préféré",
+      "socialMediaLink": "Lien du Réseau Social",
+      "preferredCommittee": "Comité Préféré",
+      "preferredActivityType": "Type d'Activité Préféré",
+      "preferredMeal": "Repas Préféré",
+      "engagementTitle": "Préférences d'engagement",
+      "lifestyleTitle": "Style de vie & Persona",
+      "socialMedia": {
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "linkedin": "LinkedIn",
+        "x": "X / Twitter",
+        "tiktok": "TikTok",
+        "other": "Autre"
+      },
+      "committees": {
+        "media": "Média",
+        "sponsoring": "Sponsoring",
+        "programme": "Programme",
+        "logistique": "Logistique",
+        "hr": "Ressources Humaines"
+      },
+      "activityTypes": {
+        "team_building": "Team Building",
+        "event": "Événement",
+        "meeting": "Réunion",
+        "training": "Formation"
+      },
+      "zodiac": {
+        "aries": "Bélier",
+        "taurus": "Taureau",
+        "gemini": "Gémeaux",
+        "cancer": "Cancer",
+        "leo": "Lion",
+        "virgo": "Vierge",
+        "libra": "Balance",
+        "scorpio": "Scorpion",
+        "sagittarius": "Sagittaire",
+        "capricorn": "Capricorne",
+        "aquarius": "Verseau",
+        "pisces": "Poissons"
+      },
       "difficultyBasic": "Basique",
       "difficultyMedium": "Moyen",
       "difficultyHard": "Difficile",
-      "difficultyExtreme": "Extrême"
+      "difficultyExtreme": "Extrême",
+      "join": "Rejoindre",
+      "joined": "Inscrit",
+      "joining": "Inscription...",
+      "joinFailed": "Échec de l'inscription à l'activité",
+      "fillRequiredCibles": "Veuillez sélectionner au moins un rôle cible (Cible).",
+      "personalityTitle": "Type de Personnalité",
+      "personalitySubtitle": "Évaluation du Profil DISC",
+      "personalityDescription": "Caractéristiques du Style",
+      "chosen": "Sélectionné",
+      "noPersonality": "Personnalité non encore évaluée",
+      "disc": {
+          "Dominant": {
+              "name": "Dominant",
+              "desc": "Orienté vers les résultats, direct et décisif. Focalisé sur l'atteinte des objectifs."
+          },
+          "Influence": {
+              "name": "Influence",
+              "desc": "Extraverti, enthousiaste et persuasif. Focalisé sur les personnes et l'inspiration."
+          },
+          "Steadiness": {
+              "name": "Stabilité",
+              "desc": "Patient, fiable et solidaire. Focalisé sur la collaboration et l'harmonie."
+          },
+          "Conscientious": {
+              "name": "Consciencieux",
+              "desc": "Analytique, systématique et précis. Focalisé sur la qualité et l'exactitude."
+          }
+      }
   },
   "teams": {
       "title": "Équipes",
@@ -326,6 +461,7 @@
       "membersCount_other": "{{count}} Membres"
   },
   "recruitment": {
+    "addNewQuestion": "Ajouter une Question",
       "title": "Tableau de Bord Recrutement",
       "subtitle": "Gérer les candidats et les modèles d'évaluation",
       "candidates": "Candidats",
@@ -554,6 +690,14 @@
     "avgAttendance": "Présence moy.",
     "distributionByType": "Répartition par type",
     "activityTrends": "Tendances de l'activité",
-    "avgAttendanceByType": "Présence moy. par type"
+    "avgAttendanceByType": "Présence moy. par type",
+    "interested": "Intéressé",
+    "notInterested": "Pas intéressé",
+    "markingInterest": "Marquage...",
+    "interestedUsers": "Utilisateurs intéressés",
+    "markPresent": "Marquer présent",
+    "markAbsent": "Marquer absent",
+    "interestMarked": "Intérêt marqué avec succès",
+    "interestFailed": "Échec du marquage de l'intérêt"
   }
 }

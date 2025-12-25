@@ -25,6 +25,22 @@ export const getTasksForMember = async (memberId: string): Promise<MemberTask[]>
     return data as MemberTask[];
 };
 
+export const getAllMemberTasks = async (): Promise<MemberTask[]> => {
+    const { data, error } = await supabase
+        .from('member_tasks')
+        .select(`
+            *,
+            task:tasks (*)
+        `);
+
+    if (error) {
+        console.error('Error fetching all member tasks:', error);
+        return [];
+    }
+
+    return data as MemberTask[];
+};
+
 export const getAllTasks = async (): Promise<Task[]> => {
     const { data, error } = await supabase
         .from('tasks')

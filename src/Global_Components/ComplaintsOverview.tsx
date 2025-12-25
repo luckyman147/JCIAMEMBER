@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, CheckCircle, Clock, Trash2, Filter } from 'lucide-react';
-import { getAllComplaints, updateComplaintStatus, deleteComplaint } from '../features/Members/services/members.service';
+import { MessageSquare, CheckCircle, Clock, Filter } from 'lucide-react';
+import { getAllComplaints, updateComplaintStatus } from '../features/Members/services/members.service';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
@@ -41,18 +41,6 @@ export default function ComplaintsOverview() {
       toast.error(t('profile.complaintFailed'));
       // Rollback
       setComplaints(previousComplaints);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm(t('common.deleteConfirm') || 'Are you sure?')) return;
-    try {
-      await deleteComplaint(id);
-      toast.success(t('profile.complaintDeleted'));
-      setComplaints(prev => prev.filter(c => c.id !== id));
-    } catch (error) {
-      console.error('Failed to delete', error);
-      toast.error(t('common.error'));
     }
   };
 
@@ -155,13 +143,7 @@ export default function ComplaintsOverview() {
                                 <Clock className="w-4 h-4" />
                             </button>
                          )}
-                         <button 
-                            onClick={() => handleDelete(c.id)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title={t('common.delete')}
-                         >
-                            <Trash2 className="w-4 h-4" />
-                         </button>
+
                        </div>
                     </div>
                   </div>

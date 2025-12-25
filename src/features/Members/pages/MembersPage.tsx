@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import Navbar from "../../../Global_Components/navBar";
-import MembersGrowthChart from "../components/stats/MembersGrowthChart";
+import MembersGrowthChart from "../components/stats/dashboard/MembersGrowthChart";
 import MembersList from "../components/MembersList";
 import MembersStatistics from "../components/stats/MembersStatistics";
 import ComplaintsOverview from "../../../Global_Components/ComplaintsOverview";
 import { useMembers, useAllPointsHistory } from "../hooks/useMembers";
+import { useAllMemberTasks } from "../../Tasks/hooks/useTasks";
 import AddMemberModal from "../components/AddMemberModal";
 import { UserPlus, Users, ShieldCheck, User } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
@@ -18,12 +19,13 @@ export default function MembersPage() {
     const isRTL = i18n.language === 'ar';
     const { data: members = [], isLoading: membersLoading } = useMembers();
     const { data: history = [], isLoading: historyLoading } = useAllPointsHistory();
+    const { data: allTaskAssignments = [], isLoading: tasksLoading } = useAllMemberTasks();
     const { role } = useAuth();
     const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || "");
     const [searchTerm, setSearchTerm] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const loading = membersLoading || historyLoading;
+    const loading = membersLoading || historyLoading || tasksLoading;
 
     const roleStats = useMemo(() => {
         const stats: Record<string, number> = {};
@@ -42,7 +44,7 @@ export default function MembersPage() {
     return (
           <div className="min-h-screen bg-gray-50">
               <Navbar />
-                   <main className="md:ml-64 pt-16 md:pt-6">
+                   <main className="md:ml-64 pt-16 md:pt-6 pb-24 md:pb-0">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
              
@@ -108,7 +110,7 @@ export default function MembersPage() {
             )}
 
             {/* General Statistics */}
-            {!loading && members.length > 0 && <MembersStatistics members={members} />}
+            {!loading && members.length > 0 && <MembersStatistics members={members} tasks={allTaskAssignments} />}
 
             {/* Growth Chart */}
             <div className="mb-8">

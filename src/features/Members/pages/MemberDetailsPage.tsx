@@ -13,9 +13,13 @@ import {
     MemberInterests,
     MemberBio,
     MemberProfessionalInfo,
+    MemberSocialInfo,
+    MemberLifestyle,
+    MemberEngagementPrefs,
+    MemberPersonality,
 } from "../components";
 import Navbar from "../../../Global_Components/navBar";
-import MemberPointsHistory from "../components/stats/MemberPointsHistory";
+import MemberPointsHistory from "../components/stats/profile/MemberPointsHistory";
 import { MemberTasksList } from "../../Tasks";
 import { MemberTeamsList } from "../../Teams";
 import { useMember, useUpdateMember, useAddComplaint, useDeleteMember } from "../hooks/useMembers";
@@ -83,7 +87,7 @@ export default function MemberDetailsPage() {
     return (
           <div className="min-h-screen bg-gray-50">
               <Navbar />
-                <main className="md:ms-64 pt-16 md:pt-6">
+                <main className="md:ms-64 pt-16 md:pt-6 pb-24 md:pb-0">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         <button 
                             onClick={() => navigate('/members')}
@@ -105,6 +109,23 @@ export default function MemberDetailsPage() {
                                 onUpdate={handleUpdate}
                                 readOnly={!isOwnProfile && !canEdit}
                             />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                                <MemberSocialInfo 
+                                    member={member} 
+                                    onUpdate={handleUpdate}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                                <MemberEngagementPrefs 
+                                    member={member} 
+                                    onUpdate={handleUpdate}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                                <MemberLifestyle 
+                                    member={member} 
+                                    onUpdate={handleUpdate}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -137,8 +158,18 @@ export default function MemberDetailsPage() {
                                         onUpdate={(desc) => handleUpdate({ description: desc })}
                                         readOnly={!isOwnProfile && !canEdit}
                                     />
+                               
                                 </div>
                             </div>
+
+                            <div className="lg:col-span-2 mb-1">
+                                <MemberPersonality 
+                                    type={member.personality_type}
+                                    onUpdate={(type) => handleUpdate({ personality_type: type })}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                            </div>
+                            
                             
                             <MemberStrengths 
                                 strengths={member.strengths || []}
@@ -151,7 +182,7 @@ export default function MemberDetailsPage() {
                                 onUpdate={(weak: string[]) => handleUpdate({ weaknesses: weak })}
                                 readOnly={!isOwnProfile && !canEdit}
                             />
-
+   
                             {/* Bottom Sections */}
                             <div className="space-y-8 lg:col-span-2">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

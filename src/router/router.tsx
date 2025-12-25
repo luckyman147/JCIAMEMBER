@@ -1,5 +1,6 @@
 
 import { createBrowserRouter } from 'react-router-dom'
+import RootLayout from '../Global_Components/RootLayout'
 import Login from '../features/Authentication/pages/LoginPage'
 import Register from '../features/Authentication/pages/register'
 import ForgotPassword from '../features/Authentication/pages/ForgotPasswordPage'
@@ -22,155 +23,160 @@ import NotFoundPage from '../Global_Components/NotFoundPage'
 import { EXECUTIVE_LEVELS } from '../utils/roles'
 
 export const router = createBrowserRouter([
-  // Public routes
-  { path: '/', element: <Home /> },
-  { path: '/pending-validation', element: <RhAdvisorPage /> },
-  { path: '/unauthorized', element: <UnauthorizedPage /> },
-  
-  // Guest-only routes (login/register)
   {
-    path: '/register',
-    element: (
-      <ProtectedRoute requireGuest={true}>
-        <ErrorBoundary>
-          <Register />
-        </ErrorBoundary>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/login',
-    element: (
-      <ProtectedRoute requireGuest={true}>
-        <Login />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/forgot-password',
-    element: (
-      <ProtectedRoute requireGuest={true}>
-        <ForgotPassword />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/reset-password',
-    element: (
-      <ResetPassword />
-    ),
-  },
+    element: <RootLayout />,
+    children: [
+      // Public routes
+      { path: '/', element: <Home /> },
+      { path: '/pending-validation', element: <RhAdvisorPage /> },
+      { path: '/unauthorized', element: <UnauthorizedPage /> },
+      
+      // Guest-only routes (login/register)
+      {
+        path: '/register',
+        element: (
+          <ProtectedRoute requireGuest={true}>
+            <ErrorBoundary>
+              <Register />
+            </ErrorBoundary>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/login',
+        element: (
+          <ProtectedRoute requireGuest={true}>
+            <Login />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/forgot-password',
+        element: (
+          <ProtectedRoute requireGuest={true}>
+            <ForgotPassword />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/reset-password',
+        element: (
+          <ResetPassword />
+        ),
+      },
 
-  // Activities routes
-  {
-    path: '/activities',
-    element: <AllActivitiesPage />,
-  },
-  {
-    path: '/activities/new',
-    element: (
-      <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
-        <ActivityForm />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/activities/:id/edit',
-    element: (
-      <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
-        <ActivityForm />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/activities/:id/GET',
-    element: (
-        <ActivityDetails />
-    
-    ),
-  },
+      // Activities routes
+      {
+        path: '/activities',
+        element: <AllActivitiesPage />,
+      },
+      {
+        path: '/activities/new',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <ActivityForm />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/activities/:id/edit',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <ActivityForm />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/activities/:id/GET',
+        element: (
+            <ActivityDetails />
+        
+        ),
+      },
 
-  // Teams routes
-  {
-    path: '/teams',
-    element: (
-      <ProtectedRoute>
-        <TeamsPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/teams/:id',
-    element: (
-      <ProtectedRoute>
-        <TeamDetailsPage />
-      </ProtectedRoute>
-    ),
-  },
+      // Teams routes
+      {
+        path: '/teams',
+        element: (
+          <ProtectedRoute>
+            <TeamsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/teams/:id',
+        element: (
+          <ProtectedRoute>
+            <TeamDetailsPage />
+          </ProtectedRoute>
+        ),
+      },
 
-  // Recruitment routes
-  {
-    path: '/recruitment',
-    element: (
-      <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
-        <RecruitmentPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/recruitment/templates/:id/edit',
-    element: (
-      <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
-        <TemplateCreatePage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/recruitment/templates/new',
-    element: (
-      <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
-        <TemplateCreatePage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/recruitment/candidates/:id',
-    element: (
-      <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
-        <CandidateEvaluationPage />
-      </ProtectedRoute>
-    ),
-  },
+      // Recruitment routes
+      {
+        path: '/recruitment',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <RecruitmentPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/recruitment/templates/:id/edit',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <TemplateCreatePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/recruitment/templates/new',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <TemplateCreatePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/recruitment/candidates/:id',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <CandidateEvaluationPage />
+          </ProtectedRoute>
+        ),
+      },
 
-  // Members routes
-  {
-    path: '/members',
-    element: (
-      <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
-        <MembersPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/members/:id',
-    element: (
-      <ProtectedRoute>
-        <MemberDetailsPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/me',
-    element: (
-      <ProtectedRoute>
-        <MemberDetailsPage />
-      </ProtectedRoute>
-    ),
-  },
+      // Members routes
+      {
+        path: '/members',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <MembersPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/members/:id',
+        element: (
+          <ProtectedRoute>
+            <MemberDetailsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/me',
+        element: (
+          <ProtectedRoute>
+            <MemberDetailsPage />
+          </ProtectedRoute>
+        ),
+      },
 
-  // Catch-all 404
-  {
-    path: '*',
-    element: <NotFoundPage />,
-  },
+      // Catch-all 404
+      {
+        path: '*',
+        element: <NotFoundPage />,
+      },
+    ]
+  }
 ])

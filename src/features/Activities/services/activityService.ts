@@ -287,7 +287,8 @@ export const activityService = {
       user_id: string
       is_temp?: boolean
       rate?: number
-      notes?: string 
+      notes?: string
+      is_interested?: boolean
     }
   ) => {
     // Insert participation
@@ -298,7 +299,8 @@ export const activityService = {
         user_id: participation.user_id,
         is_temp: participation.is_temp || false,
         rate: participation.rate || null,
-        notes: participation.notes || null
+        notes: participation.notes || null,
+        is_interested: participation.is_interested || false
       })
       .select(`
         *,
@@ -316,7 +318,7 @@ export const activityService = {
 
   updateParticipation: async (
     id: string,
-    updates: { rate?: number | null; notes?: string | null }
+    updates: { rate?: number | null; notes?: string | null; is_interested?: boolean | null }
   ) => {
     const { data, error } = await supabase
       .from('activity_participants')
@@ -370,6 +372,7 @@ export const activityService = {
         id,
         rate,
         notes,
+        is_interested,
         registered_at,
         activity:activities(
           id,
