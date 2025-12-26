@@ -10,6 +10,7 @@ import AddMemberModal from "../components/AddMemberModal";
 import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
+import TopProgressors from "../components/stats/dashboard/TopProgressors";
 
 import { useTranslation } from "react-i18next";
 // ... imports
@@ -129,15 +130,20 @@ export default function MembersPage() {
                 <div className="animate-in fade-in slide-in-from-top-4 duration-500">
                     <MembersStatistics members={members} tasks={allTaskAssignments} />
                     
-                    {/* Growth Chart */}
-                    <div className="mb-8 mt-10">
-                        <MembersGrowthChart history={history} />
+                    {/* Growth Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-10">
+                        <div className="lg:col-span-2">
+                            <MembersGrowthChart history={history as any} />
+                        </div>
+                        <div className="lg:col-span-2">
+                            <TopProgressors history={history as any} />
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Search and Filter */}
-            <div className="mb-6">
+            <div className="mb-6 mt-4">
                 <input
                     type="text"
                     placeholder={t('common.search')}

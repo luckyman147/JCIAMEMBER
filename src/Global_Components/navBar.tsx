@@ -9,7 +9,7 @@ import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Sidebar() {
   const { t, i18n } = useTranslation();
-  const { user, role, signOut } = useAuth()
+  const { user, role, poste, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -156,13 +156,20 @@ export default function Sidebar() {
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex flex-col items-start gap-1">
                 <p className="text-sm font-bold text-gray-900 truncate">
                   {user.user_metadata?.fullname || user.email}
                 </p>
-                <p className="text-[10px] text-(--color-myPrimary) uppercase font-bold tracking-widest">
-                  {role || 'Member'}
-                </p>
+                <div className={`flex flex-wrap gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-black uppercase tracking-widest border border-gray-200">
+                    {role || 'Member'}
+                  </span>
+                  {poste && (
+                    <span className="text-[9px] bg-(--color-mySecondary) text-white px-1.5 py-0.5 rounded font-black uppercase tracking-widest border border-blue-200 shadow-sm animate-in fade-in zoom-in duration-300">
+                      {poste}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

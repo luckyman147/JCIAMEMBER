@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Ban, Trash2, Sparkles, CheckCircle2 } from 'lucide-react'
-import type { Member } from '../../types'
-import EditMemberModal from '../common/EditMemberModal'
-import { useAuth } from '../../../Authentication/auth.context'
-import { EXECUTIVE_LEVELS } from '../../../../utils/roles'
+import type { Member } from '../../../types'
+import EditMemberModal from '../../common/EditMemberModal'
+import { useAuth } from '../../../../Authentication/auth.context'
+import { EXECUTIVE_LEVELS } from '../../../../../utils/roles'
 import { useTranslation } from 'react-i18next'
 
 interface MemberHeaderProps {
@@ -145,9 +145,21 @@ export default function MemberHeader({
           </div>
 
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate flex items-center gap-3">
               {member.fullname}
+              {member.is_validated && <CheckCircle2 className="w-5 h-5 text-green-500 fill-green-50/50" />}
             </h1>
+
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+               <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-200 shadow-sm">
+                  {member.role}
+               </span>
+               {member.poste && (
+                 <span className="px-2 py-1 bg-(--color-mySecondary) text-white rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100 shadow-sm">
+                    {member.poste.name}
+                 </span>
+               )}
+            </div>
 
             <div className="text-gray-500 text-sm flex flex-col sm:flex-row sm:items-center sm:gap-2 truncate">
               {member.email && <span className="truncate">{member.email}</span>}

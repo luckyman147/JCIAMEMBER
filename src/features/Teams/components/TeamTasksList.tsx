@@ -12,6 +12,7 @@ import { KanbanColumn } from "./tasks/KanbanColumn";
 import { ViewToggle } from "./tasks/ViewToggle";
 import { TaskCard } from "./tasks/TaskCard";
 import CreateTeamTaskModal from "./modals/CreateTeamTaskModal";
+import { TaskDetailsSidebar } from "../../Tasks";
 
 interface TeamMemberOption {
     id: string; // member_id
@@ -31,6 +32,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
     const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
     const [view, setView] = useState<'list' | 'kanban' | 'table'>('kanban');
     const [creationStatus, setCreationStatus] = useState<'todo' | 'in_progress' | 'completed'>('todo');
@@ -127,6 +129,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                             onEdit={setEditingTask}
                             onDelete={handleDelete}
                             onUpdate={loadTasks}
+                            onClickDetail={setSelectedTaskForDetail}
                         />
                     ))}
                 </div>
@@ -148,7 +151,10 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                                 {tasks.map(task => {
                                     const isExpired = task.deadline && task.status !== 'completed' && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
                                     return (
-                                        <tr key={task.id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <tr key={task.id} 
+                                            onClick={() => setSelectedTaskForDetail(task)}
+                                            className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                                        >
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <div className="font-bold text-gray-900 text-sm">{task.title}</div>
@@ -182,11 +188,11 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => setEditingTask(task)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                                                    <button onClick={(e) => { e.stopPropagation(); setEditingTask(task); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                                                         <FileText className="w-4 h-4" />
                                                     </button>
                                                     {isAdmin && (
-                                                        <button onClick={() => handleDelete(task.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     )}
@@ -216,6 +222,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                                     setIsCreateTaskOpen(true);
                                 }}
                                 onUpdate={loadTasks}
+                                onClickDetail={setSelectedTaskForDetail}
                             />
                         ))}
                     </div>
@@ -242,6 +249,12 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                     initialStatus={creationStatus}
                 />
             )}
+
+            <TaskDetailsSidebar 
+                task={selectedTaskForDetail}
+                isOpen={!!selectedTaskForDetail}
+                onClose={() => setSelectedTaskForDetail(null)}
+            />
         </div>
     );
 }

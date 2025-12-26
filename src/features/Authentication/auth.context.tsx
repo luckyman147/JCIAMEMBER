@@ -9,6 +9,7 @@ import type { LoginDTO } from './Dto/loginDTo'
 type AuthContextType = {
   user: User | null
   role: string | null
+  poste: string | null
   isValidated: boolean
   googleSignIn: () => Promise<any>
   signUp: (payload: RegisterDTO) => Promise<any>
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [role, setRole] = useState<string | null>(null)
+  const [poste, setPoste] = useState<string | null>(null)
   const [isValidated, setIsValidated] = useState<boolean>(true)
   const [loading, setLoading] = useState(true)
 
@@ -33,6 +35,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           `
           is_validated,
           roles (
+            name
+          ),
+          postes (
             name
           )
         `,
@@ -48,11 +53,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return {
         // @ts-ignore
         role: data?.roles?.name || 'member',
+        // @ts-ignore
+        poste: data?.postes?.name || null,
         isValidated: data?.is_validated || false
       }
     } catch (error) {
       console.error('Error in fetchUserData:', error)
-      return { role: 'member', isValidated: false }
+      return { role: 'member', poste: null, isValidated: false }
     }
   }
 
@@ -64,11 +71,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentUser) {
         fetchUserData(currentUser.id).then(res => {
           setRole(res.role)
+          setPoste(res.poste)
           setIsValidated(res.isValidated)
           setLoading(false)
         })
       } else {
         setRole(null)
+        setPoste(null)
         setIsValidated(false)
         setLoading(false)
       }
@@ -81,10 +90,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (currentUser) {
           fetchUserData(currentUser.id).then(res => {
             setRole(res.role)
+            setPoste(res.poste)
             setIsValidated(res.isValidated)
           })
         } else {
           setRole(null)
+          setPoste(null)
           setIsValidated(false)
         }
       },
@@ -138,6 +149,7 @@ const googleSignIn = async () => {
     } finally {
       setUser(null)
       setRole(null)
+      setPoste(null)
       setIsValidated(false)
       queryClient.clear()
       setLoading(false)
@@ -145,7 +157,7 @@ const googleSignIn = async () => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, role, isValidated, googleSignIn, signUp, signIn, signOut, loading }}>
+    <AuthContext.Provider value={{ user, role, poste, isValidated, googleSignIn, signUp, signIn, signOut, loading }}>
       {children}
     </AuthContext.Provider>
   )

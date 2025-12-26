@@ -114,7 +114,10 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                                         <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                                                             {member.fullname}
                                                         </div>
-                                                        <div className="text-sm text-gray-500">{member.email}</div>
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                                            <div className="text-xs text-gray-400 font-medium">{member.email}</div>
+                                                            
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -128,6 +131,11 @@ export default function MembersList({ members, loading }: MembersListProps) {
                                                     <Shield className="w-3 h-3" />
                                                     {member.role}
                                                 </div>
+                                                {member.poste && (
+                                                    <div className="text-[9px] mt-2 font-black uppercase tracking-widest text-white bg-(--color-myPrimary) px-2 py-1 rounded-md w-fit shadow-sm">
+                                                        {member.poste.name}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
                                                 <div className="flex items-center gap-1">

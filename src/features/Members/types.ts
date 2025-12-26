@@ -12,6 +12,12 @@ export interface Complaint {
     created_at: string;
 }
 
+export interface Poste {
+    id: string;
+    role_id: string;
+    name: string;
+}
+
 export interface Member {
     id: string;
     fullname: string;
@@ -19,13 +25,14 @@ export interface Member {
     phone?: string;
     avatar_url?: string;
     role: string;
+    poste_id?: string;
+    poste?: Poste;
     
     // Member specific fields
     
     points: number;
     cotisation_status: CotisationStatus;
     is_validated: boolean;
- 
     
     description?: string;
     strengths?: string[];

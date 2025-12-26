@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { CotisationStatus } from '../../types';
+import type { CotisationStatus } from '../../../types';
 
 interface MemberStatusProps {
     isValidated: boolean;

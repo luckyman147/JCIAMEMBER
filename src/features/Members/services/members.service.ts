@@ -1,4 +1,4 @@
-import type { Member, PointsHistoryEntry } from "../types";
+import type { Member, PointsHistoryEntry, Poste } from "../types";
 import supabase from "../../../utils/supabase";
 import { ROLE_MANAGERS } from "../../../utils/roles";
 
@@ -33,7 +33,8 @@ export const getMembers = async (): Promise<Member[]> => {
             personality_type,
             estimated_volunteering_hours,
             advisor_id,
-            advisor:advisor_id(id, fullname, avatar_url)
+            advisor:advisor_id(id, fullname, avatar_url),
+            poste:poste_id(id, role_id, name)
         `);
         // We filter by role 'member' ideally, but here we fetch all and can filter in frontend or query
         // Assuming roles relation is set up. 
@@ -55,7 +56,8 @@ export const getMembers = async (): Promise<Member[]> => {
         weaknesses: item.weaknesses || [],
         preferred_categories: item.preferred_categories || [],
         complaints: item.complaints || [],
-        advisor: Array.isArray(item.advisor) ? item.advisor[0] : item.advisor
+        advisor: Array.isArray(item.advisor) ? item.advisor[0] : item.advisor,
+        poste: Array.isArray(item.poste) ? item.poste[0] : item.poste
     }));
 };
 
@@ -99,7 +101,8 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
             estimated_volunteering_hours,
             advisor_id,
             advisor:advisor_id(id, fullname, avatar_url),
-            advisees:profiles!advisor_id(id, fullname, avatar_url)
+            advisees:profiles!advisor_id(id, fullname, avatar_url),
+            poste:poste_id(id, role_id, name)
         `)
         .eq('id', id)
         .single();
@@ -134,7 +137,8 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
         estimated_volunteering_hours: data.estimated_volunteering_hours,
         advisor_id: data.advisor_id,
         advisor: (Array.isArray(data.advisor) ? data.advisor[0] : data.advisor) as Partial<Member>,
-        advisees: (Array.isArray(data.advisees) ? data.advisees : (data.advisees ? [data.advisees] : [])) as Partial<Member>[]
+        advisees: (Array.isArray(data.advisees) ? data.advisees : (data.advisees ? [data.advisees] : [])) as Partial<Member>[],
+        poste: (Array.isArray(data.poste) ? data.poste[0] : data.poste) as Poste
     };
 };
 
@@ -175,7 +179,7 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
             'availability_days', 'availability_time', 'estimated_volunteering_hours',
             'astrological_sign', 'preferred_social_media', 'social_media_link',
             'preferred_committee', 'preferred_activity_type', 'preferred_meal', 'personality_type',
-            'advisor_id'
+            'advisor_id', 'poste_id'
         ];
         
         // Fields ONLY high-level users can update
@@ -469,7 +473,7 @@ export const getAllPointsHistory = async () => {
             points, 
             created_at, 
             member_id,
-            member:profiles(fullname, avatar_url)
+            member:profiles(fullname, avatar_url, roles(name), postes(name))
         `)
         .order('created_at', { ascending: true });
 
@@ -554,4 +558,30 @@ export const deleteComplaint = async (id: string): Promise<void> => {
         console.error('Error deleting complaint:', error);
         throw error;
     }
+};
+
+/**
+ * Fetch all available postes for a specific role name
+ */
+export const getPostesByRole = async (roleName: string): Promise<Poste[]> => {
+    // First get the role ID
+    const { data: roleData } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', roleName)
+        .single();
+    
+    if (!roleData) return [];
+
+    const { data, error } = await supabase
+        .from('postes')
+        .select('id, role_id, name')
+        .eq('role_id', roleData.id)
+        .order('name');
+    
+    if (error) {
+        console.error(`Error fetching postes for role ${roleName}:`, error);
+        return [];
+    }
+    return data || [];
 };

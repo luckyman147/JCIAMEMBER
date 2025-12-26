@@ -13,6 +13,7 @@ interface KanbanColumnProps {
     onDelete: (taskId: string) => void;
     onAddNew: (status: any) => void;
     onUpdate: () => void;
+    onClickDetail?: (task: Task) => void;
 }
 
 export const KanbanColumn = ({ 
@@ -23,7 +24,8 @@ export const KanbanColumn = ({
     onEdit, 
     onDelete, 
     onAddNew,
-    onUpdate 
+    onUpdate,
+    onClickDetail
 }: KanbanColumnProps) => {
     const columnTasks = tasks.filter(t => (t.status || 'todo') === column.id);
 
@@ -74,6 +76,7 @@ export const KanbanColumn = ({
                                             onEdit={onEdit}
                                             onDelete={onDelete}
                                             onUpdate={onUpdate}
+                                            onClickDetail={onClickDetail}
                                             provided={draggableProvided}
                                             canDrag={canDrag}
                                         />

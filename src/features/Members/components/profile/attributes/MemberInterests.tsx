@@ -8,11 +8,12 @@ import {
     createCategory, 
     deleteGlobalCategory,
     type Category 
-} from "../../services/members.service";
-import { useAuth } from "../../../Authentication/auth.context";
-import { EXECUTIVE_LEVELS } from "../../../../utils/roles";
+} from "../../../services/members.service";
+import { useAuth } from "../../../../Authentication/auth.context";
+import { EXECUTIVE_LEVELS } from "../../../../../utils/roles";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { ProfileCard } from "../shared";
 
 interface MemberInterestsProps {
     memberId: string;
@@ -135,29 +136,22 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                        <Tag className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900">{t('profile.interests')}</h3>
-                        {canDeleteGlobal && (
-                            <p className="text-[10px] text-gray-400 font-medium italic">{t('profile.longPressDelete')}</p>
-                        )}
-                    </div>
-                </div>
-                {!showCreateInput && !readOnly && (
-                    <button
-                        onClick={() => setShowCreateInput(true)}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4"
-                    >
-                        {t('profile.addNew')}
-                    </button>
-                )}
-            </div>
-            
+        <ProfileCard
+            title={t('profile.interests')}
+            subtitle={canDeleteGlobal ? t('profile.longPressDelete') : undefined}
+            icon={Tag}
+            iconColorClass="text-blue-600"
+            iconBgClass="bg-blue-50"
+            headerActions={!showCreateInput && !readOnly && (
+                <button
+                    onClick={() => setShowCreateInput(true)}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4"
+                >
+                    {t('profile.addNew')}
+                </button>
+            )}
+            readOnly={true}
+        >
             <div className="space-y-4">
                 {showCreateInput && (
                     <div className="p-2.5 bg-gray-50/50 rounded-xl border border-blue-100 animate-in slide-in-from-top-1 duration-200">
@@ -211,7 +205,7 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                             return (
                                 <button
                                     key={cat.id}
-                                    onClick={() => !longPressTimer.current && handleCategoryToggle(cat)}
+                                    onClick={() => !pressingId && handleCategoryToggle(cat)}
                                     onMouseDown={() => startPress(cat)}
                                     onMouseUp={cancelPress}
                                     onMouseLeave={cancelPress}
@@ -236,6 +230,6 @@ export default function MemberInterests({ memberId, readOnly = false }: MemberIn
                     </div>
                 )}
             </div>
-        </div>
+        </ProfileCard>
     );
 }

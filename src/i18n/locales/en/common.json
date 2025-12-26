@@ -158,7 +158,12 @@
       "commitmentDesc": "Based on self-reported hours",
       "volunteeringSection": "Volunteering Commitment",
       "avgHours": "Avg Hours",
-      "filledRate": "Filled Rate"
+      "filledRate": "Filled Rate",
+      "topPerformers": "Top Performers",
+      "topGrowth": "Top Growth",
+      "pointGains": "Point gains",
+      "monthlyGains": "Monthly point gains",
+      "noPointsActivity": "No points activity found for this period."
   },
   "profile": {
       "backToMembers": "Back to Members",
@@ -194,6 +199,8 @@
       "lifestyleLabel": "Lifestyle",
       "advisor": "Supervisor",
       "advisees": "Students",
+      "uploadAvatar": "Upload Avatar",
+      "avatarImage": "Avatar Image",
       "selectAdvisor": "Select Supervisor",
       "noAdvisor": "No supervisor assigned",
       "noAdvisees": "No students assigned yet",

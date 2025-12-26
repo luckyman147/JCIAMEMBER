@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@supabase/supabase-js';
 import supabase from '../../../utils/supabase';
 import { MEMBER_KEYS } from '../hooks/useMembers';
-import { getRoles } from '../services/members.service';
+import { getRoles, getPostesByRole } from '../services/members.service';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -18,9 +18,11 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
     email: '',
     phone: '',
     role: 'member',
+    posteId: '',
     isValidated: true,
   });
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [availablePostes, setAvailablePostes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
@@ -29,6 +31,13 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
         getRoles().then(setAvailableRoles);
     }
   }, [isOpen]);
+
+  // Fetch postes when role changes
+  useEffect(() => {
+    if (isOpen && formData.role) {
+      getPostesByRole(formData.role).then(setAvailablePostes);
+    }
+  }, [formData.role, isOpen]);
 
   if (!isOpen) return null;
 
@@ -97,6 +106,7 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
           fullname: formData.fullname,
           phone: formData.phone,
           role_id: roleData?.id || null,
+          poste_id: formData.posteId || null,
           is_validated: formData.isValidated,
           points: 100,
         })
@@ -126,7 +136,7 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
 
       queryClient.invalidateQueries({ queryKey: MEMBER_KEYS.lists() });
       onClose();
-      setFormData({ fullname: '', email: '', phone: '', role: 'member', isValidated: true });
+      setFormData({ fullname: '', email: '', phone: '', role: 'member', posteId: '', isValidated: true });
     } catch (error: any) {
       toast.error(error.message || 'Failed to create member');
       console.error(error);
@@ -212,8 +222,26 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
                         {availableRoles.map(r => (
                             <option key={r} value={r}>{r.toUpperCase()}</option>
                         ))}
-                    </select>
-                  </div>
+                      </select>
+                    </div>
+
+                    {availablePostes.length > 0 && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                          Specific Poste
+                        </label>
+                        <select
+                            className="w-full px-4 py-2.5 bg-purple-50/30 border border-purple-100 rounded-xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all font-semibold"
+                            value={formData.posteId}
+                            onChange={(e) => setFormData({ ...formData, posteId: e.target.value })}
+                        >
+                            <option value="">Select Poste</option>
+                            {availablePostes.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                      </div>
+                    )}
 
                   <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 flex items-center justify-between">
                       <div className="flex items-center gap-3">

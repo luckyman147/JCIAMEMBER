@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Moon, Utensils, Pencil, Check, X, Sparkles } from "lucide-react";
-import type { Member } from "../../types";
+import { Moon, Utensils, Sparkles } from "lucide-react";
+import type { Member } from "../../../types";
 import { useTranslation } from "react-i18next";
+import { ProfileCard } from "../shared";
 
 interface Props {
     member: Member;
@@ -43,34 +44,18 @@ export default function MemberLifestyle({ member, onUpdate, readOnly = true }: P
     const getSignIcon = (id: string) => ZODIAC_SIGNS.find(s => s.id === id)?.icon || '';
 
     return (
-        <div className={`bg-white p-6 rounded-2xl shadow-sm border transition-all ${isEditing ? 'border-purple-400 ring-4 ring-purple-50' : 'border-gray-100 hover:shadow-md'}`}>
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('profile.lifestyleTitle')}</h3>
-                </div>
-                {!readOnly && (
-                    <div className="flex gap-2">
-                        {isEditing ? (
-                            <>
-                                <button onClick={handleSave} className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                                    <Check className="w-4 h-4" />
-                                </button>
-                                <button onClick={() => setIsEditing(false)} className="p-1.5 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 transition-colors">
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </>
-                        ) : (
-                            <button onClick={() => setIsEditing(true)} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">
-                                <Pencil className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-                )}
-            </div>
-
+        <ProfileCard
+            title={t('profile.lifestyleTitle')}
+            icon={Sparkles}
+            iconColorClass="text-purple-600"
+            iconBgClass="bg-purple-50"
+            isEditing={isEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={handleSave}
+            onCancel={() => setIsEditing(false)}
+            readOnly={readOnly}
+            activeBorderClass="border-purple-400 ring-4 ring-purple-50"
+        >
             <div className="space-y-4">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
@@ -122,6 +107,6 @@ export default function MemberLifestyle({ member, onUpdate, readOnly = true }: P
                     )}
                 </div>
             </div>
-        </div>
+        </ProfileCard>
     );
 }

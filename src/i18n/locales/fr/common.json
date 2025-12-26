@@ -157,7 +157,12 @@
       "commitmentDesc": "Basé sur les heures déclarées",
       "volunteeringSection": "Engagement bénévole",
       "avgHours": "Heures moyennes",
-      "filledRate": "Taux de remplissage"
+      "filledRate": "Taux de remplissage",
+      "topPerformers": "Membres les Plus Performants",
+      "topGrowth": "Meilleure Progression",
+      "pointGains": "Points Gagnés",
+      "monthlyGains": "Gains de Points Mensuels",
+      "noPointsActivity": "Aucune activité de points trouvée pour cette période."
   },
   "profile": {
       "backToMembers": "Retour aux membres",
@@ -199,6 +204,8 @@
       "more": "plus",
       "membershipStatus": "Statut d'adhésion",
       "validation": "Validation",
+            "uploadAvatar": "Télécharger l'avatar",
+      "avatarImage": "Image de profile",
       "validationQuestion": "Ce membre est-il officiellement validé ?",
       "cotisation": "Cotisation",
       "semester1": "Semestre 1",

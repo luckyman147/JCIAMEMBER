@@ -30,6 +30,7 @@ interface TaskCardProps {
     onEdit: (task: Task) => void;
     onDelete: (taskId: string) => void;
     onUpdate: () => void;
+    onClickDetail?: (task: Task) => void;
     provided?: any;
     canDrag?: boolean;
 }
@@ -42,6 +43,7 @@ export const TaskCard = ({
     onEdit, 
     onDelete, 
     onUpdate,
+    onClickDetail,
     provided,
     canDrag = true 
 }: TaskCardProps) => (
@@ -49,8 +51,9 @@ export const TaskCard = ({
         ref={provided?.innerRef}
         {...provided?.draggableProps}
         {...provided?.dragHandleProps}
+        onClick={() => onClickDetail?.(task)}
         className={`
-            bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all group
+            bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all group cursor-pointer
             ${isKanban ? 'mb-3' : 'mb-3'}
             ${!canDrag ? 'cursor-default' : ''}
         `}
@@ -106,12 +109,12 @@ export const TaskCard = ({
 
             <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {(isAdmin || task.assignments?.some(a => a.member_id === currentUserId)) && (
-                    <button onClick={() => onEdit(task)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(task); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit2 className="w-3.5 h-3.5" />
                     </button>
                 )}
                 {isAdmin && (
-                    <button onClick={() => onDelete(task.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                         <Trash2 className="w-3.5 h-3.5" />
                     </button>
                 )}

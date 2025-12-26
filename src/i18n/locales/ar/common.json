@@ -158,9 +158,15 @@
       "commitmentDesc": "بناءً على الساعات المعلنة",
       "volunteeringSection": "الالتزام بالتطوع",
       "avgHours": "متوسط الساعات",
-      "filledRate": "معدل الإكمال"
+      "filledRate": "معدل الإكمال",
+      "topPerformers": "الأكثر تميزاً",
+      "topGrowth": "الأكثر تطوراً",
+      "pointGains": "زيادة النقاط",
+      "monthlyGains": "زيادة النقاط الشهرية",
+      "noPointsActivity": "لا يوجد نشاط نقاط لهذه الفترة."
   },
   "profile": {
+      "uploadAvatar": "تحميل الصورة",
       "backToMembers": "العودة إلى الأعضاء",
       "loadingDetails": "جاري تحميل تفاصيل العضو...",
       "memberUpdated": "تم تحديث العضو بنجاح",
@@ -352,6 +358,7 @@
       "noPointsHistoryFound": "لم يتم العثور على سجل نقاط.",
       "date": "التاريخ",
       "source": "المصدر",
+      "avatarImage": "صورة الملف الشخصي",
       "showMore": "عرض المزيد",
       "assignedTasks": "المهام المعينة",
       "trackMemberProgress": "تتبع تقدم الأعضاء والمهام",

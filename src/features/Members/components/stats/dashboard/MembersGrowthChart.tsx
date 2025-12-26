@@ -1,13 +1,23 @@
-
 import  { useMemo, useState } from 'react';
 import { Filter, Trophy } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PointsHistoryRaw {
     id: string;
     points: number;
     created_at: string;
     member_id: string;
-    member: { fullname: string; avatar_url: string | null }[] | { fullname: string; avatar_url: string | null };
+    member: { 
+        fullname: string; 
+        avatar_url: string | null;
+        roles?: { name: string } | { name: string }[];
+        postes?: { name: string } | { name: string }[];
+    } | { 
+        fullname: string; 
+        avatar_url: string | null;
+        roles?: { name: string } | { name: string }[];
+        postes?: { name: string } | { name: string }[];
+    }[];
 }
 
 interface ChartProps {
@@ -17,6 +27,7 @@ interface ChartProps {
 type TimeFrame = 'all' | 'year' | 'quarter' | 'month';
 
 export default function MembersGrowthChart({ history }: ChartProps) {
+    const { t } = useTranslation();
     const [hoveredMember, setHoveredMember] = useState<string | null>(null);
     const [timeFrame, setTimeFrame] = useState<TimeFrame>('month');
 
@@ -41,19 +52,29 @@ export default function MembersGrowthChart({ history }: ChartProps) {
 
         // 2. Group by Member & Sum Points
         const memberMap = new Map<string, { 
-            name: string, 
-            avatar: string | null,
-            total: number 
+            name: string; 
+            avatar: string | null;
+            poste?: string;
+            total: number;
         }>();
 
         filteredHistory.forEach(record => {
-            const memberData = Array.isArray(record.member) ? record.member[0] : record.member;
+            const memberData: any = Array.isArray(record.member) ? record.member[0] : record.member;
             if (!memberData?.fullname) return;
 
+            // Exclude Presidents and VPs
+            const rawRoles = memberData.roles;
+            const roleObject = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
+            const roleName = (roleObject?.name || '').toLowerCase();
+            if (roleName.includes('president') || roleName.includes('vp') || roleName === 'vice-president') return;
+
             if (!memberMap.has(record.member_id)) {
+                const rawPostes = memberData.postes;
+                const posteObject = Array.isArray(rawPostes) ? rawPostes[0] : rawPostes;
                 memberMap.set(record.member_id, { 
                     name: memberData.fullname, 
                     avatar: memberData.avatar_url,
+                    poste: posteObject?.name,
                     total: 0 
                 });
             }
@@ -93,7 +114,7 @@ export default function MembersGrowthChart({ history }: ChartProps) {
         return (
              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col items-center justify-center h-[200px] text-gray-400">
                 <Filter className="w-8 h-8 mb-2 opacity-30" />
-                <p className="text-sm">No points activity found for this period.</p>
+                <p className="text-sm">{t('members.noPointsActivity', 'No points activity found for this period.')}</p>
                 <div className="flex gap-2 mt-4">
                     {(['month', 'quarter', 'year', 'all'] as TimeFrame[]).map(tf => (
                          <button
@@ -101,7 +122,7 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                             onClick={() => setTimeFrame(tf)}
                             className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${timeFrame === tf ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-gray-200 hover:bg-gray-50'}`}
                         >
-                            {tf === 'all' ? 'All' : tf === 'year' ? 'Year' : tf === 'quarter' ? 'Quarter' : 'Month'}
+                            {tf === 'all' ? t('common.all') : tf === 'year' ? t('profile.year') : tf === 'quarter' ? t('profile.trimester') : t('profile.month')}
                         </button>
                     ))}
                 </div>
@@ -118,7 +139,7 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                 <div>
                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                         <Trophy className="w-5 h-5 text-yellow-500" />
-                        Top Performers
+                        {t('members.topPerformers', 'Top Performers')}
                     </h3>
                 </div>
                 
@@ -133,7 +154,7 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                                     : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
-                            {tf === 'all' ? 'All' : tf === 'year' ? 'Year' : tf === 'quarter' ? 'Quarter' : 'Month'}
+                            {tf === 'all' ? t('common.all') : tf === 'year' ? t('profile.year') : tf === 'quarter' ? t('profile.trimester') : t('profile.month')}
                         </button>
                     ))}
                 </div>
@@ -197,6 +218,7 @@ export default function MembersGrowthChart({ history }: ChartProps) {
                                 <span className={`text-[10px] font-medium text-center truncate max-w-full transition-colors ${isHovered ? 'text-gray-900' : 'text-gray-500'}`}>
                                     {member.name.split(' ')[0]} {/* First name only for cleaner look */}
                                 </span>
+                              
                             </div>
                         </div>
                     );

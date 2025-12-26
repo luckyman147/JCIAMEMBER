@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Brain, Info } from 'lucide-react';
+import { ProfileCard } from "../shared";
 
 interface MemberPersonalityProps {
     type?: 'Dominant' | 'Influence' | 'Steadiness' | 'Conscientious';
@@ -25,24 +26,19 @@ export default function MemberPersonality({ type, onUpdate, readOnly = false }: 
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full hover:shadow-md transition-all">
-            <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                        <Brain className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div className={isRTL ? 'text-right' : 'text-left'}>
-                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('profile.personalityTitle')}</h3>
-                        <p className="text-[10px] text-gray-500 font-medium">{t('profile.personalitySubtitle')}</p>
-                    </div>
+        <ProfileCard
+            title={t('profile.personalityTitle')}
+            subtitle={t('profile.personalitySubtitle')}
+            icon={Brain}
+            iconColorClass="text-indigo-600"
+            iconBgClass="bg-indigo-50"
+            readOnly={true}
+            headerActions={!readOnly && (
+                <div title={t('profile.personalitySubtitle')}>
+                    <Info className="w-4 h-4 text-gray-300 cursor-help" />
                 </div>
-                {!readOnly && (
-                    <div title={t('profile.personalitySubtitle')}>
-                        <Info className="w-4 h-4 text-gray-300 cursor-help" />
-                    </div>
-                )}
-            </div>
-
+            )}
+        >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {PERSONALITIES_CONFIG.map((p) => {
                     const isSelected = type === p.id;
@@ -112,6 +108,6 @@ export default function MemberPersonality({ type, onUpdate, readOnly = false }: 
                     <p className="text-xs text-gray-400 italic">{t('profile.noPersonality')}</p>
                 </div>
             )}
-        </div>
+        </ProfileCard>
     );
 }

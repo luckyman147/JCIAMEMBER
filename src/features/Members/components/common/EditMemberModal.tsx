@@ -1,9 +1,9 @@
 import { useState, useEffect, } from 'react'
-import type { Member } from '../../types'
+import type { Member, Poste } from '../../types'
 import { uploadAvatarImage } from '../../../../utils/uploadHelpers'
 import { useFileUpload } from '../../../Activities/hooks/useFileUpload'
-import { getRoles } from '../../services/members.service'
-import AvatarImageSection from '../profile/avatarImageComponents'
+import { getRoles, getPostesByRole } from '../../services/members.service'
+import MemberAvatarImage from '../profile/identity/MemberAvatarImage'
 import { useAuth } from '../../../Authentication/auth.context'
 import { EXECUTIVE_LEVELS } from '../../../../utils/roles'
 import { useTranslation } from "react-i18next";
@@ -34,7 +34,9 @@ export default function EditMemberModal({
   const [phone, setPhone] = useState(member.phone || '')
   const [birthday, setBirthday] = useState(member.birth_date|| '')
   const [role, setRole] = useState(member.role)
+  const [posteId, setPosteId] = useState(member.poste_id || '')
   const [availableRoles, setAvailableRoles] = useState<string[]>([])
+  const [availablePostes, setAvailablePostes] = useState<Poste[]>([])
   const [loading, setLoading] = useState(false)
 
   // Reset state when the modal opens or the member changes
@@ -46,6 +48,7 @@ export default function EditMemberModal({
       const formattedDate = member.birth_date ? member.birth_date.split('T')[0] : ''
       setBirthday(formattedDate)
       setRole(member.role)
+      setPosteId(member.poste_id || '')
       avatarImage.setUrls(member.avatar_url ? [member.avatar_url] : [])
     }
   }, [member, isOpen])
@@ -56,6 +59,15 @@ export default function EditMemberModal({
       getRoles().then(setAvailableRoles)
     }
   }, [isOpen])
+
+  // Fetch postes when role changes
+  useEffect(() => {
+    if (isOpen && role) {
+      getPostesByRole(role).then(setAvailablePostes)
+    } else {
+      setAvailablePostes([])
+    }
+  }, [role, isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,6 +94,7 @@ export default function EditMemberModal({
 
       if (canEditExclusive) {
         updates.role = role
+        updates.poste_id = posteId || undefined
       }
 
       await onSave(updates)
@@ -117,7 +130,7 @@ export default function EditMemberModal({
 
         <form onSubmit={handleSubmit} className='p-6 space-y-4'>
           {(isOwnProfile || canEditExclusive) && (
-             <AvatarImageSection fileUpload={avatarImage} />
+             <MemberAvatarImage fileUpload={avatarImage} />
           )}
 
           <div>
@@ -163,26 +176,51 @@ export default function EditMemberModal({
           </div>
 
           {canEditExclusive && (
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                {t('profile.role')}
-              </label>
+            <div className="space-y-4">
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                  {t('profile.role')}
+                </label>
 
-              <select
-                className='w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary)'
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                {availableRoles.length === 0 && (
-                  <option value={role}>{role}</option>
-                )}
+                <select
+                  className='w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary)'
+                  value={role}
+                  onChange={(e) => {
+                    setRole(e.target.value);
+                    setPosteId(''); // Reset poste when role changes
+                  }}
+                >
+                  {availableRoles.length === 0 && (
+                    <option value={role}>{role}</option>
+                  )}
 
-                {availableRoles.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
+                  {availableRoles.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {availablePostes.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    {t('profile.poste', 'Poste Specific')}
+                  </label>
+                  <select
+                    className='w-full border rounded-md p-2 text-sm focus:ring-(--color-myPrimary) focus:border-(--color-myPrimary)'
+                    value={posteId}
+                    onChange={(e) => setPosteId(e.target.value)}
+                  >
+                    <option value="">{t('common.select', 'Select Poste')}</option>
+                    {availablePostes.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           )}
           

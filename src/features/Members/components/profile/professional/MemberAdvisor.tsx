@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { UserCircle, Users, ChevronRight, UserPlus, X } from 'lucide-react';
-import type { Member } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { getMembers } from '../../services/members.service';
+import type { Member } from "../../../types";
+import { useTranslation } from "react-i18next";
+import { getMembers } from "../../../services/members.service";
 
 interface MemberAdvisorProps {
     member: Member;
