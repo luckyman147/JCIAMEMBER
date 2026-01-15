@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Trophy, Star, RefreshCw, Calendar, Target, Award, Clock, CreditCard, Filter, ChevronDown, ListFilter } from 'lucide-react';
+import { Trophy, Star, RefreshCw, Calendar, Target, Award } from 'lucide-react';
 import type { Member } from '../../../types';
 import { useTranslation } from 'react-i18next';
 import { jpsService } from "../../../services/jpsService";
@@ -26,8 +26,8 @@ export function JPSLeaderboardStats(_props: Props) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [activePeriod, setActivePeriod] = useState<PeriodType>('month');
-    const [sortBy, setSortBy] = useState<SortType>('jps');
-    const [cotisationFilter, setCotisationFilter] = useState<CotisationFilterType>('all');
+    const [sortBy] = useState<SortType>('jps');
+    const [cotisationFilter] = useState<CotisationFilterType>('all');
     const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const { role } = useAuth();

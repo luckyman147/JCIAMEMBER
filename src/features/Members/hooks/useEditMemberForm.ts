@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import type { Member, Poste } from '../types';
 import { uploadAvatarImage } from '../../../utils/uploadHelpers';
 import { useFileUpload } from '../../Activities/hooks/useFileUpload';

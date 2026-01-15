@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Briefcase, ChevronRight, LayoutGrid, Pencil, Trash2, X, Users } from "lucide-react";
+import { Plus, Briefcase, ChevronRight, LayoutGrid, Pencil, Trash2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Navbar from "../../../Global_Components/navBar";
 import { useAuth } from "../../Authentication/auth.context";
@@ -53,7 +53,7 @@ export default function ProjectsPage() {
     
     const canManage = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
 
-    const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<ProjectFormValues>({
+    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ProjectFormValues>({
         resolver: zodResolver(projectSchema)
     });
 
