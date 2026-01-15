@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Member } from '../../types';
 import MemberAvatarImage from '../profile/identity/MemberAvatarImage';
 import { useEditMemberForm } from '../../hooks/useEditMemberForm';
@@ -75,7 +74,7 @@ export default function EditMemberModal(props: EditMemberModalProps) {
                   setEditPosteName={setEditPosteName}
                   handleUpdatePoste={handleUpdatePoste}
                   handleDeletePoste={handleDeletePoste}
-                  currentUserRole={currentUserRole}
+                  currentUserRole={currentUserRole!}
                 />
               )}
             </div>
