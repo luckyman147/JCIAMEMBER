@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../Authentication/auth.context";
 import Navbar from "../../../Global_Components/navBar";
 import { toast } from "sonner";
@@ -9,6 +10,8 @@ import AddMemberModal from "../components/modals/AddMemberModal";
 import CreateTeamTaskModal from "../components/modals/CreateTeamTaskModal";
 import TeamTasksList from "../components/TeamTasksList";
 import EditTeamModal from "../components/modals/EditTeamModal";
+import TeamStrategy from "../components/TeamStrategy";
+import TeamLinks from "../components/TeamLinks";
 import { useTeamDetails, useJoinTeam, useLeaveTeam, useDeleteTeam } from "../hooks/useTeams";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 import { Trash2 } from "lucide-react";
@@ -18,6 +21,7 @@ export default function TeamDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user, role } = useAuth();
+    const { t } = useTranslation();
     const hasExecutiveRole = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
     
     const { data: team, isLoading: loading, refetch } = useTeamDetails(id, user?.id);
@@ -196,41 +200,54 @@ export default function TeamDetailsPage() {
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+                
+                {/* Full Width Section: Tasks */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-black flex items-center gap-2">
+                            {t('profile.teamTasks')}
+                           
+                        </h2>
+                            {canManageTeam && (
+                            <button 
+                                onClick={() => setIsCreateTaskOpen(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-(--color-mySecondary) text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-gray-800 transition-colors"
+                            >
+                                <Plus className="w-4 h-4" /> {t('profile.newTask')}
+                            </button>
+                        )}
+                    </div>
                     
-                    {/* Main: Tasks */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    Team Tasks 
-                                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                                         Active
-                                    </span>
-                                </h2>
-                                 {canManageTeam && (
-                                    <button 
-                                        onClick={() => setIsCreateTaskOpen(true)}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-(--color-mySecondary) text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-                                    >
-                                        <Plus className="w-4 h-4" /> New Task
-                                    </button>
-                                )}
-                            </div>
-                            
-                            <TeamTasksList 
-                                teamId={team.id} 
-                                refreshTrigger={taskRefreshTrigger} 
-                                isAdmin={canManageTeam} 
-                                teamMembers={team.members?.map((m: any) => ({ 
-                                    id: m.member_id, 
-                                    fullname: m.member?.fullname || 'Unknown', 
-                                    avatar_url: m.member?.avatar_url 
-                                })) || []}
-                            />
+                    <TeamTasksList 
+                        teamId={team.id} 
+                        refreshTrigger={taskRefreshTrigger} 
+                        isAdmin={canManageTeam} 
+                        teamMembers={team.members?.map((m: any) => ({ 
+                            id: m.member_id, 
+                            fullname: m.member?.fullname || 'Unknown', 
+                            avatar_url: m.member?.avatar_url 
+                        })) || []}
+                    />
+                </div>
 
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Content: Strategy & Links (2/3) */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {(team.strategy || canManageTeam) && (
+                            <TeamStrategy 
+                                team={team} 
+                                canManage={canManageTeam} 
+                                onUpdated={refetch} 
+                            />
+                        )}
+                        {((team.resources?.length ?? 0) > 0 || canManageTeam) && (
+                            <TeamLinks 
+                                team={team} 
+                                canManage={canManageTeam} 
+                                onUpdated={refetch} 
+                            />
+                        )}
                     </div>
 
                     {/* Sidebar: Members */}
@@ -239,7 +256,7 @@ export default function TeamDetailsPage() {
                             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <Users className="w-5 h-5 text-gray-500" />
                                 Members 
-                                <span className="text-gray-400 font-normal text-sm">({team.members?.length || 0})</span>
+                                <span className="text-gray-400 font-normal text-sm">({(team.members?.length ?? 0)})</span>
                             </h3>
                             <div className="space-y-3">
                                 {team.members?.map((tm: any) => (
@@ -256,7 +273,9 @@ export default function TeamDetailsPage() {
                                              </div>
                                              <div>
                                                  <p className="text-sm font-medium text-gray-900">{tm.member?.fullname}</p>
-                                                 <p className="text-xs text-gray-500 capitalize">{tm.role}</p>
+                                                 <p className="text-xs text-gray-500 capitalize">
+                                                    {(tm as any).custom_title || tm.role}
+                                                 </p>
                                              </div>
                                         </div>
                                         {tm.role === 'admin' && <Shield className="w-3 h-3 text-blue-500" />}
@@ -264,6 +283,7 @@ export default function TeamDetailsPage() {
                                 ))}
                             </div>
                         </div>
+
                     </div>
 
                 </div>
@@ -276,6 +296,7 @@ export default function TeamDetailsPage() {
                 teamId={team.id}
                 existingMemberIds={team.members?.map((m: any) => m.member_id) || []}
                 onAdded={() => refetch()} 
+                projectId={team.project_id}
                 />
 
             <CreateTeamTaskModal 

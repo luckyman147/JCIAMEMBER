@@ -143,6 +143,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Start Date</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Deadline</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Complexity</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Points</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
                                 </tr>
@@ -184,6 +185,17 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
+                                                {task.complexity ? (
+                                                     <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                        task.complexity === 'lead' ? 'bg-indigo-50 text-indigo-700 font-bold' :
+                                                        task.complexity === 'major' ? 'bg-orange-50 text-orange-700 font-bold' :
+                                                        'bg-slate-50 text-slate-600 font-bold'
+                                                    }`}>
+                                                        {task.complexity}
+                                                    </span>
+                                                ) : '-'}
+                                            </td>
+                                            <td className="px-6 py-4">
                                                 <span className="text-amber-600 font-bold text-sm">{task.points}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
@@ -207,7 +219,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                 </div>
             ) : (
                 <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="flex flex-col lg:flex-row gap-6 h-[700px] overflow-x-auto pb-4">
+                    <div className="flex flex-col lg:flex-row gap-6 min-h-[600px] lg:overflow-x-auto pb-6 w-full custom-scrollbar">
                         {COLUMNS.map(column => (
                             <KanbanColumn 
                                 key={column.id}

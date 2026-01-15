@@ -2,6 +2,33 @@
 import type { Task } from "../Tasks/types";
 import type { Member } from "../Members/types";
 
+// Project definition
+export interface Project {
+    id: string;
+    name: string;
+    description?: string;
+    leader_id?: string;
+    created_at: string;
+    teams?: Team[];
+    members?: ProjectMember[];
+    is_member?: boolean;
+}
+
+export interface ProjectMember {
+    id: string;
+    project_id: string;
+    member_id: string;
+    role: 'member' | 'admin';
+    joined_at: string;
+    member?: Member;
+}
+
+export interface TeamResource {
+    title: string;
+    url: string;
+    type: 'link' | 'file';
+}
+
 export interface Team {
     id: string;
     name: string;
@@ -9,6 +36,9 @@ export interface Team {
     is_public: boolean;
     created_by: string;
     activity_id?: string;
+    project_id?: string;
+    strategy?: string;
+    resources?: TeamResource[];
     created_at: string;
     
     // UI/Joined helpers
@@ -25,6 +55,10 @@ export interface TeamMember {
     role: 'member' | 'admin' | 'lead';
     joined_at: string;
     
+    // Extended permissions and titles
+    custom_title?: string;
+    permissions?: string[];
+
     // Joined profile
     member?: Member; 
 }

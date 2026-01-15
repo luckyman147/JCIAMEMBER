@@ -1,5 +1,5 @@
 import  { useMemo, useState } from 'react';
-import { Filter, Trophy } from 'lucide-react';
+import { Filter, Crown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface PointsHistoryRaw {
@@ -137,10 +137,15 @@ export default function MembersGrowthChart({ history }: ChartProps) {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-yellow-500" />
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-3">
+                        <div className="p-2 bg-amber-50 rounded-xl shadow-[0_2px_10px_-3px_rgba(245,158,11,0.3)] border border-amber-100 flex items-center justify-center">
+                            <Crown className="w-5 h-5 text-amber-500" />
+                        </div>
                         {t('members.topPerformers', 'Top Performers')}
                     </h3>
+                    <p className="text-xs text-gray-500 font-medium mt-1 ml-14">
+                        {t('members.performersBy', 'Performers by Points')}
+                    </p>
                 </div>
                 
                 <div className="flex bg-gray-100/80 p-1 rounded-lg self-start">

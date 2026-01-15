@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMembers, getAllPointsHistory, getMemberById, getPointsHistory, updateMember, addComplaint, getMemberRank, deleteMember } from "../services/members.service";
+import { getMembers, getAllPointsHistory, getMemberById, getPointsHistory, updateMember, addComplaint, getMemberRank, deleteMember, createPoste, updatePoste, deletePoste } from "../services/members.service";
 import type { Member } from "../types";
 
 export const MEMBER_KEYS = {
@@ -75,5 +75,23 @@ export function useDeleteMember() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: MEMBER_KEYS.lists() });
         },
+    });
+}
+
+export function useCreatePoste() {
+    return useMutation({
+        mutationFn: ({ name, roleId }: { name: string, roleId: string }) => createPoste(name, roleId),
+    });
+}
+
+export function useUpdatePoste() {
+    return useMutation({
+        mutationFn: ({ id, name }: { id: string, name: string }) => updatePoste(id, name),
+    });
+}
+
+export function useDeletePoste() {
+    return useMutation({
+        mutationFn: (id: string) => deletePoste(id),
     });
 }

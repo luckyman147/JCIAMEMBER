@@ -13,7 +13,7 @@ import ErrorBoundary from '../lib/ErrorBoundary'
 import AllActivitiesPage from '../features/Activities/pages/AllActivitiesPage'
 import ActivityForm from '../features/Activities/pages/ActivityForm'
 import ActivityDetails from '../features/Activities/pages/ActivityDetails'
-import { TeamsPage, TeamDetailsPage } from '../features/Teams'
+import { TeamsPage, TeamDetailsPage, ProjectsPage, ProjectDetailsPage } from '../features/Teams'
 import RecruitmentPage from '../features/Recruitment/pages/RecruitmentPage'
 import TemplateCreatePage from '../features/Recruitment/pages/TemplateCreatePage'
 import CandidateEvaluationPage from '../features/Recruitment/pages/CandidateEvaluationPage'
@@ -109,6 +109,24 @@ export const router = createBrowserRouter([
           <ProtectedRoute>
             <TeamDetailsPage />
           </ProtectedRoute>
+        ),
+      },
+
+      // Projects routes
+      {
+        path: '/projects',
+        element: (
+          <ProtectedRoute>
+            <ProjectsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/projects/:id',
+        element: (
+            <ProtectedRoute>
+                <ProjectDetailsPage />
+            </ProtectedRoute>
         ),
       },
 

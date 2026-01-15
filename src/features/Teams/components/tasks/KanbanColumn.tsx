@@ -30,7 +30,7 @@ export const KanbanColumn = ({
     const columnTasks = tasks.filter(t => (t.status || 'todo') === column.id);
 
     return (
-        <div className="min-w-[300px] bg-gray-50/50 rounded-2xl flex flex-col border border-gray-100">
+        <div className="w-full lg:min-w-[320px] bg-gray-50/50 rounded-2xl flex flex-col border border-gray-100">
             <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <h3 className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${column.color}`}>

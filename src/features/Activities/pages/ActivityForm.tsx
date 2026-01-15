@@ -14,8 +14,9 @@ import {
   MeetingSection,
   FormationSection,
   RegistrationSection,
+  GeneralAssemblySection,
   FormActions,
-} from '../components/sections'
+} from '../components/form/sections'
 
 // Layout
 import Navbar from '../../../Global_Components/navBar'
@@ -25,6 +26,8 @@ export default function ActivityForm() {
     register,
     handleSubmit,
     errors,
+    watch,
+    setValue,
     activityType,
     isPaid,
     isOnline,
@@ -68,11 +71,15 @@ export default function ActivityForm() {
               onCategoriesChange={setSelectedCategoryIds}
               disabled={isDisabled}
             />
-            <DateTimeSection register={register} errors={errors} />
+            <DateTimeSection register={register} errors={errors} watch={watch} setValue={setValue} />
 
             {/* Type-specific Sections */}
             {(activityType === 'event' || activityType === 'formation') && (
               <RegistrationSection register={register} />
+            )}
+
+             {activityType === 'general_assembly' && (
+              <GeneralAssemblySection register={register} />
             )}
 
             {activityType === 'meeting' && (
@@ -80,6 +87,7 @@ export default function ActivityForm() {
                 agenda={meetingAgenda}
                 onAgendaChange={setMeetingAgenda}
                 pvAttachment={pvAttachment}
+                register={register}
                 disabled={isDisabled}
                 />
             )}
@@ -115,7 +123,7 @@ export default function ActivityForm() {
 function FormHeader({ isEditMode }: { isEditMode: boolean }) {
   const { t } = useTranslation();
   return (
-    <div className="px-4 sm:px-8 py-4 sm:py-6 bg-gradient-to-r from-(--color-myPrimary) to-(--color-mySecondary) text-white text-start">
+    <div className="px-4 sm:px-8 py-4 sm:py-6 bg-linear-to-r from-(--color-myPrimary) to-(--color-mySecondary) text-white text-start">
       <h1 className="text-2xl sm:text-3xl font-bold">
         {isEditMode ? t('activities.editActivity') : t('activities.createActivity')}
       </h1>

@@ -1,4 +1,5 @@
-export type ActivityType = 'event' | 'formation' | 'meeting'
+export type ActivityType = 'event' | 'formation' | 'meeting' | 'general_assembly'
+export type TrainingType = 'official_session' | 'important_training' | 'just_training' | 'member_to_member'
 
 // Base interface with shared properties
 export interface ActivityBase {
@@ -33,6 +34,7 @@ export interface MeetingActivity extends ActivityBase {
   type: 'meeting'
   meeting_plan?: string
   pv_attachments?: string // URL to PV document
+  meeting_type?: 'official' | 'committee' 
   // Not for meetings
 
 }
@@ -43,12 +45,19 @@ export interface FormationActivity extends ActivityBase {
   trainer_name?: string
   course_attachment?: string // URL to course materials
   registration_deadline?: string // Formations can also have registration deadlines
+  training_type?: TrainingType
   // Not for formations
 
 }
 
+// General Assembly-specific properties
+export interface GeneralAssemblyActivity extends ActivityBase {
+  type: 'general_assembly'
+  assembly_type?: 'local' | 'zonal' | 'national' | 'international'
+}
+
 // Discriminated union type
-export type Activity = EventActivity | MeetingActivity | FormationActivity
+export type Activity = EventActivity | MeetingActivity | FormationActivity | GeneralAssemblyActivity
 
 // Type guards
 export const isEventActivity = (activity: Activity): activity is EventActivity => {
@@ -61,4 +70,8 @@ export const isMeetingActivity = (activity: Activity): activity is MeetingActivi
 
 export const isFormationActivity = (activity: Activity): activity is FormationActivity => {
   return activity.type === 'formation'
+}
+
+export const isGeneralAssemblyActivity = (activity: Activity): activity is GeneralAssemblyActivity => {
+  return activity.type === 'general_assembly'
 }

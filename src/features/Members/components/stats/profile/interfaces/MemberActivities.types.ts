@@ -12,6 +12,7 @@ export interface ActivityHistoryItem {
     rate: number | null;
     notes: string | null;
     registered_at: string;
+    is_interested?: boolean;
   };
 }
 
@@ -20,6 +21,7 @@ export interface ServiceParticipation {
   rate: number | null;
   notes: string | null;
   registered_at: string;
+  is_interested?: boolean;
   activity: { id: string } | null;
 }
 

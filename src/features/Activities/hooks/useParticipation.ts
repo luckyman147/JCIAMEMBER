@@ -126,8 +126,12 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
   const handleMarkAttendance = useCallback(async (p: Participant, status: 'present' | 'absent') => {
     try {
       if (status === 'present') {
-        await activityService.updateParticipation(p.id, { is_interested: false })
-        setParticipants(prev => prev.map(x => x.id === p.id ? { ...x, is_interested: false } : x))
+        await activityService.updateParticipation(p.id, {
+          is_temp: false,
+          is_interested: false
+        })
+        
+        setParticipants(prev => prev.map(x => x.id === p.id ? { ...x, is_interested: false, is_temp: false } : x))
         toast.success(`${p.member?.fullname} marked as present`)
       } else {
         await activityService.deleteParticipation(p.id, p.user_id, 0)

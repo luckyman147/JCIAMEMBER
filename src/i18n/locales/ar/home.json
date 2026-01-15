@@ -1,0 +1,33 @@
+{
+  "home": {
+    "heroTitle": "تمكين",
+    "heroTitleHighlight": "أعضاء JCI",
+    "heroTitleSuffix": "لغد أفضل",
+    "heroSubtitle": "أدر أنشطتك، تتبع نقاطك، وتعاون مع فريقك في منصة موحدة مصممة للنمو والأثر.",
+    "dashboardTitle": "لوحة القيادة والإدارة",
+    "activitiesTitle": "الأنشطة القادمة",
+    "activitiesSubtitle": "اكتشف وانضم للأنشطة التي تهمك.",
+    "filterTitle": "تصفية الأنشطة",
+    "clearFilters": "مسح التصنيفات",
+    "activityType": "نوع النشاط",
+    "allTypes": "كل الأنواع",
+    "events": "فعاليات",
+    "formations": "دورات تدريبية",
+    "meetings": "اجتماعات",
+    "fromDate": "من تاريخ",
+    "toDate": "إلى تاريخ",
+    "time": "الوقت",
+    "onlineOnly": "عبر الإنترنت فقط",
+    "paidActivities": "أنشطة مدفوعة",
+    "topPerformers": "الأعضاء المتميزون",
+    "teamsOverview": "نظرة عامة على الفرق",
+    "pendingCandidates": "المرشحون المعلقون",
+    "points": "نقطة",
+    "active": "نشط",
+    "viewAll": "عرض الكل",
+    "activeTeams": "الفرق النشطة",
+    "completeProfileTitle": "أكمل ملفك الشخصي",
+    "completeProfileDesc": "أضف المسمى الوظيفي، والنبذة التعريفية، والتخصصات لتعريف الآخرين بك بشكل أفضل.",
+    "completeNow": "أكمل الآن"
+  }
+}

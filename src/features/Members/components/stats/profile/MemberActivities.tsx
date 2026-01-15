@@ -17,8 +17,6 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
   const {
     loading,
     error,
-    joiningActivityId,
-    handleJoinActivity,
     attendedItems,
     absentItems,
     futureItems,
@@ -104,8 +102,6 @@ const MemberActivities: React.FC<MemberActivitiesProps> = ({ memberId }) => {
             <ActivityCard 
               key={item.activity.id} 
               item={item} 
-              onJoin={handleJoinActivity}
-              isJoining={joiningActivityId === item.activity.id}
             />
           ))
         )}

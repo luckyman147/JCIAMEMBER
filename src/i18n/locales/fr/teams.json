@@ -1,0 +1,15 @@
+{
+  "title": "Équipes",
+  "subtitle": "Collaborez, gérez les tâches et atteignez vos objectifs ensemble.",
+  "createTeam": "Créer une équipe",
+  "emptyTitle": "Aucune équipe trouvée",
+  "emptySearch": "Essayez de modifier vos termes de recherche.",
+  "emptyStart": "Commencez par créer la première équipe de votre organisation.",
+  "createNow": "Créer une équipe maintenant",
+  "deleteConfirm": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ?",
+  "deleted": "Équipe supprimée",
+  "deleteFailed": "Échec de la suppression de l'équipe",
+  "deleteTeam": "Supprimer l'équipe",
+  "membersCount_one": "{{count}} Membre",
+  "membersCount_other": "{{count}} Membres"
+}

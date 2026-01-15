@@ -1,0 +1,15 @@
+{
+  "title": "Teams & Squads",
+  "subtitle": "Collaborate, manage tasks, and achieve goals together.",
+  "createTeam": "Create Team",
+  "emptyTitle": "No teams found",
+  "emptySearch": "Try adjusting your search terms.",
+  "emptyStart": "Get started by creating the first team for your organization.",
+  "createNow": "Create a Team Now",
+  "deleteConfirm": "Are you sure you want to delete \"{{name}}\"?",
+  "deleted": "Team deleted",
+  "deleteFailed": "Failed to delete team",
+  "deleteTeam": "Delete Team",
+  "membersCount_one": "{{count}} Member",
+  "membersCount_other": "{{count}} Members"
+}

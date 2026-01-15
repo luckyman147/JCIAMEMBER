@@ -164,7 +164,7 @@ export const deleteTask = async (id: string): Promise<void> => {
         throw error;
     }
 };
-export const completeAllTaskAssignments = async (taskId: string, subtasks: SubTaskDefinition[] = []): Promise<void> => {
+export const completeAllTaskAssignments = async (taskId: string, subtasks: SubTaskDefinition[] = [], starRating?: number): Promise<void> => {
     // 1. Update all member_tasks for this task
     const subtaskIds = subtasks.map(sh => sh.id);
     
@@ -173,7 +173,8 @@ export const completeAllTaskAssignments = async (taskId: string, subtasks: SubTa
         .update({
             status: 'completed',
             progress_percentage: 100,
-            completed_subtask_ids: subtaskIds
+            completed_subtask_ids: subtaskIds,
+            star_rating: starRating
         })
         .eq('task_id', taskId);
 
@@ -181,4 +182,24 @@ export const completeAllTaskAssignments = async (taskId: string, subtasks: SubTa
         console.error(`Error completing assignments for task ${taskId}:`, error);
         throw error;
     }
+};
+
+export const uploadTaskAttachment = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+    const filePath = fileName;
+
+    const { error: uploadError } = await supabase.storage
+        .from('task-attachments')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        throw uploadError;
+    }
+
+    const { data } = supabase.storage
+        .from('task-attachments')
+        .getPublicUrl(filePath);
+
+    return data.publicUrl;
 };

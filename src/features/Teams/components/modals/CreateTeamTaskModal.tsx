@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react";
 import type { SubTaskDefinition } from "../../../Tasks/types";
-import { Plus, X, Check } from "lucide-react";
+import { Plus, X, Check, Paperclip } from "lucide-react";
 import { toast } from "sonner";
+import StarRating from "../../../Activities/components/common/StarRating";
 
 interface TeamMemberOption {
     id: string; // member_id
@@ -34,14 +35,14 @@ export default function CreateTeamTaskModal({
     const [points, setPoints] = useState<number>(0);
     const [description, setDescription] = useState("");
     const [status, setStatus] = useState<'todo' | 'in_progress' | 'completed'>(initialStatus);
-    const [trackingType, setTrackingType] = useState<'manual' | 'subtasks'>('subtasks');
     const [startDate, setStartDate] = useState<string>("");
     const [deadline, setDeadline] = useState<string>("");
+    const [complexity, setComplexity] = useState<'lead' | 'major' | 'minor'>('minor');
+    const [starRating, setStarRating] = useState<number>(3);
+    const [headerColor, setHeaderColor] = useState("");
+    const [attachments, setAttachments] = useState<{name: string, url: string}[]>([]);
+    const [uploading, setUploading] = useState(false);
     
-    const handleTrackingTypeChange = (type: 'manual' | 'subtasks') => {
-        setTrackingType(type);
-        if (type === 'manual') setSubtasks([]);
-    };
     const [subtasks, setSubtasks] = useState<SubTaskDefinition[]>([]);
     const [newSubtaskText, setNewSubtaskText] = useState("");
 
@@ -98,8 +99,8 @@ export default function CreateTeamTaskModal({
             return;
         }
 
-        if (trackingType === 'subtasks' && subtasks.length === 0) {
-           toast.error("Please add subtasks or use Manual tracking");
+        if (subtasks.length === 0) {
+           toast.error("Please add at least one task objective");
            return;
         }
 
@@ -141,15 +142,23 @@ export default function CreateTeamTaskModal({
                 status: status,
                 start_date: startDate || undefined,
                 deadline: deadline || undefined,
-                subtasks: trackingType === 'subtasks' ? subtasks : []
+                complexity,
+                star_rating: starRating,
+                header_color: headerColor,
+                attachments: attachments,
+                subtasks: subtasks
             });
 
             if (!newTask) throw new Error("Failed to create task");
 
-            // 2. Assign to all selected
-            await Promise.all(assigneeIds.map(mid => 
-                assignTaskToMember(mid, newTask.id, trackingType)
-            ));
+            if (status === 'completed') {
+                const { completeAllTaskAssignments } = await import("../../../Tasks/services/tasks.service");
+                await completeAllTaskAssignments(newTask.id, subtasks, starRating);
+            } else {
+                await Promise.all(assigneeIds.map(mid => 
+                    assignTaskToMember(mid, newTask.id, 'subtasks')
+                ));
+            }
             
             toast.success(`Task assigned to ${assigneeIds.length} members`);
             onCreated();
@@ -165,6 +174,10 @@ export default function CreateTeamTaskModal({
             setAssignAll(false);
             setStartDate("");
             setDeadline("");
+            setComplexity('minor');
+            setStarRating(3);
+            setHeaderColor("");
+            setAttachments([]);
 
         } catch (error) {
             toast.error("Failed to assign task");
@@ -180,22 +193,74 @@ export default function CreateTeamTaskModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-xl font-bold text-gray-900">Create & Assign Team Task</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <div className="flex items-center gap-4">
+                        <div 
+                            className="w-10 h-10 rounded-2xl border-2 border-white shadow-lg flex items-center justify-center relative overflow-hidden transition-all hover:scale-105 active:scale-95"
+                            style={{ backgroundColor: headerColor || '#f3f4f6' }}
+                        >
+                            <input 
+                                type="color" 
+                                className="absolute inset-0 opacity-0 cursor-pointer scale-150"
+                                value={headerColor || '#f3f4f6'}
+                                onChange={(e) => setHeaderColor(e.target.value)}
+                            />
+                            {!headerColor && <Plus className="w-5 h-5 text-gray-400" />}
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-gray-900 leading-none">Assign Team Task</h2>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                Strategic Mission Briefing
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-gray-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                     {/* Left: Task Details */}
-                    <div className="w-full md:w-1/2 p-6 border-b md:border-b-0 md:border-r space-y-4">
+                    <div className="w-full md:w-1/2 p-6 border-b md:border-b-0 md:border-r space-y-4 overflow-y-auto">
                          <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Theme Palette</label>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {[
+                                    { name: 'Blue', hex: '#3b82f6' },
+                                    { name: 'Indigo', hex: '#6366f1' },
+                                    { name: 'Violet', hex: '#8b5cf6' },
+                                    { name: 'Emerald', hex: '#10b981' },
+                                    { name: 'Rose', hex: '#f43f5e' },
+                                    { name: 'Amber', hex: '#f59e0b' },
+                                    { name: 'Slate', hex: '#64748b' }
+                                ].map((c) => (
+                                    <button
+                                        key={c.hex}
+                                        type="button"
+                                        onClick={() => setHeaderColor(c.hex)}
+                                        className={`w-6 h-6 rounded-full border-2 transition-all hover:scale-110 active:scale-95 ${headerColor === c.hex ? 'border-gray-900 scale-110 shadow-sm' : 'border-white shadow-inner'}`}
+                                        style={{ backgroundColor: c.hex }}
+                                        title={c.name}
+                                    />
+                                ))}
+                                <div className="relative w-6 h-6 rounded-full border-2 border-white shadow-inner overflow-hidden group">
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 text-[10px] text-gray-400 group-hover:bg-gray-100 cursor-pointer">+</div>
+                                    <input 
+                                        type="color" 
+                                        className="absolute inset-0 opacity-0 cursor-pointer scale-150"
+                                        value={headerColor || '#3b82f6'}
+                                        onChange={(e) => setHeaderColor(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
                             <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
                             <input 
                                 type="text" 
-                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-900"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Enter task title..."
                             />
                         </div>
                          <div>
@@ -207,6 +272,18 @@ export default function CreateTeamTaskModal({
                                 onChange={(e) => setPoints(parseInt(e.target.value) || 0)}
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Complexity (JPS Multiplier)</label>
+                            <select 
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                                value={complexity}
+                                onChange={(e) => setComplexity(e.target.value as any)}
+                            >
+                                <option value="lead">Lead Role (15x)</option>
+                                <option value="major">Major Task (10x)</option>
+                                <option value="minor">Minor Task (4x)</option>
+                            </select>
+                        </div>
                          <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <textarea 
@@ -217,7 +294,7 @@ export default function CreateTeamTaskModal({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Initial Status</label>
+                            <label className="block font-medium text-gray-700 mb-1 text-sm">Initial Status</label>
                             <select 
                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                                 value={status}
@@ -229,21 +306,34 @@ export default function CreateTeamTaskModal({
                             </select>
                         </div>
 
+                        {status === 'completed' && (
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 space-y-2">
+                                <label className="block text-xs font-black uppercase tracking-widest text-amber-700">Performance Rating (Impacts JPS)</label>
+                                <div className="flex items-center gap-4">
+                                    <StarRating 
+                                        value={starRating} 
+                                        onChange={(val: number) => setStarRating(val)} 
+                                    />
+                                    <span className="text-xs text-amber-600 font-medium italic">This rating will be applied to all assigned members.</span>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 text-xs uppercase tracking-wider font-bold">Start Date</label>
+                                <label className="block text-gray-700 mb-1 text-[10px] uppercase tracking-wider font-bold">Start Date</label>
                                 <input 
                                     type="date"
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 text-xs uppercase tracking-wider font-bold">Deadline</label>
+                                <label className="block text-gray-700 mb-1 text-[10px] uppercase tracking-wider font-bold">Deadline</label>
                                 <input 
                                     type="date"
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-red-600 font-bold"
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-red-600 font-bold"
                                     value={deadline}
                                     onChange={(e) => setDeadline(e.target.value)}
                                 />
@@ -251,35 +341,106 @@ export default function CreateTeamTaskModal({
                         </div>
 
                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Tracking</label>
-                             <div className="flex bg-gray-100 p-1 rounded-lg mb-3">
-                                <button type="button" onClick={() => handleTrackingTypeChange('subtasks')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${trackingType === 'subtasks' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}>Subtasks</button>
-                                <button type="button" onClick={() => handleTrackingTypeChange('manual')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${trackingType === 'manual' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}>Manual %</button>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400">Activity Checklist</label>
+                            </div>
+                             <div className="space-y-2">
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        className="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="Add an item..."
+                                        value={newSubtaskText}
+                                        onChange={(e) => setNewSubtaskText(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSubtask())}
+                                    />
+                                    <button onClick={handleAddSubtask} type="button" className="p-1.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors">
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="space-y-1">
+                                    {subtasks.map(st => (
+                                        <div key={st.id} className="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 text-[11px] text-gray-600 font-medium">
+                                            <span>{st.text}</span>
+                                            <button onClick={() => removeSubtask(st.id)} className="text-gray-400 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-100 space-y-4">
+                            <label className="block text-xs font-black uppercase tracking-widest text-gray-400">Mission Resources</label>
+                            
+                            <div className="relative group">
+                                <input 
+                                    type="file" 
+                                    id="task-file-upload-new"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            try {
+                                                setUploading(true);
+                                                const { uploadTaskAttachment } = await import("../../../Tasks/services/tasks.service");
+                                                const url = await uploadTaskAttachment(file);
+                                                setAttachments([...attachments, { name: file.name, url }]);
+                                                toast.success("Resource uploaded");
+                                            } catch (err) {
+                                                toast.error("Upload failed");
+                                            } finally {
+                                                setUploading(false);
+                                            }
+                                        }
+                                    }}
+                                />
+                                <label 
+                                    htmlFor="task-file-upload-new"
+                                    className={`flex flex-col items-center justify-center gap-2 p-6 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-500">
+                                        {uploading ? <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /> : <Plus className="w-6 h-6" />}
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 group-hover:text-blue-500 transition-colors">
+                                        {uploading ? 'Processing...' : 'Upload Attachment'}
+                                    </span>
+                                </label>
                             </div>
 
-                             {trackingType === 'subtasks' && (
-                                <div className="space-y-2">
-                                     <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            className="flex-1 px-2 py-1.5 border rounded text-xs"
-                                            placeholder="Add item..."
-                                            value={newSubtaskText}
-                                            onChange={(e) => setNewSubtaskText(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
-                                        />
-                                        <button onClick={handleAddSubtask} type="button" className="bg-gray-900 text-white px-2 rounded hover:bg-gray-700"><Plus className="w-3 h-3" /></button>
-                                    </div>
-                                    <ul className="space-y-1">
-                                        {subtasks.map(st => (
-                                            <li key={st.id} className="flex justify-between text-xs bg-gray-50 p-1.5 rounded">
-                                                <span>{st.text}</span>
-                                                <button onClick={() => removeSubtask(st.id)} className="text-red-400 hover:text-red-600"><X className="w-3 h-3" /></button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+                            <div className="grid grid-cols-2 gap-3">
+                                {attachments.map((att, idx) => {
+                                    const isImg = att.url.match(/\.(jpeg|jpg|gif|png|webp|avif)$/i) || att.url.includes('image');
+                                    return (
+                                        <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 group hover:ring-2 hover:ring-blue-400 transition-all">
+                                            {isImg ? (
+                                                <img src={att.url} className="w-full h-full object-cover" alt={att.name} />
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                                                    <Paperclip className="w-6 h-6 text-gray-300" />
+                                                    <span className="text-[8px] font-black uppercase tracking-tighter text-gray-400 px-2 text-center truncate w-full">{att.name}</span>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Overlays */}
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                                <div className="flex gap-2">
+                                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white text-gray-900 rounded-lg shadow-lg hover:scale-110 transition-transform">
+                                                        <Check className="w-3.5 h-3.5" />
+                                                    </a>
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                                                        className="p-1.5 bg-red-500 text-white rounded-lg shadow-lg hover:scale-110 transition-transform"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                                <span className="text-[8px] font-black text-white uppercase tracking-widest px-2 text-center truncate w-full">{att.name}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
 
@@ -309,7 +470,7 @@ export default function CreateTeamTaskModal({
                                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden">
                                              {m.avatar_url ? <img src={m.avatar_url} className="w-full h-full object-cover" /> : m.fullname.substring(0,2).toUpperCase()}
                                          </div>
-                                         <span className="text-sm font-medium text-gray-700 flex-grow truncate">{m.fullname}</span>
+                                         <span className="text-sm font-medium text-gray-700 grow truncate">{m.fullname}</span>
                                          {isSelected && <Check className="w-4 h-4 text-blue-600" />}
                                      </div>
                                  );

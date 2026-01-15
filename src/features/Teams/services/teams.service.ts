@@ -15,6 +15,7 @@ export const getTeams = async (userId?: string): Promise<Team[]> => {
             *,
             team_members!left (member_id)
         `)
+        .is('project_id', null)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -50,7 +51,7 @@ export const getTeamById = async (id: string): Promise<Team | null> => {
     return data;
 };
 
-export const updateTeam = async (id: string, updates: { name: string, description?: string }): Promise<Team | null> => {
+export const updateTeam = async (id: string, updates: Partial<Team>): Promise<Team | null> => {
     if (!id) {
         console.error("updateTeam: No ID provided");
         throw new Error("Team ID is required for updating");
@@ -58,10 +59,7 @@ export const updateTeam = async (id: string, updates: { name: string, descriptio
 
     const { data, error } = await supabase
         .from('teams')
-        .update({
-            name: updates.name,
-            description: updates.description
-        })
+        .update(updates)
         .eq('id', id)
         .select();
 
@@ -100,17 +98,42 @@ export const createTeam = async (team: Partial<Team>): Promise<Team | null> => {
 
 // --- Membership ---
 
-export const addTeamMember = async (teamId: string, memberId: string, role: 'member' | 'admin' | 'lead' = 'member'): Promise<boolean> => {
+export const addTeamMember = async (
+    teamId: string, 
+    memberId: string, 
+    role: 'member' | 'admin' | 'lead' = 'member',
+    options?: { custom_title?: string, permissions?: string[] }
+): Promise<boolean> => {
     const { error } = await supabase
         .from('team_members')
         .insert({
             team_id: teamId,
             member_id: memberId,
-            role
+            role,
+            custom_title: options?.custom_title,
+            permissions: options?.permissions
         });
 
     if (error) {
         console.error('Error adding team member:', error);
+        throw error;
+    }
+    return true;
+};
+
+export const updateTeamMember = async (
+    teamId: string, 
+    memberId: string, 
+    updates: { role?: 'member' | 'admin' | 'lead', custom_title?: string, permissions?: string[] }
+): Promise<boolean> => {
+    const { error } = await supabase
+        .from('team_members')
+        .update(updates)
+        .eq('team_id', teamId)
+        .eq('member_id', memberId);
+
+    if (error) {
+        console.error('Error updating team member:', error);
         throw error;
     }
     return true;

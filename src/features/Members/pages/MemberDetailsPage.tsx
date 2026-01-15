@@ -23,6 +23,7 @@ import Navbar from "../../../Global_Components/navBar";
 import MemberPointsHistory from "../components/stats/profile/MemberPointsHistory";
 import { MemberTasksList } from "../../Tasks";
 import { MemberTeamsList } from "../../Teams";
+import MemberJPSCard from "../components/stats/profile/MemberJPSCard";
 import { useMember, useUpdateMember, useAddComplaint, useDeleteMember } from "../hooks/useMembers";
 import type { Member } from "../types";
 import { useAuth } from "../../Authentication/auth.context";
@@ -125,9 +126,9 @@ export default function MemberDetailsPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* Left Column (Status & Points) */}
-                            <div className="space-y-8 lg:col-span-1">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                            {/* Left Column Stack */}
+                            <div className="space-y-8">
                                 <MemberStatus 
                                     isValidated={member.is_validated}
                                     cotisation={member.cotisation_status}
@@ -141,39 +142,38 @@ export default function MemberDetailsPage() {
                                     onPointsChange={(pts) => handleUpdate({ points: pts })}
                                     readOnly={!canEdit}
                                 />
-                                        <MemberBio 
-                                        description={member.description}
-                                        onUpdate={(desc) => handleUpdate({ description: desc })}
-                                        readOnly={!isOwnProfile && !canEdit}
-                                    />
-                                
+
+                                <MemberAdvisor 
+                                    member={member}
+                                    onUpdate={handleUpdate}
+                                    canEdit={canEdit}
+                                />
+
+                              
                             </div>
 
-                            {/* Middle Column (Info & Activities) */}
-                            <div className="space-y-8 lg:col-span-1">
-                                <div className=" grid-cols-2 sm:grid-cols-2 gap-4">
-                                    <MemberInterests 
-                                        memberId={member.id}
-                                        readOnly={!isOwnProfile && !canEdit}
-                                    />
-                              <div className="sm:col-span-2 mt-6"> 
-                                        <MemberAdvisor 
-                                            member={member}
-                                            onUpdate={handleUpdate}
-                                            canEdit={canEdit}
-                                        />
-                                    </div>
-                                    
-                                </div>
-                               <MemberLifestyle 
+                            {/* Right Column Stack */}
+                            <div className="space-y-8 ">
+                                  <MemberInterests 
+                                    memberId={member.id}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                                <MemberBio 
+                                    description={member.description}
+                                    onUpdate={(desc) => handleUpdate({ description: desc })}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+
+                                <MemberLifestyle 
                                     member={member} 
                                     onUpdate={handleUpdate}
                                     readOnly={!isOwnProfile && !canEdit}
                                 />
                             </div>
-                            
+                                <MemberJPSCard memberId={member.id} />
 
-                            <div className="lg:col-span-2 mb-1">
+                            {/* Full Width Sections */}
+                            <div className="lg:col-span-2">
                                 <MemberPersonality 
                                     type={member.personality_type}
                                     onUpdate={(type) => handleUpdate({ personality_type: type })}
@@ -181,20 +181,23 @@ export default function MemberDetailsPage() {
                                 />
                             </div>
                             
+                            <div className="lg:col-span-1">
+                                <MemberStrengths 
+                                    strengths={member.strengths || []}
+                                    onUpdate={(str: string[]) => handleUpdate({ strengths: str })}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                            </div>
                             
-                            <MemberStrengths 
-                                strengths={member.strengths || []}
-                                onUpdate={(str: string[]) => handleUpdate({ strengths: str })}
-                                readOnly={!isOwnProfile && !canEdit}
-                            />
-                            
-                            <MemberWeaknesses 
-                                weaknesses={member.weaknesses || []}
-                                onUpdate={(weak: string[]) => handleUpdate({ weaknesses: weak })}
-                                readOnly={!isOwnProfile && !canEdit}
-                            />
+                            <div className="lg:col-span-1">
+                                <MemberWeaknesses 
+                                    weaknesses={member.weaknesses || []}
+                                    onUpdate={(weak: string[]) => handleUpdate({ weaknesses: weak })}
+                                    readOnly={!isOwnProfile && !canEdit}
+                                />
+                            </div>
    
-                            {/* Bottom Sections */}
+                            {/* Bottom Full-Width Sections */}
                             <div className="space-y-8 lg:col-span-2">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     <MemberPointsProgress memberId={member.id} currentPoints={member.points} />

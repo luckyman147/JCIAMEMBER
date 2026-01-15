@@ -62,6 +62,11 @@ export interface Member {
     advisor_id?: string;
     advisor?: Partial<Member>;
     advisees?: Partial<Member>[];
+
+    // JPS specific fields
+    jps_score?: number;
+    jps_category?: string;
+    leaderboard_privacy?: boolean;
 }
 
 export interface ActivityLog {

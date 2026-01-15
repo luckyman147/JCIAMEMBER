@@ -68,7 +68,7 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
                             key={task.id} 
                             assignment={task} 
                             onUpdate={handleTaskUpdate}
-                            readOnly={!isAdmin}
+                            isAdmin={isAdmin}
                         />
                     ))}
                 </div>

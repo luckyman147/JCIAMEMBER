@@ -1,40 +1,22 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { ActivityType } from "../models/Activity";
-import ActivityCard from "../components/ActivityCard";
-import ActivityCharts from "../components/ActivityCharts";
+import ActivityCard from "../components/list/ActivityCard";
+import ActivityCharts from "../components/analytics/ActivityCharts";
 import Navbar from "../../../Global_Components/navBar";
 import { Plus, Search, Filter, Calendar } from "lucide-react";
-import { useAuth } from "../../../features/Authentication/auth.context";
+import { useAuth } from "../../Authentication/auth.context";
 import { useActivities } from "../hooks/useActivities";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 import { useTranslation } from "react-i18next";
-import { activityService } from "../services/activityService";
 
 export default function AllActivitiesPage() {
     const { activities, loading } = useActivities();
-    const { role, user } = useAuth();
+    const { role } = useAuth();
     const { t, i18n } = useTranslation();
-    const [userParticipations, setUserParticipations] = useState<Map<string, any>>(new Map());
 
     const hasAdvancedAccess = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
 
-    // Fetch user participations
-    useEffect(() => {
-        if (user) {
-            activityService.getMemberParticipations(user.id)
-                .then(participations => {
-                    const map = new Map();
-                    participations.forEach((p: any) => {
-                        if (p.activity?.id) {
-                            map.set(p.activity.id, { id: p.id, is_interested: p.is_interested || false });
-                        }
-                    });
-                    setUserParticipations(map);
-                })
-                .catch(err => console.error('Failed to load participations:', err));
-        }
-    }, [user]);
 
     // Filters
     const [searchTerm, setSearchTerm] = useState("");
@@ -115,6 +97,7 @@ export default function AllActivitiesPage() {
                                 <option value="event">{t('activities.events')}</option>
                                 <option value="meeting">{t('activities.meetings')}</option>
                                 <option value="formation">{t('activities.formations')}</option>
+                                <option value="general_assembly">{t('activities.generalAssembly')}</option>
                             </select>
                         </div>
 
@@ -159,7 +142,6 @@ export default function AllActivitiesPage() {
                             <div key={activity.id}>
                                 <ActivityCard 
                                     activity={activity} 
-                                    userParticipation={userParticipations.get(activity.id)}
                                 />
                             </div>
                         ))}

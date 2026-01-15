@@ -1,0 +1,17 @@
+{
+  "teams": {
+    "title": "الفرق والمجموعات",
+    "subtitle": "تعاون، أدر المهام، وحقق الأهداف معاً.",
+    "createTeam": "إنشاء فريق",
+    "emptyTitle": "لم يتم العثور على فرق",
+    "emptySearch": "جرب تعديل مصطلحات البحث الخاصة بك.",
+    "emptyStart": "ابدأ بإنشاء أول فريق لمنظمتك.",
+    "createNow": "أنشئ فريقاً الآن",
+    "deleteConfirm": "هل أنت متأكد من حذف \"{{name}}\"؟",
+    "deleted": "تم حذف الفريق",
+    "deleteFailed": "فشل حذف الفريق",
+    "deleteTeam": "حذف الفريق",
+    "membersCount_one": "عضو واحد",
+    "membersCount_other": "{{count}} أعضاء"
+  }
+}

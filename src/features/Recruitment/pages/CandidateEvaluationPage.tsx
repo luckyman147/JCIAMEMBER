@@ -131,6 +131,8 @@ export default function CandidateEvaluationPage() {
             })
         }
 
+        
+
         // 2. Update status
         await recruitmentService.updateCandidateStatus(candidate.id, status)
         setCandidate(prev => prev ? { ...prev, status } : null)

@@ -6,15 +6,12 @@ import type { ActivityHistoryItem } from '../interfaces/MemberActivities.types';
 
 interface ActivityCardProps {
     item: ActivityHistoryItem;
-    onJoin: (activityId: string) => Promise<void>;
-    isJoining: boolean;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ item, onJoin, isJoining }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ item }) => {
     const { t, i18n } = useTranslation();
     const participantCount = item.activity.activity_participants?.[0]?.count || 0;
-    const isFutureActivity = new Date(item.activity.activity_begin_date) >= new Date();
-    const hasJoined = item.status === 'attended';
+    const isNew = new Date(item.activity.activity_begin_date) > new Date(Date.now());
 
     return (
         <Link to={`/activities/${item.activity.id}/GET`} className="block">
@@ -59,12 +56,20 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, onJoin, isJoining }) 
                                     {item.activity.name}
                                 </h4>
                                 <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    {isNew && (
+                                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded border border-red-200 font-bold uppercase animate-pulse">
+                                            {t('common.new', 'New')}
+                                        </span>
+                                    )}
                                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                         item.activity.type === 'event' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
                                         item.activity.type === 'meeting' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                                        'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                                        item.activity.type === 'formation' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                                        'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
                                     }`}>
-                                        {t(`profile.${item.activity.type}`)}
+                                        {item.activity.type === 'general_assembly' && (item.activity as any).assembly_type
+                                          ? `${t('activities.generalAssembly')} - ${t(`activities.${(item.activity as any).assembly_type}`)}`
+                                          : t(`profile.${item.activity.type}`)}
                                     </span>
                                     <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
                                         <Users className="w-3 h-3 text-blue-500" />
@@ -82,36 +87,6 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, onJoin, isJoining }) 
                             </div>
 
                             <div className={`flex flex-col items-end gap-2 ${item.status === 'missed' ? 'opacity-50' : ''}`}>
-                                {isFutureActivity && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            if (!hasJoined && !isJoining) {
-                                                onJoin(item.activity.id);
-                                            }
-                                        }}
-                                        disabled={hasJoined || isJoining}
-                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                            hasJoined
-                                                ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:ring-amber-800 cursor-default shadow-sm'
-                                                : isJoining
-                                                    ? 'bg-gray-100 text-gray-400 cursor-wait'
-                                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 shadow-sm'
-                                        }`}
-                                    >
-                                        {hasJoined ? (
-                                            <>
-                                                <Star className="w-3.5 h-3.5 fill-current" />
-                                                {t('interested', 'Interested')}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Star className="w-3.5 h-3.5" />
-                                                {t('interested', 'Interested')}
-                                            </>
-                                        )}
-                                    </button>
-                                )}
                                 {(item.activity.activity_points || 0) > 0 && (
                                     <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-500 rounded text-xs font-bold">
                                         <Award className="w-3 h-3" />

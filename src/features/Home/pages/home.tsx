@@ -2,7 +2,6 @@ import { useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import Navbar from '../../../Global_Components/navBar'
-import ActivityCard from '../../Activities/components/ActivityCard'
 import ActivitiesFilter from '../components/ActivitiesFilter'
 import { useActivities } from '../../Activities/hooks/useActivities'
 import type { ActivityFilterDTO } from '../../Activities/dto/ActivityDTOs'
@@ -17,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { getMemberById } from '../../Members/services/members.service'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import ActivityCard from '../../Activities/components/list/ActivityCard'
 
 const Home = () => {
   const { t, i18n } = useTranslation() 
@@ -41,6 +41,7 @@ const Home = () => {
   useEffect(() => {
     checkProfileCompleteness()
   }, [checkProfileCompleteness])
+
   
   // Handlers
   const handleFilterChange = useCallback((filters: ActivityFilterDTO) => {
@@ -151,7 +152,9 @@ const Home = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {activities.map((activity) => (
                 <div key={activity.id} className="h-full">
-                  <ActivityCard activity={activity} />
+                  <ActivityCard 
+                    activity={activity} 
+                  />
                 </div>
               ))}
             </div>

@@ -86,7 +86,7 @@ export default function TopProgressors({ history }: TopProgressorsProps) {
     if (topProgressors.length === 0) return null;
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full mb-3">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                 <div className="flex items-center gap-3 text-left">
                     <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
@@ -103,7 +103,7 @@ export default function TopProgressors({ history }: TopProgressorsProps) {
                         <button
                             key={tf}
                             onClick={() => setTimeFrame(tf)}
-                            className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-tighter ${
+                            className={`px-2 py-1 text-[10px] font-semibold rounded-md transition-all  tracking-wider ${
                                 timeFrame === tf
                                     ? 'bg-white text-gray-900 shadow-sm'
                                     : 'text-gray-500 hover:text-gray-700'

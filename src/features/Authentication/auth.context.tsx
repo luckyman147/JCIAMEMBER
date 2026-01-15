@@ -109,6 +109,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (payload: RegisterDTO) => {
     const { email, password, fullname, phone, birth_date } = payload
 
+    // 0. Check if email already exists in profiles
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('email', email.trim().toLowerCase())
+      .maybeSingle()
+
+    if (existingProfile) {
+      return { error: { message: 'A member with this email already exists.' } }
+    }
+
     // 1. Create user
     const { data, error } = await supabase.auth.signUp({ 
       email, 

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { updateTeam } from "../../services/teams.service";
 import { X } from "lucide-react";
@@ -80,7 +79,7 @@ export default function EditTeamModal({ open, onClose, team, onUpdated }: EditTe
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea 
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none h-32"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none h-24"
                             placeholder="What is this team about?"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}

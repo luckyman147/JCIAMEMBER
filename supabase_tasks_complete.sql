@@ -55,7 +55,7 @@ declare
   task_points integer;
   task_title text;
 begin
-  -- Trigger only when status changes TO 'completed'
+  -- 1. AWARD POINTS: Status changes TO 'completed'
   if new.status = 'completed' and (old.status is null or old.status != 'completed') then
     
     -- Get points and title from task definition
@@ -78,17 +78,65 @@ begin
       );
     end if;
     
+  -- 2. RETURN POINTS: Status changes FROM 'completed' to something else
+  elsif (old.status = 'completed' and new.status != 'completed') then
+    
+    -- Get points and title from task definition
+    select points, title into task_points, task_title from tasks where id = new.task_id;
+    
+    if task_points > 0 then
+      -- Deduct member points
+      update profiles 
+      set points = coalesce(points, 0) - task_points 
+      where id = new.member_id;
+      
+      -- Log in points_history (negative points)
+      insert into points_history (member_id, points, source_type, source_id, description)
+      values (
+        new.member_id, 
+        -task_points, 
+        'task', 
+        new.task_id, 
+        'Task Reopened: ' || task_title || ' (Points Returned)'
+      );
+    end if;
   end if;
   return new;
 end;
 $$ language plpgsql;
 
--- Trigger: On Completion
+-- Trigger: On Completion/Reopen
 drop trigger if exists on_task_completion on member_tasks;
 create trigger on_task_completion
 after update on member_tasks
 for each row
 execute function handle_task_completion();
+
+-- Function: Handle Task Deletion (Return Points)
+create or replace function handle_task_deletion()
+returns trigger as $$
+declare
+  task_points integer;
+  task_title text;
+begin
+  if old.status = 'completed' then
+    select points, title into task_points, task_title from tasks where id = old.task_id;
+    if task_points > 0 then
+      update profiles set points = coalesce(points, 0) - task_points where id = old.member_id;
+      insert into points_history (member_id, points, source_type, source_id, description)
+      values (old.member_id, -task_points, 'task', old.task_id, 'Assignment Deleted: ' || task_title || ' (Points Returned)');
+    end if;
+  end if;
+  return old;
+end;
+$$ language plpgsql;
+
+-- Trigger: On Deletion
+drop trigger if exists on_task_deletion on member_tasks;
+create trigger on_task_deletion
+after delete on member_tasks
+for each row
+execute function handle_task_deletion();
 
 
 -- 5. Triggers for Locking Logic
@@ -97,9 +145,10 @@ execute function handle_task_completion();
 create or replace function prevent_completed_task_modification()
 returns trigger as $$
 begin
-  -- If the OLD record was already completed, deny any change
-  if old.status = 'completed' then
-     raise exception 'This task is completed and cannot be modified or deleted.';
+  -- Allow updates even if completed (to support star_rating and status changes)
+  -- Only block deletions of completed tasks for safety
+  if TG_OP = 'DELETE' and old.status = 'completed' then
+     raise exception 'Cannot delete a completed task assignment directly. Please reopen it first if you wish to remove it.';
   end if;
   return new;
 end;

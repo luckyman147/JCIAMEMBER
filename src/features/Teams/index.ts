@@ -1,5 +1,7 @@
 export { default as TeamsPage } from './pages/TeamsPage';
 export { default as TeamDetailsPage } from './pages/TeamDetailsPage';
+export { default as ProjectsPage } from './pages/ProjectsPage';
+export { default as ProjectDetailsPage } from './pages/ProjectDetailsPage';
 export { default as MemberTeamsList } from './components/list/MemberTeamsList';
 export { default as AddMemberModal } from './components/modals/AddMemberModal';
 export { default as CreateTeamTaskModal } from './components/modals/CreateTeamTaskModal';

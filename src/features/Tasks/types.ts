@@ -11,11 +11,15 @@ export interface Task {
     team_id?: string; // Optional link to a team
     team?: { name: string }; // Joined team data
     description?: string;
+    complexity?: 'lead' | 'major' | 'minor';
     subtasks?: SubTaskDefinition[]; // The defined points/subtasks
     status: 'todo' | 'in_progress' | 'completed';
     created_at: string;
     start_date?: string;
     deadline?: string;
+    star_rating?: number;
+    header_color?: string;
+    attachments?: { name: string; url: string }[];
     assignments?: { member_id: string }[];
 }
 
@@ -38,6 +42,7 @@ export interface MemberTask {
     
     // For subtask tracking
     completed_subtask_ids: string[];
+    star_rating?: number;
     
     assigned_at: string;
     updated_at: string;

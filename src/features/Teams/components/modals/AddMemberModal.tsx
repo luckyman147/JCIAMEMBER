@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { cn } from "../../../../lib/utils";
 import type { Member } from "../../../Members/types";
 import { getMembers } from "../../../Members/services/members.service";
+import { getProjectMembers } from "../../services/project.service";
 
 interface AddMemberModalProps {
     open: boolean;
@@ -14,9 +15,10 @@ interface AddMemberModalProps {
     teamId: string;
     existingMemberIds: string[];
     onAdded: () => void;
+    projectId?: string; // If present, restricts to project members
 }
 
-export default function AddMemberModal({ open, onClose, teamId, existingMemberIds, onAdded }: AddMemberModalProps) {
+export default function AddMemberModal({ open, onClose, teamId, existingMemberIds, onAdded, projectId }: AddMemberModalProps) {
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -34,7 +36,16 @@ export default function AddMemberModal({ open, onClose, teamId, existingMemberId
     const loadMembers = async () => {
         setLoading(true);
         try {
-            const allMembers = await getMembers();
+            let allMembers: Member[] = [];
+            
+            if (projectId) {
+                // Constrain to project members only
+                const pm = await getProjectMembers(projectId);
+                allMembers = pm as unknown as Member[]; 
+            } else {
+                 allMembers = await getMembers();
+            }
+            
             // Filter out already in team
             setMembers(allMembers.filter(m => !existingMemberIds.includes(m.id)));
         } catch (error) {

@@ -1,5 +1,5 @@
 
-import { X, Calendar, Clock, Trophy, CheckCircle2, Circle } from 'lucide-react';
+import { X, Calendar, Clock, Trophy, CheckCircle2, Circle, Star, ExternalLink, Paperclip } from 'lucide-react';
 import type { Task } from '../types';
 
 interface TaskDetailsSidebarProps {
@@ -23,26 +23,29 @@ export const TaskDetailsSidebar = ({ task, isOpen, onClose }: TaskDetailsSidebar
 
             {/* Sidebar */}
             <div 
-                className={`fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl z-[60] transform transition-transform duration-500 ease-out border-l border-gray-100 flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl z-60 transform transition-transform duration-500 ease-out border-l border-gray-100 flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
             >
                 {/* Header */}
-                <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0">
+                <div 
+                    className="p-6 border-b flex items-center justify-between sticky top-0 z-10"
+                    style={{ backgroundColor: task.header_color || '#ffffff' }}
+                >
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl ${
-                            task.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
-                            task.status === 'in_progress' ? 'bg-blue-50 text-blue-600' :
-                            'bg-slate-50 text-slate-500'
+                        <div className={`p-2 rounded-xl bg-white/90 shadow-sm ${
+                            task.status === 'completed' ? 'text-emerald-600' :
+                            task.status === 'in_progress' ? 'text-blue-600' :
+                            'text-slate-500'
                         }`}>
                             {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                         </div>
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Task Detail</span>
-                            <h2 className="text-sm font-bold text-gray-900 line-clamp-1">{task.title}</h2>
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${task.header_color ? 'text-white/80' : 'text-gray-400'}`}>Task Detail</span>
+                            <h2 className={`text-sm font-black line-clamp-1 ${task.header_color ? 'text-white' : 'text-gray-900'}`}>{task.title}</h2>
                         </div>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-400"
+                        className={`p-2 rounded-xl transition-colors ${task.header_color ? 'text-white/80 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-50'}`}
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -59,10 +62,25 @@ export const TaskDetailsSidebar = ({ task, isOpen, onClose }: TaskDetailsSidebar
                         }`}>
                             {task.status?.replace('_', ' ')}
                         </span>
+                        {task.star_rating && (
+                            <span className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-amber-400" />
+                                {task.star_rating} Quality
+                            </span>
+                        )}
                         {task.points > 0 && (
                             <span className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1.5">
                                 <Trophy className="w-3 h-3" />
                                 {task.points} Points
+                            </span>
+                        )}
+                        {task.complexity && (
+                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                task.complexity === 'lead' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                task.complexity === 'major' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                                'bg-slate-50 text-slate-600 border-slate-100'
+                            }`}>
+                                {task.complexity}
                             </span>
                         )}
                         {isExpired && (
@@ -109,17 +127,41 @@ export const TaskDetailsSidebar = ({ task, isOpen, onClose }: TaskDetailsSidebar
                     {/* Subtasks / Objectives */}
                     {task.subtasks && task.subtasks.length > 0 && (
                         <section>
-                            <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center justify-between">
-                                <span>Objectives ({task.subtasks.length})</span>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">
+                                Objectives ({task.subtasks.length})
                             </h3>
                             <div className="space-y-2">
                                 {task.subtasks.map((sub, idx) => (
-                                    <div key={sub.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-50 hover:border-gray-100 transition-colors group">
-                                        <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-[10px] font-bold text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                    <div key={sub.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-50 bg-gray-50/20 hover:border-gray-100 transition-colors group">
+                                        <div className="w-6 h-6 rounded-lg bg-white shadow-sm flex items-center justify-center text-[10px] font-black text-gray-400 group-hover:text-blue-600 transition-colors">
                                             {idx + 1}
                                         </div>
-                                        <span className="text-sm text-gray-600 font-medium">{sub.text}</span>
+                                        <span className="text-sm text-gray-600 font-bold">{sub.text}</span>
                                     </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Attachments */}
+                    {task.attachments && task.attachments.length > 0 && (
+                        <section>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                                <Paperclip className="w-3.5 h-3.5" />
+                                Resources ({task.attachments.length})
+                            </h3>
+                            <div className="grid grid-cols-1 gap-2">
+                                {task.attachments.map((att, idx) => (
+                                    <a 
+                                        key={idx} 
+                                        href={att.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between p-3 rounded-xl bg-blue-50/50 border border-blue-100 hover:bg-blue-50 transition-colors group"
+                                    >
+                                        <span className="text-xs font-black text-blue-700 uppercase tracking-tight">{att.name}</span>
+                                        <ExternalLink className="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600" />
+                                    </a>
                                 ))}
                             </div>
                         </section>

@@ -24,6 +24,7 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
     const [trackingType, setTrackingType] = useState<'manual' | 'subtasks'>('subtasks');
     const [startDate, setStartDate] = useState<string>("");
     const [deadline, setDeadline] = useState<string>("");
+    const [complexity, setComplexity] = useState<'lead' | 'major' | 'minor'>('minor');
     
     const handleTrackingTypeChange = (type: 'manual' | 'subtasks') => {
         setTrackingType(type);
@@ -88,6 +89,7 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
                 status: 'todo',
                 start_date: startDate || undefined,
                 deadline: deadline || undefined,
+                complexity,
                 subtasks: trackingType === 'subtasks' ? subtasks : []
             }, trackingType);
             
@@ -134,6 +136,7 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
         setSelectedTaskId(null);
         setStartDate("");
         setDeadline("");
+        setComplexity('minor');
     };
 
     const filteredTasks = availableTasks.filter(t => 
@@ -203,11 +206,22 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <h4 className="font-medium text-gray-900">{task.title}</h4>
-                                                        {task.team && (
-                                                            <span className="inline-flex items-center gap-1 mt-1 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
-                                                                Team: {task.team.name}
-                                                            </span>
-                                                        )}
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            {task.team && (
+                                                                <span className="inline-flex items-center gap-1 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 whitespace-nowrap">
+                                                                    Team: {task.team.name}
+                                                                </span>
+                                                            )}
+                                                            {task.complexity && (
+                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest whitespace-nowrap ${
+                                                                    task.complexity === 'lead' ? 'bg-indigo-100 text-indigo-700' :
+                                                                    task.complexity === 'major' ? 'bg-orange-100 text-orange-700' :
+                                                                    'bg-slate-100 text-slate-600'
+                                                                }`}>
+                                                                    {task.complexity}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     {task.points > 0 && <span className="text-xs font-bold text-gray-500">{task.points} pts</span>}
                                                 </div>
@@ -244,6 +258,19 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Complexity (JPS Multiplier)</label>
+                                <select 
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    value={complexity}
+                                    onChange={(e) => setComplexity(e.target.value as any)}
+                                >
+                                    <option value="lead">Lead Role (15x)</option>
+                                    <option value="major">Major Task (10x)</option>
+                                    <option value="minor">Minor Task (4x)</option>
+                                </select>
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                                 <textarea 
                                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none h-24"
@@ -255,7 +282,7 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1 font-bold text-xs uppercase">Start Date</label>
+                                    <label className="block text-gray-700 mb-1 font-bold text-xs uppercase tracking-wider">Start Date</label>
                                     <input 
                                         type="date"
                                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
@@ -264,7 +291,7 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1 font-bold text-xs uppercase">Deadline</label>
+                                    <label className="block text-gray-700 mb-1 font-bold text-xs uppercase tracking-wider">Deadline</label>
                                     <input 
                                         type="date"
                                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-red-600 font-bold"
@@ -299,10 +326,10 @@ export default function AssignTaskModal({ open, onClose, onAssigned, memberId }:
                             {trackingType === 'subtasks' && (
                                 <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase">Checklist Items</label>
-                                    
+
                                     <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             className="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                             placeholder="Add a subtask..."
                                             value={newSubtaskText}

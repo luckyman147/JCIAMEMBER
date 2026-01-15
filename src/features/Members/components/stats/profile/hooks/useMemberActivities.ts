@@ -11,7 +11,6 @@ export const useMemberActivities = (memberId: string) => {
   const [historyItems, setHistoryItems] = useState<ActivityHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [joiningActivityId, setJoiningActivityId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -71,7 +70,8 @@ export const useMemberActivities = (memberId: string) => {
                       id: p.id,
                       rate: p.rate,
                       notes: p.notes,
-                      registered_at: p.registered_at
+                      registered_at: p.registered_at,
+                      is_interested: p.is_interested
                   }
               });
           }
@@ -118,23 +118,6 @@ export const useMemberActivities = (memberId: string) => {
     }
   }, [memberId, fetchData]);
 
-  const handleJoinActivity = async (activityId: string) => {
-    try {
-      setJoiningActivityId(activityId);
-      await activityService.addParticipation({
-        activity_id: activityId,
-        user_id: memberId,
-        is_temp: false,
-        is_interested:true
-      });
-      await fetchData();
-    } catch (err: any) {
-      console.error("Failed to join activity", err);
-      throw err;
-    } finally {
-      setJoiningActivityId(null);
-    }
-  };
 
   const attendedItems = historyItems.filter(i => i.status === 'attended');
   const absentItems = historyItems.filter(i => i.status === 'missed' && new Date(i.activity.activity_begin_date) < new Date());
@@ -149,8 +132,6 @@ export const useMemberActivities = (memberId: string) => {
     historyItems,
     loading,
     error,
-    joiningActivityId,
-    handleJoinActivity,
     attendedItems,
     absentItems,
     futureItems,

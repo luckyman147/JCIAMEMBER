@@ -29,6 +29,7 @@ export interface CreateMeetingDTO extends ActivityDTOBase {
   type: 'meeting'
   meeting_plan?: string | null
   pv_attachments?: string | null
+  meeting_type?: 'official' | 'committee' | null
 }
 
 // Formation-specific DTO
@@ -37,16 +38,25 @@ export interface CreateFormationDTO extends ActivityDTOBase {
   trainer_name?: string | null
   course_attachment?: string | null
   registration_deadline?: string | null
+  training_type?: import("../models/Activity").TrainingType | null
+}
+
+// General Assembly-specific DTO
+export interface CreateGeneralAssemblyDTO extends ActivityDTOBase {
+  type: 'general_assembly'
+  assembly_type?: 'local' | 'zonal' | 'national' | 'international'
 }
 
 // Discriminated union for Create
-export type CreateActivityDTO = CreateEventDTO | CreateMeetingDTO | CreateFormationDTO
+export type CreateActivityDTO = CreateEventDTO | CreateMeetingDTO | CreateFormationDTO | CreateGeneralAssemblyDTO
 
 // Update DTOs (Partial of each type)
 export type UpdateEventDTO = Partial<CreateEventDTO>
 export type UpdateMeetingDTO = Partial<CreateMeetingDTO>
 export type UpdateFormationDTO = Partial<CreateFormationDTO>
-export type UpdateActivityDTO = UpdateEventDTO | UpdateMeetingDTO | UpdateFormationDTO
+export type UpdateGeneralAssemblyDTO = Partial<CreateGeneralAssemblyDTO>
+export type UpdateActivityDTO = UpdateEventDTO | UpdateMeetingDTO | UpdateFormationDTO | UpdateGeneralAssemblyDTO
+
 
 // Filter DTO
 export interface ActivityFilterDTO {

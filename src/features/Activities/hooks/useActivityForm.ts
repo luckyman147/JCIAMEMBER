@@ -17,6 +17,8 @@ export interface UseActivityFormReturn {
   register: ReturnType<typeof useForm<ActivityFormValues>>['register']
   handleSubmit: ReturnType<typeof useForm<ActivityFormValues>>['handleSubmit']
   errors: ReturnType<typeof useForm<ActivityFormValues>>['formState']['errors']
+  watch: ReturnType<typeof useForm<ActivityFormValues>>['watch']
+  setValue: ReturnType<typeof useForm<ActivityFormValues>>['setValue']
   
   // Watched values
   activityType: string
@@ -64,7 +66,7 @@ export function useActivityForm(): UseActivityFormReturn {
   const now = new Date()
   const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000)
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<ActivityFormValues>({
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema) as any,
     defaultValues: {
       is_online: false,
@@ -126,6 +128,8 @@ export function useActivityForm(): UseActivityFormReturn {
           pv_attachments: activity.type === 'meeting' ? (activity.pv_attachments || '') : '',
           trainer_name: activity.type === 'formation' ? (activity.trainer_name || '') : '',
           course_attachment: activity.type === 'formation' ? (activity.course_attachment || '') : '',
+          training_type: activity.type === 'formation' ? (activity.training_type || 'just_training') : undefined,
+          assembly_type: activity.type === 'general_assembly' ? (activity.assembly_type || undefined) : undefined,
         })
 
         // Set file URLs
@@ -237,6 +241,13 @@ export function useActivityForm(): UseActivityFormReturn {
           trainer_name: data.trainer_name || null,
           course_attachment: urls.courseUrl,
           registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : null,
+          training_type: data.training_type || 'just_training',
+        }
+      case 'general_assembly':
+        return {
+          ...basePayload,
+          type: 'general_assembly',
+          assembly_type: data.assembly_type,
         }
     }
   }, [user, meetingAgenda])
@@ -291,6 +302,8 @@ export function useActivityForm(): UseActivityFormReturn {
     register,
     handleSubmit,
     errors,
+    watch,
+    setValue,
     activityType,
     isPaid,
     isOnline,

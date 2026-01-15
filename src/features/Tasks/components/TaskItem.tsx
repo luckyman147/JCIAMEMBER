@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { MemberTask } from "../types";
 import { Check, Calendar, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import StarRating from "../../Activities/components/common/StarRating";
 
 const formatDate = (dateStr: string) => {
     try {
@@ -27,24 +28,25 @@ const isExpired = (deadline: string) => {
 interface TaskItemProps {
     assignment: MemberTask;
     onUpdate: (id: string, updates: Partial<MemberTask>) => Promise<void>;
-    readOnly?: boolean;
+    isAdmin?: boolean;
 }
 
-export default function TaskItem({ assignment, onUpdate, readOnly = false }: TaskItemProps) {
+export default function TaskItem({ assignment, onUpdate, isAdmin = false }: TaskItemProps) {
     const { t } = useTranslation();
     const [updating, setUpdating] = useState(false);
     
     const task = assignment.task;
     if (!task) return null;
     
-    // Lock if completed or readOnly
-    const isLocked = assignment.status === 'completed' || readOnly;
+    // Lock if completed or not admin
+    const isLocked = assignment.status === 'completed';
+    const canEditProgress = !isLocked;
 
     const isSubtaskTracking = assignment.tracking_type === 'subtasks';
     
     // Handler for Manual Progress
     const handleManualProgressChange = async (newProgress: number) => {
-        if (updating || isLocked) return;
+        if (updating || !canEditProgress) return;
         setUpdating(true);
         try {
             await onUpdate(assignment.id, { 
@@ -58,7 +60,7 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
 
     // Handler for Subtasks
     const handleSubtaskToggle = async (subtaskId: string) => {
-        if (updating || isLocked) return;
+        if (updating || !canEditProgress) return;
         setUpdating(true);
         try {
             const currentCompleted = assignment.completed_subtask_ids || [];
@@ -95,6 +97,15 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                         {task.points > 0 && (
                             <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full font-medium">
                                 {task.points} pts
+                            </span>
+                        )}
+                        {task.complexity && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest ${
+                                task.complexity === 'lead' ? 'bg-indigo-100 text-indigo-700' :
+                                task.complexity === 'major' ? 'bg-orange-100 text-orange-700' :
+                                'bg-slate-100 text-slate-600'
+                            }`}>
+                                {task.complexity}
                             </span>
                         )}
                     </div>
@@ -136,8 +147,13 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                         assignment.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                         'bg-gray-100 text-gray-600'
                     }`}>
-                        {t(`profile.${assignment.status || 'todo'}`)}
+                        {assignment.status?.replace('_', ' ')}
                     </span>
+                    {assignment.star_rating && !isAdmin && (
+                        <div className="mt-2 flex items-center gap-1">
+                            <StarRating value={assignment.star_rating} disabled size="sm" />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -164,10 +180,10 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                                 <button
                                     key={subtask.id}
                                     onClick={() => handleSubtaskToggle(subtask.id)}
-                                    disabled={updating || isLocked}
-                                    className={`flex items-start gap-3 w-full text-left p-2 rounded-lg transition-colors group ${isLocked ? 'cursor-not-allowed opacity-75' : 'hover:bg-gray-50'}`}
+                                    disabled={updating || !canEditProgress}
+                                    className={`flex items-start gap-3 w-full text-left p-2 rounded-lg transition-colors group ${!canEditProgress ? 'cursor-not-allowed opacity-75' : 'hover:bg-gray-50'}`}
                                 >
-                                    <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isDone ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
+                                    <div className={`shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isDone ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
                                         {isDone && <Check className="w-3.5 h-3.5 text-white" />}
                                     </div>
                                     <span className={`text-sm ${isDone ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
@@ -188,8 +204,8 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                             step="10"
                             value={assignment.progress_percentage}
                             onChange={(e) => handleManualProgressChange(parseInt(e.target.value))}
-                            disabled={updating || isLocked}
-                            className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${isLocked ? 'cursor-not-allowed opacity-50 accent-gray-400' : 'accent-blue-600'}`}
+                            disabled={updating || !canEditProgress}
+                            className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${!canEditProgress ? 'cursor-not-allowed opacity-50 accent-gray-400' : 'accent-blue-600'}`}
                         />
                          <div className="flex justify-between text-xs text-gray-400 mt-1">
                             <span>0%</span>
@@ -199,28 +215,41 @@ export default function TaskItem({ assignment, onUpdate, readOnly = false }: Tas
                     </div>
                 )}
                 
-                {!isLocked && assignment.status !== 'completed' && (
-                    <button
-                        onClick={async () => {
-                            if (isSubtaskTracking) {
-                                await onUpdate(assignment.id, {
-                                    status: 'completed',
-                                    progress_percentage: 100,
-                                    completed_subtask_ids: task.subtasks?.map(s => s.id) || []
-                                });
-                            } else {
-                                await onUpdate(assignment.id, {
-                                    status: 'completed',
-                                    progress_percentage: 100
-                                });
-                            }
-                        }}
-                        disabled={updating}
-                        className="mt-6 w-full py-2 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-100 hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <Check className="w-3.5 h-3.5" />
-                        {t('profile.markAsComplete')}
-                    </button>
+                {isAdmin && (
+                    <div className="mt-6 flex flex-col gap-2 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-amber-700">{t('profile.qualityScore')} (Admin Only)</label>
+                        <StarRating 
+                            value={assignment.star_rating || 0} 
+                            onChange={(val) => onUpdate(assignment.id, { star_rating: val })}
+                        />
+                        <p className="text-[10px] text-amber-600 italic">This rating influences the member's JPS score for this task.</p>
+                    </div>
+                )}
+
+                {canEditProgress && (
+                    <div className="mt-4">
+                        <button
+                            onClick={async () => {
+                                if (isSubtaskTracking) {
+                                    await onUpdate(assignment.id, {
+                                        status: 'completed',
+                                        progress_percentage: 100,
+                                        completed_subtask_ids: task.subtasks?.map(s => s.id) || []
+                                    });
+                                } else {
+                                    await onUpdate(assignment.id, {
+                                        status: 'completed',
+                                        progress_percentage: 100
+                                    });
+                                }
+                            }}
+                            disabled={updating}
+                            className="w-full py-2 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-100 hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <Check className="w-3.5 h-3.5" />
+                            {t('profile.markAsComplete')}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
