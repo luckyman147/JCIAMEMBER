@@ -154,23 +154,23 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-blue-900/80">
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
-                                ({details.activityPoints} + {details.taskPoints} + {details.earnedPoints})
+                                (({details.meetingsPoints.toFixed(1)}M + {details.formationsPoints.toFixed(1)}F + {details.gaPoints.toFixed(1)}G + {details.eventsPoints.toFixed(1)}E) + {details.taskPoints.toFixed(1)}T + {details.earnedPoints}P)
                             </span>
                             <span>×</span>
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
-                                {details.participationRate.toFixed(2)}
+                                {details.participationRate.toFixed(2)}Rate
                             </span>
                             <span>×</span>
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
-                                {details.feeMultiplier.toFixed(1)}
+                                {details.feeMultiplier.toFixed(1)}Fee
                             </span>
                             <span>-</span>
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
-                                {details.complaintsPenalty}
+                                {details.complaintsPenalty}Pen
                             </span>
                             <span>+</span>
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
-                                {details.rankBonus}
+                                {details.rankBonus}Rank
                             </span>
                             <span className="font-bold text-blue-600">=</span>
                             <span className="bg-(--color-myAccent) text-white px-2 py-0.5 rounded-md font-black shadow-sm">
@@ -184,13 +184,16 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 border-b border-gray-100 pb-1">
                             {t('profile.jps.formula.title')}
                         </p>
-                        <div className="grid grid-cols-1 gap-1.5">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                             {[
-                                { color: 'bg-blue-100', label: t('profile.jps.formula.pointsSum') },
-                                { color: 'bg-emerald-100', label: t('profile.jps.formula.participation') },
-                                { color: 'bg-indigo-100', label: t('profile.jps.formula.fees') },
-                                { color: 'bg-rose-100', label: t('profile.jps.formula.penalty') },
-                                { color: 'bg-amber-100', label: t('profile.jps.formula.bonus') }
+                                { color: 'bg-blue-400', label: 'M: Meetings (Imp × Rate × 0.1)' },
+                                { color: 'bg-indigo-400', label: 'F: Formations (Imp × Rate × 0.1)' },
+                                { color: 'bg-emerald-400', label: 'G: Assemblies (Imp × Rate × 0.1)' },
+                                { color: 'bg-purple-400', label: 'E: Events (Imp × Rate × 0.1)' },
+                                { color: 'bg-orange-400', label: 'T: Tasks' },
+                                { color: 'bg-amber-400', label: 'P: Points Earned' },
+                                { color: 'bg-gray-400', label: 'Rate: Participation' },
+                                { color: 'bg-gray-400', label: 'Fee: Membership' }
                             ].map((item, idx) => (
                                 <div key={idx} className="flex items-center gap-2">
                                     <div className={cn("w-1.5 h-1.5 rounded-full", item.color)} />
@@ -200,7 +203,7 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         </div>
                         <p className="text-[9px] text-gray-400 italic mt-2 bg-gray-50/80 p-2 rounded-lg leading-relaxed">
                             <Info className="w-2.5 h-2.5 inline-block mr-1 -mt-0.5" />
-                            {t('profile.jps.formula.zeroNote')}
+                            Activity scores are weighted by the quality of participation (1-5 stars × 0.1).
                         </p>
                     </div>
                 </div>

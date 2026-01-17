@@ -6,6 +6,10 @@ export interface JPSResult {
     category: PerformanceCategory;
     details: {
         activityPoints: number;
+        meetingsPoints: number;
+        formationsPoints: number;
+        gaPoints: number;
+        eventsPoints: number;
         taskPoints: number;
         earnedPoints: number;
         participationRate: number; // For score multiplyer
@@ -13,6 +17,13 @@ export interface JPSResult {
         complaintsPenalty: number;
         rankBonus: number;
         feeMultiplier: number;
+    };
+    comparison: {
+        mentorshipImpact: number; // MIS
+        consistencyIndex: number; // MCI
+        contributionDensity: number; // CD
+        engagementDiversity: number; // DoE
+        momentum: number; // Growth
     };
 }
 
@@ -86,7 +97,15 @@ export const jpsService = {
 
         const { data: participations } = await supabase
             .from('activity_participants')
-            .select('*, activity:activities!inner(*), formation:formations(*), meeting:meetings(*), ga:general_assemblies(*)')
+            .select(`
+                *,
+                activity:activities!inner(
+                    *,
+                    formation:formations(*),
+                    meeting:meetings(*),
+                    ga:general_assemblies(*)
+                )
+            `)
             .eq('user_id', memberId)
             .gte('activity.activity_begin_date', startISO)
             .lte('activity.activity_begin_date', calculationDateLimit)
@@ -113,7 +132,7 @@ export const jpsService = {
         // 5. Fetch Total Activities for Participation Rate (Filtered by Induction Date)
         const { data: member } = await supabase
             .from('profiles')
-            .select('cotisation_status, created_at')
+            .select('cotisation_status, created_at, points')
             .eq('id', memberId)
             .single();
 
@@ -137,12 +156,25 @@ export const jpsService = {
 
         // --- CALCULATIONS ---
 
-        // A. Activity Points Σ(M × S)
+        // A. Activity Points Breakdown Σ(M × S)
         let activityPoints = 0;
+        let meetingsPoints = 0;
+        let formationsPoints = 0;
+        let gaPoints = 0;
+        let eventsPoints = 0;
+
         participations?.forEach(p => {
             const m = this.getActivityMultiplier(p);
-            const s = p.rate || 3; // Default to 3 stars if not rated
-            activityPoints += (m * s);
+            const s = (p.rate || 3) * 0.1; // Star rating (1-5) scaled to 0.1-0.5
+            const total = m * s;
+            
+            activityPoints += total;
+            
+            const type = p.activity?.type;
+            if (type === 'meeting') meetingsPoints += total;
+            else if (type === 'formation') formationsPoints += total;
+            else if (type === 'general_assembly') gaPoints += total;
+            else if (type === 'event') eventsPoints += total;
         });
 
         // B. Task Points Σ(T × S)
@@ -185,11 +217,38 @@ export const jpsService = {
         const rawScore = (activityPoints + taskPoints + earnedPoints) * participationRate * feeMultiplier;
         const finalScore = Math.max(0, rawScore - complaintsPenalty + rankBonus);
 
+        // --- ADVANCED METRICS (NEW) ---
+        
+        // 1. Mentorship Impact (MIS)
+        const mentorshipImpact = await this.calculateMIS(memberId);
+
+        // 2. Consistency & Momentum (Historical)
+        const { data: snapshots } = await supabase
+            .from('jps_snapshots')
+            .select('score, year, month, trimester')
+            .eq('member_id', memberId)
+            .order('year', { ascending: false })
+            .order('month', { ascending: false })
+            .limit(6);
+
+        const consistencyIndex = this.calculateMCI(snapshots || []);
+        const momentum = this.calculateMomentum(finalScore, snapshots || []);
+
+        // 3. Contribution Density (CD)
+        const contributionDensity = this.calculateCD(member?.points || 0, member?.created_at);
+
+        // 4. Diversity of Engagement (DoE)
+        const engagementDiversity = this.calculateDoE(participations || []);
+
         return {
             score: Math.round(finalScore),
             category: getJPSCategory(finalScore).name,
             details: {
                 activityPoints,
+                meetingsPoints,
+                formationsPoints,
+                gaPoints,
+                eventsPoints,
                 taskPoints,
                 earnedPoints,
                 participationRate,
@@ -197,23 +256,36 @@ export const jpsService = {
                 complaintsPenalty,
                 rankBonus,
                 feeMultiplier
+            },
+            comparison: {
+                mentorshipImpact,
+                consistencyIndex,
+                contributionDensity,
+                engagementDiversity,
+                momentum
             }
         };
     },
 
     getActivityMultiplier(p: any) {
-        const type = p.activity?.type;
+        const activity = p.activity;
+        const type = activity?.type;
+        
         if (type === 'general_assembly') {
-            const gaType = p.ga?.assembly_type;
+            // Check both nested join and potential property if already flattened
+            const gaType = activity?.ga?.assembly_type || p.ga?.assembly_type;
             if (gaType === 'national' || gaType === 'international') return 12;
             if (gaType === 'zonal') return 9;
             return 6; // local
         }
         if (type === 'meeting') {
-            return 10;
+            const meetingType = activity?.meeting?.meeting_type || p.meeting?.meeting_type;
+            if (meetingType === 'official') return 10;
+            if (meetingType === 'committee') return 7;
+            return 8; // Default meeting multiplier
         }
         if (type === 'formation') {
-            const trType = p.formation?.training_type;
+            const trType = activity?.formation?.training_type || p.formation?.training_type;
             if (trType === 'official_session') return 9;
             if (trType === 'important_training') return 7;
             if (trType === 'just_training') return 5;
@@ -234,8 +306,7 @@ export const jpsService = {
     },
 
     async calculateRankBonus(memberId: string, start: string, end: string): Promise<number> {
-        // This is expensive if many members, but for JCI local it's fine.
-        // We sum points from points_history for all members in the period
+        // ... (existing rank bonus logic) ...
         const { data: allHistory } = await supabase
             .from('points_history')
             .select('member_id, points')
@@ -257,6 +328,74 @@ export const jpsService = {
         if (rank <= 5) return 30;
         if (rank <= 10) return 10;
         return 0;
+    },
+
+    /**
+     * ADVANCED METRIC HELPERS
+     */
+
+    async calculateMIS(memberId: string): Promise<number> {
+        const { data: advisees } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('advisor_id', memberId);
+        
+        if (!advisees || advisees.length === 0) return 0;
+
+        const { startDate } = this.getTrimesterDates();
+        
+        const { data: adviseeSnapshots } = await supabase
+            .from('jps_snapshots')
+            .select('score')
+            .in('member_id', advisees.map(a => a.id))
+            .eq('year', startDate.getFullYear())
+            .eq('trimester', Math.floor(startDate.getMonth() / 3) + 1);
+
+        if (!adviseeSnapshots || adviseeSnapshots.length === 0) return 0;
+
+        const avgJPS = adviseeSnapshots.reduce((acc, s) => acc + s.score, 0) / adviseeSnapshots.length;
+        return Math.round(avgJPS);
+    },
+
+    calculateMCI(snapshots: any[]): number {
+        if (snapshots.length < 2) return 100; // Perfect consistency for newcomers or if no history
+
+        const scores = snapshots.map(s => s.score);
+        const mean = scores.reduce((a, b) => a + b) / scores.length;
+        if (mean === 0) return 0;
+
+        const variance = scores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / scores.length;
+        const stdDev = Math.sqrt(variance);
+        
+        // CV = stdDev / Mean. Score = 100 * (1 - CV)
+        const cv = stdDev / mean;
+        return Math.max(0, Math.round(100 * (1 - cv)));
+    },
+
+    calculateMomentum(currentScore: number, snapshots: any[]): number {
+        if (snapshots.length === 0) return 0;
+        
+        // Find the most recent snapshot that isn't from the current trimester calculation
+        // Since refreshJPS might have already updated it, we look for previous trimester's avg or previous month
+        const previousScore = snapshots[0]?.score || 0;
+        if (previousScore === 0) return 0;
+
+        const growth = ((currentScore - previousScore) / previousScore) * 100;
+        return Math.round(growth);
+    },
+
+    calculateCD(totalPoints: number, createdAt: string): number {
+        const joinDate = new Date(createdAt);
+        const now = new Date();
+        const months = Math.max(1, (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth()));
+        
+        return Math.round((totalPoints / months) * 10) / 10;
+    },
+
+    calculateDoE(participations: any[]): number {
+        const typesParticipated = new Set(participations.map(p => p.activity?.type));
+        const totalTypes = 4; // meeting, formation, event, general_assembly
+        return Math.round((typesParticipated.size / totalTypes) * 100);
     },
 
     /**

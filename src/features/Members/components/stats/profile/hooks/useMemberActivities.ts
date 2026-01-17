@@ -11,6 +11,7 @@ export const useMemberActivities = (memberId: string) => {
   const [historyItems, setHistoryItems] = useState<ActivityHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [memberJoinDate, setMemberJoinDate] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -24,6 +25,7 @@ export const useMemberActivities = (memberId: string) => {
       }
 
       const joinDate = member.created_at || new Date().toISOString();
+      setMemberJoinDate(joinDate);
       
       const { data: memberCategoriesData } = await activityService.getMembers().then(() => 
         supabase.from('profile_categories').select('category_id').eq('profile_id', memberId)
@@ -126,7 +128,28 @@ export const useMemberActivities = (memberId: string) => {
   const attendedCount = attendedItems.length;
   const missedCount = absentItems.length;
   const futureCount = futureItems.length;
-  const presenceRate = Math.round((attendedCount / (attendedCount + missedCount || 1)) * 100);
+
+  // Refined Presence Rate calculation: (Attended Past Since Join) / (Total Past Since Join)
+  const presenceRate = (() => {
+    if (!memberJoinDate || historyItems.length === 0) return 0;
+    const jd = new Date(memberJoinDate);
+    const now = new Date();
+
+    const pastAttendedSinceJoin = historyItems.filter(i => 
+      i.status === 'attended' && 
+      new Date(i.activity.activity_begin_date) < now &&
+      new Date(i.activity.activity_begin_date) >= jd
+    ).length;
+
+    const pastMissedSinceJoin = historyItems.filter(i => 
+      i.status === 'missed' && 
+      new Date(i.activity.activity_begin_date) < now
+      // Note: 'missed' status items from allActivities are already >= joinDate
+    ).length;
+
+    const totalSinceJoin = pastAttendedSinceJoin + pastMissedSinceJoin;
+    return totalSinceJoin > 0 ? Math.round((pastAttendedSinceJoin / totalSinceJoin) * 100) : 0;
+  })();
 
   return {
     historyItems,
@@ -141,3 +164,4 @@ export const useMemberActivities = (memberId: string) => {
     presenceRate
   };
 };
+

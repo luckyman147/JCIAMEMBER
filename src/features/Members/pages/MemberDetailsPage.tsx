@@ -23,7 +23,7 @@ import Navbar from "../../../Global_Components/navBar";
 import MemberPointsHistory from "../components/stats/profile/MemberPointsHistory";
 import { MemberTasksList } from "../../Tasks";
 import { MemberTeamsList } from "../../Teams";
-import MemberJPSCard from "../components/stats/profile/MemberJPSCard";
+import { MemberJPSCard, MemberPerformanceComparison } from "../components";
 import { useMember, useUpdateMember, useAddComplaint, useDeleteMember } from "../hooks/useMembers";
 import type { Member } from "../types";
 import { useAuth } from "../../Authentication/auth.context";
@@ -170,7 +170,11 @@ export default function MemberDetailsPage() {
                                     readOnly={!isOwnProfile && !canEdit}
                                 />
                             </div>
+                            
+                            <div className="lg:col-span-2 space-y-8">
                                 <MemberJPSCard memberId={member.id} />
+                                <MemberPerformanceComparison memberId={member.id} />
+                            </div>
 
                             {/* Full Width Sections */}
                             <div className="lg:col-span-2">
