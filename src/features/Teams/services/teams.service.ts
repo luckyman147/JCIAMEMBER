@@ -51,6 +51,28 @@ export const getTeamById = async (id: string): Promise<Team | null> => {
     return data;
 };
 
+export const getTeamByShareToken = async (token: string): Promise<Team | null> => {
+    // Querying JSONB array for a specific non-revoked token
+    const { data, error } = await supabase
+        .from('teams')
+        .select(`
+            *,
+            members:team_members (
+                *,
+                member:profiles (*)
+            )
+        `)
+        .contains('share_tokens', JSON.stringify([{ token, revoked: false }]))
+        .maybeSingle(); 
+    
+    if (error) {
+        console.error(`Error fetching team by share token:`, error);
+        return null;
+    }
+    
+    return data;
+};
+
 export const updateTeam = async (id: string, updates: Partial<Team>): Promise<Team | null> => {
     if (!id) {
         console.error("updateTeam: No ID provided");

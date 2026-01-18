@@ -3,7 +3,7 @@ import supabase from './supabase'
 // File validation constants
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml',"text/plain"]
 const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 
 export interface UploadResult {
@@ -125,6 +125,52 @@ export const uploadActivityImage = async (file: File): Promise<UploadResult> => 
 }
 
 /**
+ * Upload team resource (image or document)
+ */
+export const uploadTeamResource = async (file: File): Promise<UploadResult> => {
+  try {
+    const isImage = ALLOWED_IMAGE_TYPES.includes(file.type)
+    const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_DOCUMENT_SIZE
+    const allowedTypes = isImage ? ALLOWED_IMAGE_TYPES : ALLOWED_DOCUMENT_TYPES
+    
+    // Validate file
+    const validation = validateFile(file, allowedTypes, maxSize)
+    if (!validation.valid) {
+      return { success: false, error: validation.error }
+    }
+
+    // Generate unique filename
+    const filename = generateUniqueFilename(file.name)
+    const filePath = `team-resources/${filename}`
+
+    // Upload to Supabase Storage - using 'activity-attachments' as it's a known existing generic bucket
+    // or just try 'team-resources' if we think it exists. I'll use 'activity-attachments' to be safe
+    // but name the folder 'team-resources' inside it.
+    const { data, error } = await supabase.storage
+      .from('team-attachments')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('Upload error:', error)
+      return { success: false, error: error.message }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('team-attachments')
+      .getPublicUrl(data.path)
+
+    return { success: true, url: publicUrl }
+  } catch (error) {
+    console.error('Upload error:', error)
+    return { success: false, error: 'Failed to upload resource' }
+  }
+}
+
+/**
  * Upload activity attachment (PV, course materials, etc.)
  */
 export const uploadActivityAttachment = async (file: File): Promise<UploadResult> => {
@@ -173,34 +219,37 @@ export const uploadRecapImages = async (files: File[]): Promise<UploadResult[]> 
 }
 
 /**
- * Delete file from Supabase Storage
+ * Delete file from any Supabase Storage bucket
  */
-export const deleteFile = async (fileUrl: string, bucket: 'activity-images' | 'activity-attachments'): Promise<boolean> => {
+export const deleteStorageFile = async (fileUrl: string, bucket: string): Promise<boolean> => {
   try {
-    // Extract file path from URL
-    const url = new URL(fileUrl)
-    const pathParts = url.pathname.split(`/storage/v1/object/public/${bucket}/`)
-    if (pathParts.length < 2) {
-      console.error('Invalid file URL')
-      return false
+    const filePath = extractFilePath(fileUrl);
+    if (!filePath) {
+      console.error('Could not extract file path from URL:', fileUrl);
+      return false;
     }
-    const filePath = pathParts[1]
 
-    // Delete from storage
     const { error } = await supabase.storage
       .from(bucket)
-      .remove([filePath])
+      .remove([filePath]);
 
     if (error) {
-      console.error('Delete error:', error)
-      return false
+      console.error(`Delete error from bucket ${bucket}:`, error);
+      return false;
     }
 
-    return true
+    return true;
   } catch (error) {
-    console.error('Delete error:', error)
-    return false
+    console.error('Delete error:', error);
+    return false;
   }
+}
+
+/**
+ * Delete file from Supabase Storage (Legacy wrapper)
+ */
+export const deleteFile = async (fileUrl: string, bucket: 'activity-images' | 'activity-attachments'): Promise<boolean> => {
+  return deleteStorageFile(fileUrl, bucket);
 }
 
 /**
@@ -208,10 +257,16 @@ export const deleteFile = async (fileUrl: string, bucket: 'activity-images' | 'a
  */
 export const extractFilePath = (url: string): string | null => {
   try {
-    const urlObj = new URL(url)
-    const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/)
-    return pathMatch ? pathMatch[1] : null
+    const urlObj = new URL(url);
+    // Standard Supabase URL pattern: .../storage/v1/object/public/BUCKET_NAME/FILE_PATH
+    const parts = urlObj.pathname.split('/');
+    const publicIndex = parts.indexOf('public');
+    if (publicIndex !== -1 && parts.length > publicIndex + 2) {
+      // The path starts after the bucket name (which is at publicIndex + 1)
+      return parts.slice(publicIndex + 2).join('/');
+    }
+    return null;
   } catch {
-    return null
+    return null;
   }
 }

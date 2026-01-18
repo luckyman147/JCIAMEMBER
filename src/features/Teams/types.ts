@@ -26,7 +26,7 @@ export interface ProjectMember {
 export interface TeamResource {
     title: string;
     url: string;
-    type: 'link' | 'file';
+    type: 'link' | 'file' | 'image';
 }
 
 export interface Team {
@@ -39,6 +39,7 @@ export interface Team {
     project_id?: string;
     strategy?: string;
     resources?: TeamResource[];
+    share_tokens?: { token: string; revoked: boolean }[];
     created_at: string;
     
     // UI/Joined helpers

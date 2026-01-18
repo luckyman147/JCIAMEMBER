@@ -14,7 +14,9 @@ export default function MemberTeamsList({ memberId }: { memberId: string }) {
     const [loading, setLoading] = useState(true);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const navigate = useNavigate();
-    const { role } = useAuth();
+    const { role, user } = useAuth();
+    const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
+    const isOwnProfile = user?.id === memberId;
 
     const isAdmin = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
 
@@ -62,7 +64,9 @@ export default function MemberTeamsList({ memberId }: { memberId: string }) {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {teams.map(team => (
+                    {teams
+                        .filter(t => t.is_public || isExecutive || isOwnProfile)
+                        .map(team => (
                         <div 
                             key={team.id}
                             onClick={() => navigate(`/teams/${team.id}`)}

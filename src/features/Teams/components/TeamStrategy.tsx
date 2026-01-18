@@ -1,9 +1,13 @@
-
 import { useState } from "react";
-import { Target, Save, Edit2, Plus, Trash2 } from "lucide-react";
+import { Target, Save, Plus } from "lucide-react";
 import { updateTeam } from "../services/teams.service";
 import { toast } from "sonner";
 import type { Team } from "../types";
+
+// Sub-components
+import { StrategyItem } from "./strategy/StrategyItem";
+import { StrategyEditorItem } from "./strategy/StrategyEditorItem";
+import { StrategyTypeToggle } from "./strategy/StrategyTypeToggle";
 
 interface TeamStrategyProps {
     team: Team;
@@ -13,6 +17,7 @@ interface TeamStrategyProps {
 
 export default function TeamStrategy({ team, canManage, onUpdated }: TeamStrategyProps) {
     const [isEditing, setIsEditing] = useState(false);
+    const [listType, setListType] = useState<'ordered' | 'bullet'>('ordered');
     const [strategyItems, setStrategyItems] = useState<string[]>(
         team.strategy ? team.strategy.split('\n').filter(item => item.trim() !== '') : []
     );
@@ -34,67 +39,73 @@ export default function TeamStrategy({ team, canManage, onUpdated }: TeamStrateg
     };
 
     const addItem = () => {
-        setStrategyItems([...strategyItems, ""]);
+        setStrategyItems(prev => [...prev, ""]);
     };
 
     const updateItem = (index: number, value: string) => {
-        const newItems = [...strategyItems];
-        newItems[index] = value;
-        setStrategyItems(newItems);
+        setStrategyItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = value;
+            return newItems;
+        });
     };
 
     const removeItem = (index: number) => {
-        setStrategyItems(strategyItems.filter((_, i) => i !== index));
+        setStrategyItems(prev => prev.filter((_, i) => i !== index));
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all hover:shadow-md">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all hover:shadow-md">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Target className="w-6 h-6 text-blue-600" />
-                    Team Strategy
-                </h2>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-(--color-myAccent)">
+                        <Target className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-gray-900 tracking-tight">Team Strategy</h2>
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest italic">Mission & Strategic Goals</p>
+                    </div>
+                </div>
                 {canManage && !isEditing && (
+                    <div>
+                        
                     <button 
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                        className="text-xs  text-(--color-myAccent) px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-gray-100 transition-colors"
                     >
-                        <Edit2 className="w-4 h-4" />
-                        Edit
+                        <i className="fa-solid fa-pen-to-square"></i>
+                        Adjust Strategy
                     </button>
+                    </div>
                 )}
             </div>
 
             {isEditing ? (
                 <div className="space-y-4">
+                    <StrategyTypeToggle 
+                        listType={listType}
+                        onTypeChange={setListType}
+                    />
+
                     <div className="space-y-3">
                         {strategyItems.map((item, index) => (
-                            <div key={index} className="flex gap-2">
-                                <span className="shrink-0 w-6 h-10 flex items-center justify-center font-bold text-blue-600">
-                                    {index + 1}.
-                                </span>
-                                <input 
-                                    className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                    value={item}
-                                    onChange={(e) => updateItem(index, e.target.value)}
-                                    placeholder={`Goal ${index + 1}...`}
-                                />
-                                <button 
-                                    onClick={() => removeItem(index)}
-                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+                            <StrategyEditorItem 
+                                key={index}
+                                index={index}
+                                value={item}
+                                listType={listType}
+                                onChange={(val) => updateItem(index, val)}
+                                onRemove={() => removeItem(index)}
+                            />
                         ))}
                     </div>
                     
                     <button 
                         onClick={addItem}
-                        className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors px-2 py-1"
+                        className="flex items-center gap-2 text-xs font-black text-(--color-myAccent) uppercase tracking-widest hover:bg-blue-50 transition-colors px-4 py-2 rounded-xl border border-dashed border-blue-200"
                     >
                         <Plus className="w-4 h-4" />
-                        Add Strategic Goal
+                        Add Strategic Point
                     </button>
 
                     <div className="flex justify-end gap-2 pt-4 border-t">
@@ -103,19 +114,19 @@ export default function TeamStrategy({ team, canManage, onUpdated }: TeamStrateg
                                 setIsEditing(false);
                                 setStrategyItems(team.strategy ? team.strategy.split('\n').filter(item => item.trim() !== '') : []);
                             }}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="px-4 py-2 text-xs font-black text-gray-500 uppercase tracking-widest hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             Cancel
                         </button>
                         <button 
                             onClick={handleSave}
                             disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-6 py-2 bg-(--color-myAccent) text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-opacity-90 shadow-lg shadow-blue-900/10 disabled:opacity-50 transition-all font-sans"
                         >
                             {loading ? "Saving..." : (
                                 <>
                                     <Save className="w-4 h-4" />
-                                    Save Strategy
+                                    Commit Strategy
                                 </>
                             )}
                         </button>
@@ -124,26 +135,25 @@ export default function TeamStrategy({ team, canManage, onUpdated }: TeamStrateg
             ) : (
                 <div className="space-y-4">
                     {strategyItems.length > 0 ? (
-                        <ol className="space-y-3">
+                        <div className="space-y-3">
                             {strategyItems.map((item, index) => (
-                                <li key={index} className="flex gap-4 p-3 bg-blue-50/30 rounded-xl border border-blue-100/50 group">
-                                    <span className="shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-                                        {index + 1}
-                                    </span>
-                                    <p className="text-gray-700 leading-relaxed pt-1">
-                                        {item}
-                                    </p>
-                                </li>
+                                <StrategyItem 
+                                    key={index}
+                                    index={index}
+                                    content={item}
+                                    listType={listType}
+                                />
                             ))}
-                        </ol>
+                        </div>
                     ) : (
-                        <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                            <Target className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                            <p className="text-sm text-gray-400 font-medium">No strategy defined for this team yet.</p>
+                        <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                            <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                            <p className="text-sm text-gray-400 font-black uppercase tracking-widest">No Strategy Defined</p>
+                            <p className="text-xs text-gray-400 mt-1">Define your team's tactical and strategic goals here.</p>
                             {canManage && (
                                 <button 
                                     onClick={() => setIsEditing(true)}
-                                    className="mt-3 text-xs bg-white border border-gray-200 px-4 py-1.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                                    className="mt-4 px-6 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black text-(--color-myAccent) hover:bg-blue-50 transition-colors shadow-sm"
                                 >
                                     Define Strategy
                                 </button>

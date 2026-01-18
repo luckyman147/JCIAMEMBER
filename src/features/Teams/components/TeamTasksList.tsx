@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getTeamTasks } from "../services/teams.service";
 import { deleteTask, updateTask, completeAllTaskAssignments } from "../../Tasks/services/tasks.service";
 import type { Task } from "../../Tasks/types";
-import { FileText, Trash2 } from "lucide-react";
+import { Pencil, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../Authentication/auth.context";
 import EditTaskModal from "./modals/EditTaskModal";
@@ -200,9 +200,11 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(e) => { e.stopPropagation(); setEditingTask(task); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
-                                                        <FileText className="w-4 h-4" />
+                                                  {(isAdmin || task.assignments?.some(a => a.member_id === user?.id)) && (
+                                                    <button onClick={(e) => { e.stopPropagation(); setEditingTask(task); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Modify Task">
+                                                        <Pencil className="w-4 h-4" />
                                                     </button>
+                                                  )}
                                                     {isAdmin && (
                                                         <button onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                                                             <Trash2 className="w-4 h-4" />
@@ -248,6 +250,7 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                     task={editingTask} 
                     onUpdated={loadTasks} 
                     teamMembers={teamMembers}
+                    isAdmin={isAdmin}
                 />
             )}
 
@@ -266,6 +269,9 @@ export default function TeamTasksList({ teamId, refreshTrigger, isAdmin, teamMem
                 task={selectedTaskForDetail}
                 isOpen={!!selectedTaskForDetail}
                 onClose={() => setSelectedTaskForDetail(null)}
+                onEdit={setEditingTask}
+                isAdmin={isAdmin}
+                currentUserId={user?.id}
             />
         </div>
     );

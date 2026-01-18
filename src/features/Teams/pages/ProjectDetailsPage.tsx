@@ -14,13 +14,13 @@ import AddProjectMemberModal from "../components/modals/AddProjectMemberModal";
 export default function ProjectDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const { t, i18n } = useTranslation();
-    const { role } = useAuth();
+    const { role, user } = useAuth();
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     
-    const hasEditAccess = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
+    const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
 
     useEffect(() => {
         if (id) {
@@ -65,7 +65,7 @@ export default function ProjectDetailsPage() {
                 {/* Project Header */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8 text-start">
                     <div className="flex items-start gap-6">
-                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
                             <Briefcase className="w-8 h-8" />
                         </div>
                         <div className="flex-1">
@@ -85,10 +85,10 @@ export default function ProjectDetailsPage() {
                                 </div>
                             </div>
                         </div>
-                        {hasEditAccess && (
+                        {isExecutive && (
                              <button 
                                 onClick={() => setIsCreateTeamOpen(true)}
-                                className="flex-shrink-0 inline-flex items-center gap-2 bg-(--color-myPrimary) text-white px-5 py-2.5 rounded-lg hover:opacity-90 transition-colors font-medium shadow-sm whitespace-nowrap"
+                                className="shrink-0 inline-flex items-center gap-2 bg-(--color-myPrimary) text-white px-5 py-2.5 rounded-lg hover:opacity-90 transition-colors font-medium shadow-sm whitespace-nowrap"
                             >
                                 <Plus className="w-5 h-5" /> {t('teams.addTeam', 'Add Team')}
                             </button>
@@ -104,7 +104,9 @@ export default function ProjectDetailsPage() {
 
                      {project.teams && project.teams.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {project.teams.map(team => (
+                            {(project.teams || [])
+                                .filter(t => t.is_public || isExecutive || project.members?.some(m => m.member_id === user?.id))
+                                .map(team => (
                                 <Link 
                                     key={team.id}
                                     to={`/teams/${team.id}`}
@@ -139,7 +141,7 @@ export default function ProjectDetailsPage() {
                         <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-200">
                              <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                              <p className="text-gray-500">{t('teams.noTeamsInProject', 'No teams added to this project yet.')}</p>
-                             {hasEditAccess && (
+                             {isExecutive && (
                                 <button 
                                     onClick={() => setIsCreateTeamOpen(true)}
                                     className="mt-4 text-blue-600 font-medium hover:underline"
@@ -161,7 +163,7 @@ export default function ProjectDetailsPage() {
                             {t('teams.projectMembers', 'Project Members')}
                             <span className="text-gray-400 font-normal text-sm">({project.members?.length || 0})</span>
                         </h3>
-                        {hasEditAccess && (
+                        {isExecutive && (
                             <button 
                                 onClick={() => setIsAddMemberOpen(true)}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
@@ -175,7 +177,7 @@ export default function ProjectDetailsPage() {
                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {project.members.map((pm) => (
                                 <div key={pm.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shrink-0">
                                         {pm.member?.avatar_url ? (
                                             <img src={pm.member.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
