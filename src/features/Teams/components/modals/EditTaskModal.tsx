@@ -5,6 +5,7 @@ import { getTaskAssignments } from "../../services/teams.service";
 import { X, UserPlus, Check, Paperclip, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { StarRating } from "../../../Activities/components";
+import { deleteStorageFile } from "../../../../utils/uploadHelpers";
 
 interface TeamMemberOption {
     id: string; // member_id
@@ -18,9 +19,10 @@ interface EditTaskModalProps {
     task: Task;
     onUpdated: () => void;
     teamMembers?: TeamMemberOption[];
+    isAdmin?: boolean;
 }
 
-export default function EditTaskModal({ open, onClose, task, onUpdated, teamMembers = [] }: EditTaskModalProps) {
+export default function EditTaskModal({ open, onClose, task, onUpdated, teamMembers = [], isAdmin = false }: EditTaskModalProps) {
     const [loading, setLoading] = useState(false);
     
     // Editable state
@@ -34,10 +36,11 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
     const [headerColor, setHeaderColor] = useState(task.header_color || "");
     const [attachments, setAttachments] = useState<{name: string, url: string}[]>(task.attachments || []);
     const [uploading, setUploading] = useState(false);
+    const [pendingUploads, setPendingUploads] = useState<string[]>([]);
+    const [description, setDescription] = useState(task.description || "");
     
     // Read-only / Immutable state
     const [points, setPoints] = useState(task.points);
-    const [description, setDescription] = useState(task.description || "");
     const [trackingType, setTrackingType] = useState<'manual' | 'subtasks'>(task.subtasks && task.subtasks.length > 0 ? 'subtasks' : 'manual');
     const [subtasks, setSubtasks] = useState<SubTaskDefinition[]>(task.subtasks || []);
 
@@ -74,6 +77,14 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
         }
     };
 
+    const handleClose = async () => {
+        if (pendingUploads.length > 0) {
+            await Promise.all(pendingUploads.map(url => deleteStorageFile(url, 'task-attachments')));
+        }
+        setPendingUploads([]);
+        onClose();
+    };
+
     const toggleAssignee = (id: string) => {
         setAssigneeIds(prev => 
             prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
@@ -88,6 +99,7 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
             await updateTask(task.id, {
                 title,
                 status,
+                description,
                 complexity,
                 start_date: startDate || undefined,
                 deadline: deadline || undefined,
@@ -114,6 +126,7 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                 await completeAllTaskAssignments(task.id, subtasks, starRating);
             }
 
+            setPendingUploads([]); // Clear pending since they are now saved
             toast.success("Task updated");
             onUpdated();
             onClose();
@@ -128,8 +141,8 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={handleClose}>
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center p-6 border-b">
                     <div className="flex items-center gap-4">
                         <div 
@@ -152,7 +165,7 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-gray-600">
+                    <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-gray-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -217,14 +230,16 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                         <div>
                             <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Complexity (JPS Multiplier)</label>
                             <select 
-                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium ${!isAdmin ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                 value={complexity}
-                                onChange={(e) => setComplexity(e.target.value as any)}
+                                onChange={(e) => isAdmin && setComplexity(e.target.value as any)}
+                                disabled={!isAdmin}
                             >
                                 <option value="lead">Lead Role (15x)</option>
                                 <option value="major">Major Task (10x)</option>
                                 <option value="minor">Minor Task (4x)</option>
                             </select>
+                            {!isAdmin && <p className="text-[9px] text-gray-400 mt-1 italic">Complexity can only be modified by executives.</p>}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -248,14 +263,17 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                             </div>
                         </div>
 
-                        <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 space-y-2">
-                            <label className="block text-xs font-black uppercase tracking-widest text-amber-700">Performance Rating</label>
+                        <div className={`p-4 rounded-xl border space-y-2 ${isAdmin ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100'}`}>
+                            <label className={`block text-xs font-black uppercase tracking-widest ${isAdmin ? 'text-amber-700' : 'text-gray-400'}`}>Performance Rating</label>
                             <div className="flex items-center gap-4">
                                 <StarRating 
                                     value={starRating} 
-                                    onChange={(val: number) => setStarRating(val)} 
+                                    onChange={(val: number) => isAdmin && setStarRating(val)} 
+                                    disabled={!isAdmin}
                                 />
-                                <span className="text-[10px] text-amber-600 font-bold italic">Global quality assessment for this objective.</span>
+                                <span className={`text-[10px] font-bold italic ${isAdmin ? 'text-amber-600' : 'text-gray-400'}`}>
+                                    {isAdmin ? 'Global quality assessment for this objective.' : 'Evaluation is restricted to executives.'}
+                                </span>
                             </div>
                         </div>
 
@@ -274,14 +292,15 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                             </div>
                         </div>
 
-                        {description && (
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Description (Fixed)</label>
-                                <div className="p-3 bg-gray-50 border rounded-lg text-xs text-gray-500 leading-relaxed italic">
-                                    {description}
-                                </div>
-                            </div>
-                        )}
+                        <div>
+                            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Description</label>
+                            <textarea 
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-medium min-h-[80px]"
+                                placeholder="Refine the strategic description..."
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                            />
+                        </div>
 
                         <div className="space-y-3">
                              <div className="flex items-center justify-between">
@@ -328,19 +347,30 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                                     type="file" 
                                     id="edit-task-file-upload-new"
                                     className="hidden"
+                                    multiple
                                     onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
+                                        const files = Array.from(e.target.files || []);
+                                        if (files.length > 0) {
                                             try {
                                                 setUploading(true);
                                                 const { uploadTaskAttachment } = await import("../../../Tasks/services/tasks.service");
-                                                const url = await uploadTaskAttachment(file);
-                                                setAttachments([...attachments, { name: file.name, url }]);
-                                                toast.success("Resource added");
+                                                
+                                                const newAttachments = [...attachments];
+                                                const newPending = [...pendingUploads];
+                                                for (const file of files) {
+                                                    const url = await uploadTaskAttachment(file);
+                                                    newAttachments.push({ name: file.name, url });
+                                                    newPending.push(url);
+                                                }
+                                                
+                                                setAttachments(newAttachments);
+                                                setPendingUploads(newPending);
+                                                toast.success(`${files.length} resource(s) added`);
                                             } catch (err) {
                                                 toast.error("Upload failed");
                                             } finally {
                                                 setUploading(false);
+                                                if (e.target) e.target.value = '';
                                             }
                                         }
                                     }}
@@ -409,8 +439,8 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                                 return (
                                     <div 
                                         key={m.id}
-                                        onClick={() => toggleAssignee(m.id)}
-                                        className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer border transition-all ${isSelected ? 'bg-white border-blue-200 shadow-sm' : 'border-transparent hover:bg-gray-100'}`}
+                                        onClick={() => isAdmin && toggleAssignee(m.id)}
+                                        className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${isSelected ? 'bg-white border-blue-200 shadow-sm' : 'border-transparent hover:bg-gray-100'} ${!isAdmin ? 'cursor-default opacity-80' : 'cursor-pointer'}`}
                                     >
                                         <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-[10px] font-bold text-gray-600 overflow-hidden">
                                             {m.avatar_url ? <img src={m.avatar_url} className="w-full h-full object-cover" /> : m.fullname.substring(0,2).toUpperCase()}
@@ -420,6 +450,7 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                                     </div>
                                 );
                             })}
+                            {!isAdmin && <p className="text-[9px] text-gray-400 p-2 italic text-center">Assignments can only be managed by executives.</p>}
                         </div>
 
                         <div className="p-4 border-t bg-white sticky bottom-0 flex flex-col gap-2">
@@ -430,7 +461,7 @@ export default function EditTaskModal({ open, onClose, task, onUpdated, teamMemb
                             >
                                 {loading ? 'Saving...' : 'Update Task'}
                             </button>
-                            <button type="button" onClick={onClose} className="w-full py-2 text-sm text-gray-500 font-medium hover:text-gray-700">Cancel</button>
+                            <button type="button" onClick={handleClose} className="w-full py-2 text-sm text-gray-500 font-medium hover:text-gray-700">Cancel</button>
                         </div>
                     </div>
                 </form>

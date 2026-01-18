@@ -75,14 +75,35 @@ export const TaskAssignmentsPreview = ({ taskId, task, currentUserId, onUpdate }
     };
 
     if (assignments.length === 0) return <span className="text-xs text-gray-400 font-medium">Unassigned</span>;
+    
+    // Calculate aggregate progress (average of all members' progress)
+    const aggregateProgress = assignments.length > 0 
+        ? Math.round(assignments.reduce((acc, curr) => acc + (curr.progress_percentage || 0), 0) / assignments.length)
+        : 0;
 
     return (
-        <div className="flex flex-col gap-2 w-full">
-            <div className="flex -space-x-1.5 overflow-hidden">
+        <div className="flex flex-col gap-3 w-full">
+            {/* Aggregate Progress Bar */}
+            {task.subtasks && task.subtasks.length > 0 && (
+                <div className="space-y-1.5">
+                    <div className="flex justify-between items-center px-0.5">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-gray-400">Team Progress</span>
+                        <span className="text-[10px] font-black text-(--color-myPrimary)">{aggregateProgress}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner border border-gray-50/50">
+                        <div 
+                            className="h-full bg-linear-to-r from-(--color-myPrimary) to-blue-400 transition-all duration-500 ease-out rounded-full shadow-sm"
+                            style={{ width: `${aggregateProgress}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            <div className="flex -space-x-1.5 overflow-hidden pt-1">
                 {assignments.slice(0, 5).map((a) => (
                     <div 
                         key={a.id} 
-                        className="relative w-6 h-6 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[8px] overflow-hidden shadow-sm flex-shrink-0" 
+                        className="relative w-6 h-6 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[8px] overflow-hidden shadow-sm shrink-0" 
                         title={`${a.member?.fullname} (${a.progress_percentage}%)`}
                     >
                         {a.member?.avatar_url ? (
@@ -96,7 +117,7 @@ export const TaskAssignmentsPreview = ({ taskId, task, currentUserId, onUpdate }
                     </div>
                 ))}
                 {assignments.length > 5 && (
-                    <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600 shadow-sm flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600 shadow-sm shrink-0">
                         +{assignments.length - 5}
                     </div>
                 )}

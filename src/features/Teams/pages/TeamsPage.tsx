@@ -18,9 +18,13 @@ export default function TeamsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const isRTL = i18n.language === 'ar';
 
-    const hasCreatePermission = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
+    const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '');
 
-    const filteredTeams = teams.filter(team => 
+    const visibleTeams = teams.filter(team => 
+        team.is_public || isExecutive || team.is_member
+    );
+
+    const filteredTeams = visibleTeams.filter(team => 
         team.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         (team.description && team.description.toLowerCase().includes(searchQuery.toLowerCase()))
     );
@@ -48,7 +52,7 @@ export default function TeamsPage() {
                             <LayoutGrid className="w-5 h-5" />
                             {t('teams.projects', 'Projects')}
                         </Link>
-                         <div className="relative flex-grow md:flex-grow-0">
+                         <div className="relative grow md:grow-0">
                             <input 
                                 type="text" 
                                 placeholder={t('common.search')}
@@ -58,7 +62,7 @@ export default function TeamsPage() {
                             />
                             <Search className={`absolute top-2.5 w-4 h-4 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} />
                         </div>
-                        {hasCreatePermission && (
+                        {isExecutive && (
                             <button 
                                 onClick={() => setIsCreateModalOpen(true)}
                                 className="flex items-center gap-2 px-6 py-2 bg-(--color-myPrimary) text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
@@ -91,7 +95,7 @@ export default function TeamsPage() {
                         <p className="text-gray-500 max-w-sm mx-auto mb-6">
                             {searchQuery ? t('teams.emptySearch', 'Try adjusting your search terms.') : t('teams.emptyStart', 'Get started by creating the first team for your organization.')}
                         </p>
-                        {hasCreatePermission && !searchQuery && (
+                        {isExecutive && !searchQuery && (
                             <button 
                                 onClick={() => setIsCreateModalOpen(true)}
                                 className="text-(--color-myPrimary) font-medium hover:underline"

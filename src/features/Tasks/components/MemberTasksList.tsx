@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useMemberTasks, useUpdateMemberTask } from "../hooks/useTasks";
 import type { MemberTask } from "../types";
 import { useTranslation } from "react-i18next";
+import EditTaskModal from "../../Teams/components/modals/EditTaskModal";
 
 interface MemberTasksListProps {
     memberId: string;
@@ -17,6 +18,7 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
     const { data: tasks = [], isLoading: loading, refetch } = useMemberTasks(memberId);
     const updateMutation = useUpdateMemberTask();
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<any | null>(null);
 
     const handleTaskUpdate = async (id: string, updates: Partial<MemberTask>) => {
         try {
@@ -69,6 +71,7 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
                             assignment={task} 
                             onUpdate={handleTaskUpdate}
                             isAdmin={isAdmin}
+                            onEdit={setEditingTask}
                         />
                     ))}
                 </div>
@@ -80,6 +83,19 @@ export default function MemberTasksList({ memberId, isAdmin = false }: MemberTas
                 onAssigned={() => refetch()}
                 memberId={memberId}
             />
+
+            {editingTask && (
+                <div className="text-start">
+                    <EditTaskModal 
+                        open={!!editingTask}
+                        onClose={() => setEditingTask(null)}
+                        task={editingTask}
+                        onUpdated={refetch}
+                        isAdmin={isAdmin}
+                        teamMembers={[]} // In profile view we don't easily have whole team list
+                    />
+                </div>
+            )}
         </div>
     );
 }

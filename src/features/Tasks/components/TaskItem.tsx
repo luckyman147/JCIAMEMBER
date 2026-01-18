@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import type { MemberTask } from "../types";
-import { Check, Calendar, Clock } from "lucide-react";
+import { Check, Calendar, Clock, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import StarRating from "../../Activities/components/common/StarRating";
 
@@ -29,9 +28,10 @@ interface TaskItemProps {
     assignment: MemberTask;
     onUpdate: (id: string, updates: Partial<MemberTask>) => Promise<void>;
     isAdmin?: boolean;
+    onEdit?: (task: any) => void;
 }
 
-export default function TaskItem({ assignment, onUpdate, isAdmin = false }: TaskItemProps) {
+export default function TaskItem({ assignment, onUpdate, isAdmin = false, onEdit }: TaskItemProps) {
     const { t } = useTranslation();
     const [updating, setUpdating] = useState(false);
     
@@ -153,6 +153,14 @@ export default function TaskItem({ assignment, onUpdate, isAdmin = false }: Task
                         <div className="mt-2 flex items-center gap-1">
                             <StarRating value={assignment.star_rating} disabled size="sm" />
                         </div>
+                    )}
+                    {onEdit && (
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+                            className="mt-3 p-2 bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-blue-100"
+                        >
+                            <Pencil className="w-3.5 h-3.5" /> Modify Mission
+                        </button>
                     )}
                 </div>
             </div>

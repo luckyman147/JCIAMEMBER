@@ -5,13 +5,14 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../Authentication/auth.context";
 import Navbar from "../../../Global_Components/navBar";
 import { toast } from "sonner";
-import { Users, Lock, Globe, Plus, LogOut, UserPlus, Shield, Settings, Loader } from "lucide-react";
+import { Users, Lock, Globe, Plus, LogOut, UserPlus, Shield, Settings, Loader, Share2 } from "lucide-react";
 import AddMemberModal from "../components/modals/AddMemberModal";
 import CreateTeamTaskModal from "../components/modals/CreateTeamTaskModal";
 import TeamTasksList from "../components/TeamTasksList";
 import EditTeamModal from "../components/modals/EditTeamModal";
 import TeamStrategy from "../components/TeamStrategy";
 import TeamLinks from "../components/TeamLinks";
+import ShareTeamModal from "../components/modals/ShareTeamModal";
 import { useTeamDetails, useJoinTeam, useLeaveTeam, useDeleteTeam } from "../hooks/useTeams";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 import { Trash2 } from "lucide-react";
@@ -66,14 +67,15 @@ export default function TeamDetailsPage() {
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
     const [isEditTeamOpen, setIsEditTeamOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(0);
 
 
     // Helpers
-    const isTeamAdmin = team?.my_role === 'admin' || team?.my_role === 'lead';
-    const isGlobalAdmin = role?.toLowerCase() === 'admin'; 
-    const isPresident = role?.toLowerCase() === 'president';
-    const canManageTeam = isTeamAdmin || isGlobalAdmin || isPresident || hasExecutiveRole;
+    const isTeamAdmin = team?.created_by === user?.id;
+    const canManageTeam = isTeamAdmin || hasExecutiveRole;
+
+    // Regular members + exclusive roles can edit content (Strategy, Links, Tasks)
 
     if (loading) return <div>
         <Navbar />
@@ -89,7 +91,7 @@ export default function TeamDetailsPage() {
     if (!team) return null;
 
     // Strict Access Control for Private Teams
-    if (!team.is_public && !team.is_member && !isGlobalAdmin && !isPresident) {
+    if (!team.is_public && !team.is_member && !hasExecutiveRole ) {
         return (
             <div className="min-h-screen bg-gray-50">
                 <Navbar />
@@ -146,7 +148,7 @@ export default function TeamDetailsPage() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {team.is_member || isGlobalAdmin || isPresident ? (
+                            {team.is_member || hasExecutiveRole  ? (
                                 <>
                                     {canManageTeam && (
                                         <>
@@ -168,6 +170,12 @@ export default function TeamDetailsPage() {
                                                 className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50"
                                             >
                                                 <UserPlus className="w-4 h-4" /> Add Member
+                                            </button>
+                                            <button 
+                                                onClick={() => setIsShareModalOpen(true)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-(--color-myPrimary) border border-blue-100 rounded-lg text-sm font-black uppercase tracking-widest hover:bg-blue-100 transition-all"
+                                            >
+                                                <Share2 className="w-4 h-4" /> Share
                                             </button>
                                         </>
                                     )}
@@ -243,6 +251,7 @@ export default function TeamDetailsPage() {
                         )}
                         {((team.resources?.length ?? 0) > 0 || canManageTeam) && (
                             <TeamLinks 
+
                                 team={team} 
                                 canManage={canManageTeam} 
                                 onUpdated={refetch} 
@@ -318,6 +327,13 @@ export default function TeamDetailsPage() {
                 onUpdated={() => {
                     refetch();
                 }}
+            />
+
+            <ShareTeamModal 
+                open={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                team={team}
+                onUpdated={refetch}
             />
 
                 </main>
