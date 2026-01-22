@@ -115,18 +115,7 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         </span>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-                                <Info className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-gray-900 uppercase tracking-tight">{t('profile.jps.rankBonus')}</p>
-                                <p className="text-[10px] text-gray-500 font-medium">{t('profile.jps.leaderboardPosition')}</p>
-                            </div>
-                        </div>
-                        <span className="text-sm font-black text-amber-600">+{details.rankBonus}</span>
-                    </div>
+
 
                     {details.complaintsPenalty > 0 && (
                         <div className="flex items-center justify-between">
@@ -167,10 +156,6 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                             <span>-</span>
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
                                 {details.complaintsPenalty}Pen
-                            </span>
-                            <span>+</span>
-                            <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
-                                {details.rankBonus}Rank
                             </span>
                             <span className="font-bold text-blue-600">=</span>
                             <span className="bg-(--color-myAccent) text-white px-2 py-0.5 rounded-md font-black shadow-sm">

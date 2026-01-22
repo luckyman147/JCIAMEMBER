@@ -319,8 +319,6 @@
     "other": "Autre",
     "participationRate": "Taux de Participation",
     "attendanceImpact": "Impact de la présence",
-    "rankBonus": "Bonus de Rang",
-    "leaderboardPosition": "Position au classement",
     "complaintsPenalty": "Pénalité de Plaintes",
     "behaviorImpact": "Impact du comportement",
     "calculationFormula": "Formule de Calcul",
@@ -331,7 +329,6 @@
       "participation": "Multiplicateur de taux de participation",
       "fees": "Bonus de cotisation (x1.1 si payé)",
       "penalty": "Pénalité pour plaintes résolues",
-      "bonus": "Points basés sur le rang précédent",
       "equal": "Score de performance final",
       "zeroNote": "Une valeur de 0 signifie que ce facteur n'a aucun impact actuel sur votre score."
     }

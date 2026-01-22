@@ -15,7 +15,7 @@ interface ParticipationSectionProps {
 export default function ParticipationSection({ activityId, activityPoints }: ParticipationSectionProps) {
   const {
     participants, members, loading, submitting, showForm, excludeIds,
-    selectedMember, memberSearch, rate, notes,
+    selectedMemberIds, memberSearch, rate, notes,
     editingId, editRate, editNotes,
     setMemberSearch, setRate, setNotes, setEditRate, setEditNotes,
     toggleForm, handleAdd, handleDelete, handleSelectMember, handleClearSelection,
@@ -41,13 +41,13 @@ export default function ParticipationSection({ activityId, activityPoints }: Par
         <AddForm
           members={members}
           excludeIds={excludeIds}
-          selectedMember={selectedMember}
+          selectedMemberIds={selectedMemberIds}
           memberSearch={memberSearch}
           rate={rate}
           notes={notes}
           submitting={submitting}
           onSearchChange={setMemberSearch}
-          onSelectMember={handleSelectMember}
+          onToggleMember={handleSelectMember}
           onClearSelection={handleClearSelection}
           onRateChange={setRate}
           onNotesChange={setNotes}
@@ -87,7 +87,7 @@ function Header({ count, points, showForm, onToggle, canManage }: {
         <div>
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
-                <User className="w-6 h-6 text-blue-600" />
+                <User className="w-6 h-6 text-(--color-myPrimary)" />
             </div>
             <div className="flex flex-col">
                 <span>{t('activities.participants')}</span>
@@ -112,16 +112,16 @@ function Header({ count, points, showForm, onToggle, canManage }: {
   )
 }
 
-function AddForm({ members, excludeIds, selectedMember, memberSearch, rate, notes, submitting, onSearchChange, onSelectMember, onClearSelection, onRateChange, onNotesChange, onSubmit }: {
+function AddForm({ members, excludeIds, selectedMemberIds, memberSearch, rate, notes, submitting, onSearchChange, onToggleMember, onClearSelection, onRateChange, onNotesChange, onSubmit }: {
   members: { id: string; fullname: string }[]
   excludeIds: string[]
-  selectedMember: string
+  selectedMemberIds: string[]
   memberSearch: string
   rate: number
   notes: string
   submitting: boolean
   onSearchChange: (v: string) => void
-  onSelectMember: (id: string) => void
+  onToggleMember: (id: string) => void
   onClearSelection: () => void
   onRateChange: (v: number) => void
   onNotesChange: (v: string) => void
@@ -133,11 +133,11 @@ function AddForm({ members, excludeIds, selectedMember, memberSearch, rate, note
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <MemberSelector
           members={members}
-          selectedMember={selectedMember}
+          selectedMemberIds={selectedMemberIds}
           memberSearch={memberSearch}
           excludeIds={excludeIds}
           onSearchChange={onSearchChange}
-          onSelectMember={onSelectMember}
+          onToggleMember={onToggleMember}
           onClearSelection={onClearSelection}
         />
         <div>
@@ -150,7 +150,7 @@ function AddForm({ members, excludeIds, selectedMember, memberSearch, rate, note
         <input type="text" value={notes} onChange={e => onNotesChange(e.target.value)} placeholder={t('activities.notesPlaceholder')} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2.5 px-3 border" />
       </div>
       <div className={`flex ${i18n.dir() === 'rtl' ? 'justify-start' : 'justify-end'}`}>
-        <button type="submit" disabled={submitting || !selectedMember} className="px-6 py-2.5 bg-(--color-mySecondary) text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors min-w-[140px] justify-center">
+        <button type="submit" disabled={submitting || selectedMemberIds.length === 0} className="px-6 py-2.5 bg-(--color-mySecondary) text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors min-w-[140px] justify-center">
           {submitting ? <><LoadingSpinner size="sm" /> {t('activities.adding')}</> : <><Plus className="w-4 h-4" /> {t('activities.add')}</>}
         </button>
       </div>

@@ -352,8 +352,6 @@
     "other": "Other",
     "participationRate": "Participation Rate",
     "attendanceImpact": "Attendance impact",
-    "rankBonus": "Rank Bonus",
-    "leaderboardPosition": "Leaderboard position",
     "complaintsPenalty": "Complaints Penalty",
     "behaviorImpact": "Behavior impact",
     "calculationFormula": "Calculation Formula",
@@ -364,7 +362,6 @@
       "participation": "Participation Rate multiplier",
       "fees": "Membership Fee bonus (x1.1 if paid)",
       "penalty": "Penalty for resolved complaints",
-      "bonus": "Points from high rank in previous period",
       "equal": "Final performance score",
       "zeroNote": "A value of 0 means this factor currently has no impact on your score."
     }

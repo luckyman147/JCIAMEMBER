@@ -20,70 +20,75 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-0 sm:p-4">
+            <div className="bg-white w-full h-full sm:h-auto sm:max-w-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 duration-300">
                 <Header onClose={onClose} />
 
-                <form onSubmit={handleAddMember} className="p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <section className="space-y-4">
-                            <InputField
-                                label="Full Name"
-                                placeholder="e.g. John Doe"
-                                value={formData.fullname}
-                                onChange={(val) => setFormData({ ...formData, fullname: val })}
-                            />
-                            <InputField
-                                label="Email Address"
-                                type="email"
-                                placeholder="name@example.com"
-                                value={formData.email}
-                                onChange={(val) => setFormData({ ...formData, email: val })}
-                            />
-                            <InputField
-                                label="Phone Number"
-                                placeholder="8 digits"
-                                maxLength={8}
-                                value={formData.phone}
-                                onChange={(val) => setFormData({ ...formData, phone: val.replace(/\D/g, '') })}
-                            />
-                        </section>
-
-                        <section className="space-y-4 pt-1">
-                            <SelectField
-                                label="Assigned Role"
-                                icon={<Shield className="w-3 h-3" />}
-                                value={formData.role}
-                                onChange={(val) => setFormData({ ...formData, role: val })}
-                                options={availableRoles.map(r => ({ label: r.toUpperCase(), value: r }))}
-                                className="bg-blue-50/30 border-blue-100"
-                            />
-
-                            {availablePostes.length > 0 && (
-                                <SelectField
-                                    label="Specific Poste"
-                                    value={formData.posteId}
-                                    onChange={(val) => setFormData({ ...formData, posteId: val })}
-                                    options={[
-                                        { label: 'Select Poste', value: '' },
-                                        ...availablePostes.map(p => ({ label: p.name, value: p.id }))
-                                    ]}
-                                    className="bg-purple-50/30 border-purple-100"
-                                    animate
+                <div className="flex-1 overflow-y-auto">
+                    <form id="add-member-form" onSubmit={handleAddMember} className="p-6 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20 sm:pb-0">
+                            <section className="space-y-5">
+                                <InputField
+                                    label="Full Name"
+                                    placeholder="e.g. John Doe"
+                                    value={formData.fullname}
+                                    onChange={(val) => setFormData({ ...formData, fullname: val })}
                                 />
-                            )}
+                                <InputField
+                                    label="Email Address"
+                                    type="email"
+                                    placeholder="name@example.com"
+                                    value={formData.email}
+                                    onChange={(val) => setFormData({ ...formData, email: val })}
+                                />
+                                <InputField
+                                    label="Phone Number"
+                                    placeholder="8 digits"
+                                    maxLength={8}
+                                    value={formData.phone}
+                                    onChange={(val) => setFormData({ ...formData, phone: val.replace(/\D/g, '') })}
+                                />
+                            </section>
 
-                            <ValidationToggle
-                                isValidated={formData.isValidated}
-                                onToggle={() => setFormData({ ...formData, isValidated: !formData.isValidated })}
-                            />
+                            <section className="space-y-5">
+                                <SelectField
+                                    label="Assigned Role"
+                                    icon={<Shield className="w-3 h-3" />}
+                                    value={formData.role}
+                                    onChange={(val) => setFormData({ ...formData, role: val })}
+                                    options={availableRoles.map(r => ({ label: r.toUpperCase(), value: r }))}
+                                    className="bg-blue-50/50 border-blue-100"
+                                />
 
-                            <Notice text="Notice: A unique password will be generated and downloaded after creation." />
-                        </section>
-                    </div>
+                                {availablePostes.length > 0 && (
+                                    <SelectField
+                                        label="Specific Poste"
+                                        value={formData.posteId}
+                                        onChange={(val) => setFormData({ ...formData, posteId: val })}
+                                        options={[
+                                            { label: 'Select Poste', value: '' },
+                                            ...availablePostes.map(p => ({ label: p.name, value: p.id }))
+                                        ]}
+                                        className="bg-purple-50/50 border-purple-100"
+                                        animate
+                                    />
+                                )}
 
+                                <div className="space-y-4 pt-2">
+                                    <ValidationToggle
+                                        isValidated={formData.isValidated}
+                                        onToggle={() => setFormData({ ...formData, isValidated: !formData.isValidated })}
+                                    />
+                                    <Notice text="A unique password will be generated and downloaded after creation." />
+                                </div>
+                            </section>
+                        </div>
+                    </form>
+                </div>
+
+                <div className="p-6 bg-gray-50 border-t border-gray-100">
                     <Actions onClose={onClose} loading={loading} />
-                </form>
+                </div>
             </div>
         </div>
     );

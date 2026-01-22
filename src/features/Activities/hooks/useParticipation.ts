@@ -34,7 +34,7 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
   const [showForm, setShowForm] = useState(false)
   
   // Form State
-  const [selectedMember, setSelectedMember] = useState('')
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
   const [memberSearch, setMemberSearch] = useState('')
   const [rate, setRate] = useState(0)
   const [notes, setNotes] = useState('')
@@ -70,7 +70,7 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
 
   // Form Handlers
   const resetForm = useCallback(() => {
-    setSelectedMember('')
+    setSelectedMemberIds([])
     setMemberSearch('')
     setRate(0)
     setNotes('')
@@ -80,36 +80,52 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
   const handleAdd = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!selectedMember) {
-      toast.error('Please select a member')
+    if (selectedMemberIds.length === 0) {
+      toast.error('Please select at least one member')
       return
     }
     
-    if (participants.some(p => p.user_id === selectedMember)) {
-      toast.error('Already registered')
-      return
-    }
-
     setSubmitting(true)
+    let successCount = 0
+    let failCount = 0
+
     try {
-      await activityService.addParticipation(
-        { 
-          activity_id: activityId, 
-          user_id: selectedMember, 
-          rate: rate > 0 ? rate : undefined, 
-          notes: notes.trim() || undefined 
+      await Promise.all(selectedMemberIds.map(async (userId) => {
+        if (participants.some(p => p.user_id === userId)) {
+          failCount++
+          return
         }
-      )
-      toast.success(`Added${activityPoints > 0 ? ` (+${activityPoints} pts)` : ''}`)
+        
+        try {
+          await activityService.addParticipation({ 
+            activity_id: activityId, 
+            user_id: userId, 
+            rate: rate > 0 ? rate : undefined, 
+            notes: notes.trim() || undefined 
+          })
+          successCount++
+        } catch (err) {
+          failCount++
+          console.error(`Failed to add member ${userId}:`, err)
+        }
+      }))
+
+      if (successCount > 0) {
+        toast.success(`Successfully added ${successCount} member(s)${activityPoints > 0 ? ` (+${activityPoints * successCount} pts total)` : ''}`)
+      }
+      if (failCount > 0) {
+        toast.error(`Failed to add ${failCount} member(s) (maybe already registered)`)
+      }
+      
       resetForm()
       const data = await activityService.getParticipations(activityId)
       setParticipants(data || [])
     } catch (error: any) {
-      toast.error(error.message || 'Failed to add')
+      toast.error(error.message || 'Error updating participation')
     } finally {
       setSubmitting(false)
     }
-  }, [activityId, activityPoints, selectedMember, rate, notes, participants, resetForm])
+  }, [activityId, activityPoints, selectedMemberIds, rate, notes, participants, resetForm])
 
   const handleDelete = useCallback(async (p: Participant) => {
     if (!confirm('Remove?')) return
@@ -174,12 +190,14 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
 
   // Member Selection Handlers
   const handleSelectMember = useCallback((id: string) => {
-    setSelectedMember(id)
+    setSelectedMemberIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
     setMemberSearch('')
   }, [])
 
   const handleClearSelection = useCallback(() => {
-    setSelectedMember('')
+    setSelectedMemberIds([])
     setMemberSearch('')
   }, [])
 
@@ -198,7 +216,7 @@ export function useParticipation({ activityId, activityPoints }: UseParticipatio
     excludeIds,
     
     // Form Values
-    selectedMember,
+    selectedMemberIds,
     memberSearch,
     rate,
     notes,

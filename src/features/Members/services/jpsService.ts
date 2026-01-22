@@ -15,7 +15,6 @@ export interface JPSResult {
         participationRate: number; // For score multiplyer
         actualParticipationRate: number; // For real display
         complaintsPenalty: number;
-        rankBonus: number;
         feeMultiplier: number;
     };
     comparison: {
@@ -209,13 +208,10 @@ export const jpsService = {
         // F. Complaints Penalty
         const complaintsPenalty = (complaintsCount || 0) * 25;
 
-        // G. Rank Bonus
-        const rankBonus = await this.calculateRankBonus(memberId, startISO, endISO);
-
         // --- FINAL FORMULA ---
-        // JPS = ([Σ(M × S) + Σ(T × S) + Σ(PointsEarned)] × P × FeeMultiplier) - (C × 25) + RankBonus
+        // JPS = ([Σ(M × S) + Σ(T × S) + Σ(PointsEarned)] × P × FeeMultiplier) - (C × 25)
         const rawScore = (activityPoints + taskPoints + earnedPoints) * participationRate * feeMultiplier;
-        const finalScore = Math.max(0, rawScore - complaintsPenalty + rankBonus);
+        const finalScore = Math.max(0, rawScore - complaintsPenalty);
 
         // --- ADVANCED METRICS (NEW) ---
         
@@ -254,7 +250,6 @@ export const jpsService = {
                 participationRate,
                 actualParticipationRate,
                 complaintsPenalty,
-                rankBonus,
                 feeMultiplier
             },
             comparison: {
@@ -305,30 +300,6 @@ export const jpsService = {
         }
     },
 
-    async calculateRankBonus(memberId: string, start: string, end: string): Promise<number> {
-        // ... (existing rank bonus logic) ...
-        const { data: allHistory } = await supabase
-            .from('points_history')
-            .select('member_id, points')
-            .gte('created_at', start)
-            .lte('created_at', end);
-
-        if (!allHistory) return 0;
-
-        const memberPointsMap: Record<string, number> = {};
-        allHistory.forEach(h => {
-            memberPointsMap[h.member_id] = (memberPointsMap[h.member_id] || 0) + h.points;
-        });
-
-        const sortedMemberIds = Object.keys(memberPointsMap).sort((a, b) => memberPointsMap[b] - memberPointsMap[a]);
-        const rank = sortedMemberIds.indexOf(memberId) + 1;
-
-        if (rank === 0) return 0;
-        if (rank === 1) return 50;
-        if (rank <= 5) return 30;
-        if (rank <= 10) return 10;
-        return 0;
-    },
 
     /**
      * ADVANCED METRIC HELPERS

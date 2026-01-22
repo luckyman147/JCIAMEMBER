@@ -15,7 +15,6 @@ import {
   FormationSection,
   RegistrationSection,
   GeneralAssemblySection,
-  FormActions,
 } from '../components/form/sections'
 
 // Layout
@@ -55,11 +54,16 @@ export default function ActivityForm() {
 
       <div className="max-w-4xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* Header */}
-          <FormHeader isEditMode={isEditMode} />
+          <FormHeader 
+            isEditMode={isEditMode} 
+            loading={loading} 
+            uploading={uploading} 
+            onCancel={onCancel}
+          />
           
           {/* Form */}
           <form 
+            id="activity-form"
             onSubmit={handleSubmit((data) => onSubmit(data as unknown as ActivityFormValues))} 
             className="p-4 sm:p-8 space-y-6 sm:space-y-8"
           >
@@ -104,13 +108,7 @@ export default function ActivityForm() {
             <RecapImagesSection fileUpload={recapImages} />
             <PaymentSection register={register} errors={errors} isPaid={isPaid} />
 
-            {/* Actions */}
-            <FormActions
-              isEditMode={isEditMode}
-              loading={loading}
-              uploading={uploading}
-              onCancel={onCancel}
-            />
+
           </form>
         </div>
       </div>
@@ -119,19 +117,53 @@ export default function ActivityForm() {
   )
 }
 
-// Simple header component
-function FormHeader({ isEditMode }: { isEditMode: boolean }) {
+// Header component with actions
+function FormHeader({ isEditMode, loading, uploading, onCancel }: { 
+  isEditMode: boolean; 
+  loading: boolean;
+  uploading: boolean;
+  onCancel: () => void;
+}) {
   const { t } = useTranslation();
+  const isSubmitting = loading || uploading;
+
   return (
-    <div className="px-4 sm:px-8 py-4 sm:py-6 bg-linear-to-r from-(--color-myPrimary) to-(--color-mySecondary) text-white text-start">
-      <h1 className="text-2xl sm:text-3xl font-bold">
-        {isEditMode ? t('activities.editActivity') : t('activities.createActivity')}
-      </h1>
-      <p className="mt-2 text-sm sm:text-base text-blue-100">
-        {isEditMode 
-          ? t('activities.updateSubtitle') 
-          : t('activities.createSubtitle')}
-      </p>
+    <div className="px-4 sm:px-8 py-4 sm:py-6 bg-linear-to-r from-(--color-myPrimary) to-(--color-mySecondary) text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="text-start">
+        <h1 className="text-2xl sm:text-3xl font-bold">
+          {isEditMode ? t('activities.editActivity') : t('activities.createActivity')}
+        </h1>
+        <p className="mt-1 text-sm text-blue-100/80">
+          {isEditMode 
+            ? t('activities.updateSubtitle') 
+            : t('activities.createSubtitle')}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 sm:flex-none px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-sm font-bold transition-all"
+        >
+          {t('profile.cancel')}
+        </button>
+        <button
+          form="activity-form"
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 sm:flex-none px-6 py-2 bg-white text-(--color-myPrimary) hover:bg-blue-50 rounded-xl text-sm font-bold shadow-lg shadow-black/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[120px]"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="w-4 h-4 border-2 border-(--color-myPrimary) border-t-transparent rounded-full animate-spin" />
+              {uploading ? t('activities.uploading') : (isEditMode ? t('activities.updating') : t('activities.creating'))}
+            </>
+          ) : (
+             isEditMode ? t('activities.updateActivity') : t('activities.createActivity')
+          )}
+        </button>
+      </div>
     </div>
   )
 }
