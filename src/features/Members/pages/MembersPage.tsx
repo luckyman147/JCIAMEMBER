@@ -7,12 +7,12 @@ import ComplaintsOverview from "../../../Global_Components/ComplaintsOverview";
 import { useMembers, useAllPointsHistory } from "../hooks/useMembers";
 import { useAllMemberTasks } from "../../Tasks/hooks/useTasks";
 import AddMemberModal from "../components/Members/AddMemberModal";
-import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Eye, EyeOff, Search, ListFilter, ChevronDown, CreditCard } from "lucide-react";
+import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 import TopProgressors from "../components/stats/dashboard/TopProgressors";
 import { JPSLeaderboardStats } from "../components/stats/dashboard/JPSLeaderboardStats";
-import { useUpdateMember } from "../hooks/useMembers";
+
 import { useTranslation } from "react-i18next";
 import { cn } from "../../../lib/utils";
 // ... imports
@@ -30,12 +30,10 @@ export default function MembersPage() {
     const [cotisationFilter, setCotisationFilter] = useState("all");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [showStats, setShowStats] = useState(true);
-    const { mutate: updateMember } = useUpdateMember();
+
     
-    // Find current user in members list to get privacy status
-    const { user } = useAuth();
-    const currentUser = members.find(m => m.id === user?.id);
-    const isPrivate = currentUser?.leaderboard_privacy ?? false;
+
+
 
     const loading = membersLoading || historyLoading || tasksLoading;
 
@@ -103,18 +101,7 @@ export default function MembersPage() {
                         {showStats ? <LayoutPanelTop className="w-4 h-4" /> : <LayoutPanelLeft className="w-4 h-4" />}
                         {showStats ? t('profile.hideStats') : t('profile.showStats')}
                     </button>
-                    <button 
-                        onClick={() => updateMember({ id: user!.id, updates: { leaderboard_privacy: !isPrivate } as any })}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-semibold text-sm border shadow-sm ${
-                            isPrivate 
-                            ? 'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100' 
-                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                        }`}
-                        title={isPrivate ? "Hide from Leaderboard" : "Show on Leaderboard"}
-                    >
-                        {isPrivate ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        {isPrivate ? "Private" : "Public"}
-                    </button>
+
                     <button 
                         onClick={() => setIsAddModalOpen(true)}
                         className="flex items-center gap-2 bg-(--color-myAccent) text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 font-semibold"

@@ -21,8 +21,8 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-0 sm:p-4">
-            <div className="bg-white w-full h-full sm:h-auto sm:max-w-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 duration-300">
-                <Header onClose={onClose} />
+            <div className="bg-white w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 duration-300">
+                <Header onClose={onClose} loading={loading} />
 
                 <div className="flex-1 overflow-y-auto">
                     <form id="add-member-form" onSubmit={handleAddMember} className="p-6 space-y-8">
@@ -86,9 +86,9 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
                     </form>
                 </div>
 
-                <div className="p-6 bg-gray-50 border-t border-gray-100">
+                {/* <div className="p-6 bg-gray-50 border-t border-gray-100">
                     <Actions onClose={onClose} loading={loading} />
-                </div>
+                </div> */}
             </div>
         </div>
     );
@@ -96,7 +96,7 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
 
 // --- Sub-components (local to this file for organization) ---
 
-function Header({ onClose }: { onClose: () => void }) {
+function Header({ onClose, loading }: { onClose: () => void; loading: boolean }) {
     return (
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
             <div className="flex items-center gap-3">
@@ -105,9 +105,23 @@ function Header({ onClose }: { onClose: () => void }) {
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">Add New Member</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full">
-                <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-2">
+                <button
+                    type="submit"
+                    form="add-member-form"
+                    disabled={loading}
+                    className="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-100 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Save
+                </button>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
         </div>
     );
 }
@@ -200,6 +214,7 @@ function Notice({ text }: { text: string }) {
     );
 }
 
+/*
 function Actions({ onClose, loading }: { onClose: () => void, loading: boolean }) {
     return (
         <div className="pt-2 flex gap-3">
@@ -227,3 +242,4 @@ function Actions({ onClose, loading }: { onClose: () => void, loading: boolean }
         </div>
     );
 }
+*/

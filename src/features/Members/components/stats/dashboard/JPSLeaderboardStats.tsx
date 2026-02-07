@@ -65,7 +65,7 @@ export function JPSLeaderboardStats(_props: Props) {
     }, [activePeriod]);
 
     const refreshJPSMutation = useMutation({
-        mutationFn: () => jpsService.refreshAllJPS(),
+        mutationFn: () => jpsService.refreshAllJPS(activePeriod === 'month' ? 'month' : 'trimester'),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['members'] });
             loadData();

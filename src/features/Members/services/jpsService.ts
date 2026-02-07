@@ -64,29 +64,38 @@ const getCategoryMetadata = (name: PerformanceCategory) => {
  */
 export const jpsService = {
     /**
-     * Get trimester date range
+     * Get period date range
      */
-    getTrimesterDates(date: Date = new Date()) {
+    getPeriodDates(periodType: 'month' | 'trimester' = 'trimester', date: Date = new Date()) {
         const month = date.getMonth();
         const year = date.getFullYear();
-        let startMonth = 0;
-        
-        if (month >= 0 && month <= 2) startMonth = 0; // T1
-        else if (month >= 3 && month <= 5) startMonth = 3; // T2
-        else if (month >= 6 && month <= 8) startMonth = 6; // T3
-        else startMonth = 9; // T4
+        let startDate: Date;
+        let endDate: Date;
 
-        const startDate = new Date(year, startMonth, 1);
-        const endDate = new Date(year, startMonth + 3, 0, 23, 59, 59);
+        if (periodType === 'month') {
+             startDate = new Date(year, month, 1);
+             endDate = new Date(year, month + 1, 0, 23, 59, 59);
+        } else {
+            let startMonth = 0;
+            if (month >= 0 && month <= 2) startMonth = 0; // T1
+            else if (month >= 3 && month <= 5) startMonth = 3; // T2
+            else if (month >= 6 && month <= 8) startMonth = 6; // T3
+            else startMonth = 9; // T4
+
+            startDate = new Date(year, startMonth, 1);
+            endDate = new Date(year, startMonth + 3, 0, 23, 59, 59);
+        }
         
         return { startDate, endDate };
     },
 
+
+
     /**
-     * Calculate JPS for a member in a specific trimester
+     * Calculate JPS for a member in a specific period (month or trimester)
      */
-    async calculateJPS(memberId: string, customDate?: Date): Promise<JPSResult> {
-        const { startDate, endDate } = this.getTrimesterDates(customDate);
+    async calculateJPS(memberId: string, periodType: 'month' | 'trimester' = 'trimester', customDate?: Date): Promise<JPSResult> {
+        const { startDate, endDate } = this.getPeriodDates(periodType, customDate);
         const startISO = startDate.toISOString();
         const endISO = endDate.toISOString();
 
@@ -313,7 +322,7 @@ export const jpsService = {
         
         if (!advisees || advisees.length === 0) return 0;
 
-        const { startDate } = this.getTrimesterDates();
+        const { startDate } = this.getPeriodDates();
         
         const { data: adviseeSnapshots } = await supabase
             .from('jps_snapshots')
@@ -372,21 +381,63 @@ export const jpsService = {
     /**
      * Refresh JPS snapshot for a member
      */
-    async refreshJPS(memberId: string): Promise<JPSResult> {
-        const result = await this.calculateJPS(memberId);
-        const { startDate } = this.getTrimesterDates();
+    async refreshJPS(memberId: string, periodType: 'month' | 'trimester' = 'trimester'): Promise<JPSResult> {
+        const result = await this.calculateJPS(memberId, periodType);
         
+        const now = new Date();
+        const year = now.getFullYear();
+        
+        let monthValue: number | null = null;
+        let trimesterValue: number | null = null;
+
+        // Store differently based on period type to avoid overwriting trimester data with partial month data
+        // and to allow distinct retrieval
+        if (periodType === 'month') {
+            monthValue = now.getMonth() + 1;
+            // When calculating for a specific month, we store it as a 'month' snapshot
+            // We explicitely set trimester to null (or 0 if DB requires int) to distinguish it
+        } else {
+            trimesterValue = Math.floor(now.getMonth() / 3) + 1;
+            // When calculating for a trimester, we store it as a 'trimester' snapshot
+        }
+
+        // We need to handle the upsert carefully. 
+        // Ideally, the DB constraint should be (member_id, year, month, trimester) where nulls are significant.
+        // Assuming the DB can handle multiple rows for the same year if one has month set and other has trimester set.
+        
+        const snapshotData: any = {
+            member_id: memberId,
+            score: result.score,
+            category: result.category,
+            year: year,
+            details: result.details
+        };
+
+        if (periodType === 'month') {
+             snapshotData.month = monthValue;
+             snapshotData.trimester = null;
+        } else {
+             snapshotData.month = null;
+             snapshotData.trimester = trimesterValue;
+        }
+
+        // We need to use specific onConflict strategies or just rely on the ID if we had one.
+        // Since we likely have a unique constraint, we rely on supabase's upsert matching.
+        // Note: For this to work perfectly, the DB constraint must align. 
+        // If the current constraint is (member_id, trimester, month, year), it might fail if nulls aren't unique index compatible in strict ways, 
+        // but typically (id, year, month, null) != (id, year, null, tri).
+        
+        // However, if the constraint enforces all 4 columns, we just pass what we have.
+        // If the DB forces non-null, we might need to use 0 for "not applicable".
+        // Let's assume standard nullable columns or we might need to check schema. 
+        // Reverting to previous explicit upsert but with conditional fields:
+
         await supabase
             .from('jps_snapshots')
-            .upsert({
-                member_id: memberId,
-                score: result.score,
-                category: result.category,
-                trimester: Math.floor(startDate.getMonth() / 3) + 1,
-                month: new Date().getMonth() + 1,
-                year: startDate.getFullYear(),
-                details: result.details
-            }, { onConflict: 'member_id, trimester, month, year' });
+            .upsert(snapshotData, { 
+                onConflict: 'member_id, year, month, trimester',
+                ignoreDuplicates: false 
+            });
 
         return result;
     },
@@ -394,7 +445,7 @@ export const jpsService = {
     /**
      * Refresh JPS for all members
      */
-    async refreshAllJPS() {
+    async refreshAllJPS(periodType: 'month' | 'trimester' = 'trimester') {
         // Fetch ALL members including their full names for logging/verification if needed
         const { data: members, error } = await supabase.from('profiles').select('id, fullname');
         if (error || !members) {
@@ -402,13 +453,13 @@ export const jpsService = {
             throw new Error("Could not fetch members list");
         }
         
-        console.log(`Refreshing JPS for ${members.length} members...`);
+        console.log(`Refreshing JPS (${periodType}) for ${members.length} members...`);
         
         // Use Promise.all with chunks of 5 to avoid overloading but stay fast
         const chunkSize = 5;
         for (let i = 0; i < members.length; i += chunkSize) {
             const chunk = members.slice(i, i + chunkSize);
-            await Promise.all(chunk.map(m => this.refreshJPS(m.id).catch(err => {
+            await Promise.all(chunk.map(m => this.refreshJPS(m.id, periodType).catch(err => {
                 console.error(`Failed to refresh JPS for ${m.fullname}:`, err);
             })));
         }
@@ -417,6 +468,26 @@ export const jpsService = {
     },
 
     async getTopMembersByPeriod(period: 'month' | 'trimester' | 'year' | 'all', year: number, value: number) {
+        // 1. Fetch all members first
+        const { data: allMembers, error: membersError } = await supabase
+            .from('profiles')
+            .select(`
+                id, 
+                fullname, 
+                avatar_url, 
+                roles(name), 
+                leaderboard_privacy, 
+                poste:poste_id(id, name),
+                estimated_volunteering_hours,
+                cotisation_status
+            `);
+
+        if (membersError) {
+             console.error("Supabase Members Fetch Error:", membersError);
+             throw membersError;
+        }
+
+        // 2. Fetch Snapshots
         let query = supabase
             .from('jps_snapshots')
             .select(`
@@ -425,63 +496,55 @@ export const jpsService = {
                 month,
                 year,
                 trimester,
-                member:profiles!member_id(
-                    id, 
-                    fullname, 
-                    avatar_url, 
-                    roles(name), 
-                    leaderboard_privacy, 
-                    poste:poste_id(id, name),
-                    estimated_volunteering_hours,
-                    cotisation_status
-                )
+                member_id
             `)
             .eq('year', year);
 
         if (period === 'month') {
-            query = query.eq('month', value);
+            query = query.eq('month', value).is('trimester', null);
         } else if (period === 'trimester') {
-            query = query.eq('trimester', value);
+            query = query.eq('trimester', value).is('month', null);
         }
 
-        const { data, error } = await query.order('score', { ascending: false });
+        const { data: snapshots, error } = await query;
 
         if (error) {
             console.error("Supabase JPS Query Error:", error);
             throw error;
         }
 
+        // 3. Map snapshots to member IDs for checking
         // Deduplicate: If multiple snapshots match (e.g. for 'year' or 'all'), take the latest one per member
-        const latestPerMember = new Map<string, any>();
+        const snapshotMap = new Map<string, any>();
         
-        data.forEach((s: any) => {
-            if (!s.member) return; // Skip if relationship failed
-            if (s.member.leaderboard_privacy === true) return; // Explicitly hidden
-
-            const existing = latestPerMember.get(s.member.id);
-            if (!existing) {
-                latestPerMember.set(s.member.id, s);
-            } else {
-                // Determine which is later
-                if (s.year > existing.year || (s.year === existing.year && s.month > existing.month)) {
-                    latestPerMember.set(s.member.id, s);
-                }
-            }
+        snapshots?.forEach((s: any) => {
+             const existing = snapshotMap.get(s.member_id);
+             if (!existing) {
+                 snapshotMap.set(s.member_id, s);
+             } else {
+                 if (s.year > existing.year || (s.year === existing.year && s.month > existing.month)) {
+                     snapshotMap.set(s.member_id, s);
+                 }
+             }
         });
 
-        // Map and sort values
-        return Array.from(latestPerMember.values())
-            .map((s: any) => ({
-                id: s.member.id,
-                fullname: s.member.fullname,
-                avatar_url: s.member.avatar_url,
-                role: (Array.isArray(s.member.roles) ? s.member.roles[0]?.name : s.member.roles?.name) || 'Member',
-                jps_score: s.score,
-                jps_category: s.category,
-                poste: s.member.poste,
-                estimated_volunteering_hours: s.member.estimated_volunteering_hours,
-                cotisation_status: s.member.cotisation_status
-            }))
+        // 4. Combine and Sort
+        return allMembers
+            .filter((m: any) => m.leaderboard_privacy !== true) // Filter out private members
+            .map((m: any) => {
+                const snapshot = snapshotMap.get(m.id);
+                return {
+                    id: m.id,
+                    fullname: m.fullname,
+                    avatar_url: m.avatar_url,
+                    role: (Array.isArray(m.roles) ? m.roles[0]?.name : m.roles?.name) || 'Member',
+                    jps_score: snapshot?.score || 0,
+                    jps_category: snapshot?.category || 'Observer',
+                    poste: m.poste,
+                    estimated_volunteering_hours: m.estimated_volunteering_hours,
+                    cotisation_status: m.cotisation_status
+                };
+            })
             .sort((a, b) => b.jps_score - a.jps_score);
     }
 };
