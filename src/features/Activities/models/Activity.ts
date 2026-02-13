@@ -17,7 +17,9 @@ export interface ActivityBase {
   price?: number
   is_public: boolean
   image_url?: string
+  video_url?: string
   recap_images?: string[]
+  recap_videos?: string[]
   created_at: string
   // Count from optional join
   activity_participants?: { count: number }[]

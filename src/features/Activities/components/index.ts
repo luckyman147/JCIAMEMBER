@@ -8,6 +8,8 @@ export { default as MeetingAgenda } from './details/MeetingAgenda';
 export { default as ActivitySidebar } from './details/ActivitySidebar';
 export { default as TypeSpecificDetails } from './details/TypeSpecificDetails';
 export { default as RecapGallery } from './details/RecapGallery';
+export { default as ActivityVideo } from './details/ActivityVideo';
+export { default as RecapVideoGallery } from './details/RecapVideoGallery';
 export { default as AttachmentLink } from './details/AttachmentLink';
 export { default as ActivityCard } from './list/ActivityCard';
 export { default as MediaPreviewModal } from './modals/MediaPreviewModal';

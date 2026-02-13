@@ -8,7 +8,7 @@ import { useActivities } from './useActivities'
 import { useFileUpload } from './useFileUpload'
 import { activityService } from '../services/activityService'
 import { activitySchema, type ActivityFormValues } from '../schemas/activitySchema'
-import { uploadActivityImage, uploadActivityAttachment, uploadRecapImages } from '../../../utils/uploadHelpers'
+import { uploadActivityImage, uploadActivityAttachment, uploadRecapImages, uploadActivityVideo, uploadRecapVideos } from '../../../utils/uploadHelpers'
 import { parseAgenda, serializeAgenda, type AgendaItem } from '../models/MeetingAgenda'
 import type { CreateActivityDTO } from '../dto/ActivityDTOs'
 
@@ -37,6 +37,9 @@ export interface UseActivityFormReturn {
   pvAttachment: ReturnType<typeof useFileUpload>
   courseAttachment: ReturnType<typeof useFileUpload>
   recapImages: ReturnType<typeof useFileUpload>
+  activityVideo: ReturnType<typeof useFileUpload>
+  recapVideos: ReturnType<typeof useFileUpload>
+  
   
   // Handlers
   setMeetingAgenda: React.Dispatch<React.SetStateAction<AgendaItem[]>>
@@ -90,6 +93,8 @@ export function useActivityForm(): UseActivityFormReturn {
   const pvAttachment = useFileUpload()
   const courseAttachment = useFileUpload()
   const recapImages = useFileUpload()
+  const activityVideo = useFileUpload()
+  const recapVideos = useFileUpload()
   
   // Local state
   const [uploading, setUploading] = useState(false)
@@ -121,6 +126,7 @@ export function useActivityForm(): UseActivityFormReturn {
           price: activity.price,
           is_public: activity.is_public,
           image_url: activity.image_url || '',
+          video_url: activity.video_url || '',
           registration_deadline: (activity.type === 'event' || activity.type === 'formation') && activity.registration_deadline
             ? formatDate(activity.registration_deadline)
             : '',
@@ -130,6 +136,7 @@ export function useActivityForm(): UseActivityFormReturn {
           course_attachment: activity.type === 'formation' ? (activity.course_attachment || '') : '',
           training_type: activity.type === 'formation' ? (activity.training_type || 'just_training') : undefined,
           assembly_type: activity.type === 'general_assembly' ? (activity.assembly_type || undefined) : undefined,
+          recap_videos: activity.recap_videos || [],
         })
 
         // Set file URLs
@@ -151,6 +158,12 @@ export function useActivityForm(): UseActivityFormReturn {
         }
         if (activity.recap_images?.length) {
           recapImages.setUrls(activity.recap_images)
+        }
+        if (activity.video_url) {
+          activityVideo.setUrls([activity.video_url])
+        }
+        if (activity.recap_videos?.length) {
+          recapVideos.setUrls(activity.recap_videos)
         }
 
         // Fetch categories
@@ -194,13 +207,26 @@ export function useActivityForm(): UseActivityFormReturn {
       recapUrls = [...recapUrls, ...results.filter(r => r.success && r.url).map(r => r.url!)]
     }
 
-    return { imageUrl, pvUrl, courseUrl, recapUrls }
-  }, [activityImage, pvAttachment, courseAttachment, recapImages])
+    let videoUrl = activityVideo.urls[0] || null
+    if (activityVideo.file.length > 0) {
+      const result = await uploadActivityVideo(activityVideo.file[0])
+      if (!result.success || !result.url) throw new Error(result.error || 'Failed to upload video')
+      videoUrl = result.url
+    }
+
+    let recapVideoUrls = [...recapVideos.urls]
+    if (recapVideos.file.length > 0) {
+      const results = await uploadRecapVideos(recapVideos.file)
+      recapVideoUrls = [...recapVideoUrls, ...results.filter(r => r.success && r.url).map(r => r.url!)]
+    }
+
+    return { imageUrl, pvUrl, courseUrl, recapUrls, videoUrl, recapVideoUrls }
+  }, [activityImage, pvAttachment, courseAttachment, recapImages, activityVideo, recapVideos])
 
   // Build payload helper
   const buildPayload = useCallback((
     data: ActivityFormValues,
-    urls: { imageUrl: string | null; pvUrl: string | null; courseUrl: string | null; recapUrls: string[] }
+    urls: { imageUrl: string | null; pvUrl: string | null; courseUrl: string | null; recapUrls: string[]; videoUrl: string | null; recapVideoUrls: string[] }
   ): CreateActivityDTO => {
     const basePayload = {
       name: data.name,
@@ -216,7 +242,9 @@ export function useActivityForm(): UseActivityFormReturn {
       price: data.is_paid ? data.price : 0,
       is_public: data.is_public,
       image_url: data.type === 'meeting' ? null : urls.imageUrl,
+      video_url: urls.videoUrl,
       recap_images: urls.recapUrls.length > 0 ? urls.recapUrls : null,
+      recap_videos: urls.recapVideoUrls.length > 0 ? urls.recapVideoUrls : null,
       leader_id: user!.id,
     }
 
@@ -316,6 +344,8 @@ export function useActivityForm(): UseActivityFormReturn {
     pvAttachment,
     courseAttachment,
     recapImages,
+    activityVideo,
+    recapVideos,
     setMeetingAgenda,
     setSelectedCategoryIds,
     onSubmit,

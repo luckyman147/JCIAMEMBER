@@ -3,8 +3,10 @@ import supabase from './supabase'
 // File validation constants
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml',"text/plain"]
 const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']
 
 export interface UploadResult {
   success: boolean
@@ -122,6 +124,54 @@ export const uploadActivityImage = async (file: File): Promise<UploadResult> => 
     console.error('Upload error:', error)
     return { success: false, error: 'Failed to upload image' }
   }
+}
+
+/**
+ * Upload activity video to Supabase Storage
+ */
+export const uploadActivityVideo = async (file: File): Promise<UploadResult> => {
+  try {
+    // Validate file
+    const validation = validateFile(file, ALLOWED_VIDEO_TYPES, MAX_VIDEO_SIZE)
+    if (!validation.valid) {
+      return { success: false, error: validation.error }
+    }
+
+    // Generate unique filename
+    const filename = generateUniqueFilename(file.name)
+    const filePath = `activities/videos/${filename}`
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('activity-attachments')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('Upload error:', error)
+      return { success: false, error: error.message }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('activity-attachments')
+      .getPublicUrl(data.path)
+
+    return { success: true, url: publicUrl }
+  } catch (error) {
+    console.error('Upload error:', error)
+    return { success: false, error: 'Failed to upload video' }
+  }
+}
+
+/**
+ * Upload multiple recap videos
+ */
+export const uploadRecapVideos = async (files: File[]): Promise<UploadResult[]> => {
+  const uploadPromises = files.map(file => uploadActivityVideo(file))
+  return Promise.all(uploadPromises)
 }
 
 /**

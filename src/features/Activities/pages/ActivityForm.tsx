@@ -7,10 +7,12 @@ import {
   BasicInfoSection,
   CategorySection,
   CoverImageSection,
+  CoverVideoSection,
   DateTimeSection,
   LocationSection,
   PaymentSection,
   RecapImagesSection,
+  RecapVideosSection,
   MeetingSection,
   FormationSection,
   RegistrationSection,
@@ -39,6 +41,8 @@ export default function ActivityForm() {
     pvAttachment,
     courseAttachment,
     recapImages,
+    activityVideo,
+    recapVideos,
     setMeetingAgenda,
     setSelectedCategoryIds,
     onSubmit,
@@ -68,7 +72,10 @@ export default function ActivityForm() {
             className="p-4 sm:p-8 space-y-6 sm:space-y-8"
           >
             {/* Common Sections */}
-            <CoverImageSection activityType={activityType} fileUpload={activityImage} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <CoverImageSection activityType={activityType} fileUpload={activityImage} />
+              <CoverVideoSection activityType={activityType} fileUpload={activityVideo} />
+            </div>
             <BasicInfoSection register={register} errors={errors} isEditMode={isEditMode} />
             <CategorySection
               selectedCategoryIds={selectedCategoryIds}
@@ -105,7 +112,10 @@ export default function ActivityForm() {
 
             {/* Common Sections (continued) */}
             <LocationSection register={register} errors={errors} isOnline={isOnline} />
-            <RecapImagesSection fileUpload={recapImages} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <RecapImagesSection fileUpload={recapImages} />
+              <RecapVideosSection fileUpload={recapVideos} />
+            </div>
             <PaymentSection register={register} errors={errors} isPaid={isPaid} />
 
 

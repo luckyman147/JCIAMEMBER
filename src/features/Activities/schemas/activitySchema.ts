@@ -14,7 +14,9 @@ export const activitySchema = z.object({
   price: z.coerce.number().min(0).optional(),
   is_public: z.boolean().default(true),
   image_url: z.string().optional(),
+  video_url: z.string().optional(),
   recap_images: z.array(z.string()).optional(),
+  recap_videos: z.array(z.string()).optional(),
   // Type-specific fields (all optional)
   registration_deadline: z.string().optional(),
   meeting_plan: z.string().optional(),

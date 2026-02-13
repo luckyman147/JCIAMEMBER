@@ -150,5 +150,12 @@
   "markPresent": "Mark Present",
   "markAbsent": "Mark Absent",
   "interestMarked": "Interest successfully marked",
-  "interestFailed": "Failed to mark interest"
+  "interestFailed": "Failed to mark interest",
+  "coverVideo": "Cover Video",
+  "activityVideoOptional": "Activity Video (Optional)",
+  "recapVideosSectionLabel": "Recap Videos",
+  "recapVideosDescription": "Upload multiple videos to document this activity.",
+  "activityVideos": "Activity Videos",
+  "activityVideo": "Activity Video",
+  "recapVideos": "Recap Videos"
 }

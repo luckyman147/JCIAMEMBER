@@ -15,6 +15,8 @@ import {
   ActivitySidebar,
   TypeSpecificDetails,
   RecapGallery,
+  ActivityVideo,
+  RecapVideoGallery,
   AttachmentLink
 } from '../components'
 import { useActivityDetail } from '../hooks/useActivityDetail'
@@ -97,9 +99,15 @@ export default function ActivityDetails() {
 
                 <AttachmentLink activity={activity} onPreview={handlePreview} />
 
+                {activity.video_url && <ActivityVideo url={activity.video_url} />}
+
                 <RecapGallery 
                   images={activity.recap_images || []} 
                   onImageClick={handleRecapPreview} 
+                />
+
+                <RecapVideoGallery 
+                  videos={activity.recap_videos || []} 
                 />
               </div>
 

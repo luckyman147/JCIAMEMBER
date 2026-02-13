@@ -142,6 +142,13 @@
     "markPresent": "تسجيل حضور",
     "markAbsent": "تسجيل غياب",
     "interestMarked": "تم تحديد الاهتمام بنجاح",
-    "interestFailed": "فشل في تحديد الاهتمام"
+    "interestFailed": "فشل في تحديد الاهتمام",
+    "coverVideo": "فيديو الغلاف",
+    "activityVideoOptional": "فيديو النشاط (اختياري)",
+    "recapVideosSectionLabel": "فيديوهات الملخص",
+    "recapVideosDescription": "ارفع عدة فيديوهات لتوثيق هذا النشاط.",
+    "activityVideos": "فيديوهات النشاط",
+    "activityVideo": "فيديو النشاط",
+    "recapVideos": "فيديوهات الملخص"
   }
 }

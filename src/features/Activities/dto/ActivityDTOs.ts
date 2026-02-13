@@ -14,7 +14,9 @@ interface ActivityDTOBase {
   price?: number
   is_public: boolean
   image_url?: string | null
+  video_url?: string | null
   recap_images?: string[] | null
+  recap_videos?: string[] | null
   leader_id: string
 }
 

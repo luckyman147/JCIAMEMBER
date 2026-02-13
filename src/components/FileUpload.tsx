@@ -3,7 +3,7 @@ import { Upload, X, File } from 'lucide-react'
 
 interface FileUploadProps {
   label: string
-  accept: 'image' | 'document'
+  accept: 'image' | 'document' | 'video'
   multiple?: boolean
   onFileSelect: (files: File[]) => void
   onFileRemove?: (index: number) => void
@@ -31,6 +31,8 @@ export default function FileUpload({
 
   const acceptedTypes = accept === 'image' 
     ? 'image/jpeg,image/jpg,image/png,image/webp,image/gif'
+    : accept === 'video'
+    ? 'video/mp4,video/webm,video/ogg,video/quicktime'
     : 'application/pdf,.doc,.docx'
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -153,6 +155,8 @@ export default function FileUpload({
                   <div className='text-xs text-gray-500'>
                     {accept === 'image'
                       ? 'PNG, JPG, GIF up to 5MB'
+                      : accept === 'video'
+                      ? 'MP4, WEBM, QuickTime up to 50MB'
                       : 'PDF, DOC, DOCX up to 10MB'}
                   </div>
                 </>
@@ -175,7 +179,7 @@ export default function FileUpload({
               key={index}
               file={file}
               onRemove={() => handleRemove(index)}
-              isImage={accept === 'image'}
+              type={accept}
             />
           ))}
         </div>
@@ -189,7 +193,7 @@ export default function FileUpload({
               key={index}
               url={url}
               onRemove={() => handleRemove(index)}
-              isImage={accept === 'image'}
+              type={accept}
             />
           ))}
         </div>
@@ -199,29 +203,29 @@ export default function FileUpload({
 }
 
 // File Preview Component
-function FilePreview({ file, onRemove, isImage }: { file: File; onRemove: () => void; isImage: boolean }) {
+function FilePreview({ file, onRemove, type }: { file: File; onRemove: () => void; type: 'image' | 'document' | 'video' }) {
   const [preview, setPreview] = useState<string>('')
 
   React.useEffect(() => {
-    if (isImage) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    if (type === 'image' || type === 'video') {
+      const url = URL.createObjectURL(file)
+      setPreview(url)
+      return () => URL.revokeObjectURL(url)
     }
-  }, [file, isImage])
+  }, [file, type])
 
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-      <div className="flex items-center space-x-3">
-        {isImage && preview ? (
-          <img src={preview} alt={file.name} className="h-12 w-12 object-cover rounded" />
+      <div className="flex items-center space-x-3 min-w-0 flex-1">
+        {type === 'image' && preview ? (
+          <img src={preview} alt={file.name} className="h-12 w-12 shrink-0 object-cover rounded" />
+        ) : type === 'video' && preview ? (
+          <video src={preview} className="h-12 w-12 shrink-0 object-cover rounded" />
         ) : (
-          <File className="h-8 w-8 text-gray-400" />
+          <File className="h-8 w-8 shrink-0 text-gray-400" />
         )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900 truncate" title={file.name}>{file.name}</p>
           <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
         </div>
       </div>
@@ -237,24 +241,26 @@ function FilePreview({ file, onRemove, isImage }: { file: File; onRemove: () => 
 }
 
 // URL Preview Component (for existing uploaded files)
-function UrlPreview({ url, onRemove, isImage }: { url: string; onRemove: () => void; isImage: boolean }) {
+function UrlPreview({ url, onRemove, type }: { url: string; onRemove: () => void; type: 'image' | 'document' | 'video' }) {
   const filename = url.split('/').pop() || 'file'
 
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-      <div className="flex items-center space-x-3">
-        {isImage ? (
-          <img src={url} alt={filename} className="h-12 w-12 object-cover rounded" />
+      <div className="flex items-center space-x-3 min-w-0 flex-1">
+        {type === 'image' ? (
+          <img src={url} alt={filename} className="h-12 w-12 shrink-0 object-cover rounded" />
+        ) : type === 'video' ? (
+          <video src={url} className="h-12 w-12 shrink-0 object-cover rounded" />
         ) : (
-          <File className="h-8 w-8 text-gray-400" />
+          <File className="h-8 w-8 shrink-0 text-gray-400" />
         )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{filename}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900 truncate" title={filename}>{filename}</p>
           <a 
             href={url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-blue-600 hover:underline inline-block max-w-full truncate"
           >
             View file
           </a>

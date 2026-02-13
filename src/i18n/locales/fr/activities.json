@@ -145,5 +145,12 @@
   "markPresent": "Marquer présent",
   "markAbsent": "Marquer absent",
   "interestMarked": "Intérêt marqué avec succès",
-  "interestFailed": "Échec du marquage de l'intérêt"
+  "interestFailed": "Échec du marquage de l'intérêt",
+  "coverVideo": "Vidéo de Couverture",
+  "activityVideoOptional": "Vidéo de l'Activité (Optionnel)",
+  "recapVideosSectionLabel": "Vidéos Récapitulatives",
+  "recapVideosDescription": "Téléchargez plusieurs vidéos pour documenter cette activité.",
+  "activityVideos": "Vidéos de l'Activité",
+  "activityVideo": "Vidéo de l'Activité",
+  "recapVideos": "Vidéos Récapitulatives"
 }

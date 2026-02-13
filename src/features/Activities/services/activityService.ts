@@ -93,7 +93,9 @@ export const activityService = {
       price: activity.price,
       is_public: activity.is_public,
       image_url: activity.image_url,
+      video_url: activity.video_url,
       recap_images: activity.recap_images,
+      recap_videos: activity.recap_videos,
       leader_id: activity.leader_id,
     }
 
@@ -148,7 +150,7 @@ export const activityService = {
     const baseFields = [
       'name', 'description', 'type', 'activity_address', 'is_online', 'online_link',
       'activity_begin_date', 'activity_end_date', 'activity_points', 'is_paid',
-      'price', 'is_public', 'image_url', 'recap_images', 'leader_id'
+      'price', 'is_public', 'image_url', 'video_url', 'recap_images', 'recap_videos', 'leader_id'
     ]
 
     const baseUpdates: any = {}
