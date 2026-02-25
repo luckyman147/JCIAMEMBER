@@ -161,7 +161,7 @@ export const jpsService = {
                 const snap = snapshotMap.get(m.id);
                 return {
                     id: m.id, fullname: m.fullname, avatar_url: m.avatar_url,
-                    role: (Array.isArray(m.roles) ? m.roles[0]?.name : m.roles?.name) ?? 'Member',
+                    role: (m.roles as { name: string }[])?.[0]?.name ?? 'Member',
                     jps_score: snap?.score ?? 0, jps_category: snap?.category ?? 'Observer',
                     poste: m.poste, estimated_volunteering_hours: m.estimated_volunteering_hours, cotisation_status: m.cotisation_status,
                 };
