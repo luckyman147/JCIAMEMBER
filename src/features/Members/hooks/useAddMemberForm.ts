@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@supabase/supabase-js';
@@ -24,7 +24,12 @@ export const useAddMemberForm = ({ onSuccess }: UseAddMemberProps) => {
     const [availableRoles, setAvailableRoles] = useState<string[]>([]);
     const [availablePostes, setAvailablePostes] = useState<Poste[]>([]);
     const [loading, setLoading] = useState(false);
+    const [emailCheck, setEmailCheck] = useState<{
+        checking: boolean;
+        exists: boolean | null;
+    }>({ checking: false, exists: null });
     const queryClient = useQueryClient();
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         getRoles().then(setAvailableRoles);
@@ -35,6 +40,36 @@ export const useAddMemberForm = ({ onSuccess }: UseAddMemberProps) => {
             getPostesByRole(formData.role).then(setAvailablePostes);
         }
     }, [formData.role]);
+
+    useEffect(() => {
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        const trimmed = formData.email.trim();
+        if (!trimmed || !trimmed.includes('@')) {
+            setEmailCheck({ checking: false, exists: null });
+            return;
+        }
+
+        setEmailCheck(prev => ({ ...prev, checking: true }));
+
+        debounceRef.current = setTimeout(async () => {
+            try {
+                const { data, error } = await supabase.rpc('check_email_exists', {
+                    p_email: trimmed.toLowerCase(),
+                });
+                if (error) throw error;
+                setEmailCheck({ checking: false, exists: !!data });
+            } catch {
+                setEmailCheck({ checking: false, exists: null });
+            }
+        }, 500);
+
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [formData.email]);
 
     const generateRandomPassword = (length = 12) => {
         const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
@@ -75,14 +110,14 @@ export const useAddMemberForm = ({ onSuccess }: UseAddMemberProps) => {
         const password = generateRandomPassword();
 
         try {
-            // 1. Check if email already exists in profiles
-            const { data: existingUser } = await supabase
-                .from('profiles')
-                .select('email')
-                .eq('email', formData.email.trim().toLowerCase())
-                .maybeSingle();
+            // 1. Check if email already exists in auth.users
+            const { data: emailExists, error: checkError } = await supabase.rpc('check_email_exists', {
+                p_email: formData.email.trim().toLowerCase(),
+            });
 
-            if (existingUser) {
+            if (checkError) throw checkError;
+
+            if (emailExists) {
                 toast.error('A member with this email already exists.');
                 setLoading(false);
                 return;
@@ -92,7 +127,7 @@ export const useAddMemberForm = ({ onSuccess }: UseAddMemberProps) => {
             // This prevents the admin from being logged out
             const tempSupabase = createClient(
                 import.meta.env.VITE_SUPABASE_URL,
-                import.meta.env.VITE_SUPABASE_ANON_KEY,
+                import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
                 {
                     auth: {
                         persistSession: false,
@@ -145,8 +180,9 @@ export const useAddMemberForm = ({ onSuccess }: UseAddMemberProps) => {
             queryClient.invalidateQueries({ queryKey: MEMBER_KEYS.lists() });
             setFormData({ fullname: '', email: '', phone: '', role: 'member', posteId: '', isValidated: true });
             onSuccess();
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to create member');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to create member';
+            toast.error(message);
             console.error(error);
         } finally {
             setLoading(false);
@@ -159,6 +195,7 @@ export const useAddMemberForm = ({ onSuccess }: UseAddMemberProps) => {
         availableRoles,
         availablePostes,
         loading,
+        emailCheck,
         handleAddMember
     };
 };

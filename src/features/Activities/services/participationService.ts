@@ -128,6 +128,62 @@ export const participationService = {
   },
 
   /**
+   * Get participation counts per member by activity type since a given date
+   */
+  getParticipationsSince: async (memberIds: string[], sinceDate: string) => {
+    if (memberIds.length === 0) return {}
+
+    const { data, error } = await supabase
+      .from('activity_participants')
+      .select(`
+        user_id,
+        activity:activity_id(type)
+      `)
+      .in('user_id', memberIds)
+      .gte('registered_at', sinceDate)
+      .not('is_interested', 'eq', true)
+
+    if (error) throw error
+
+    const counts: Record<string, { events: number; meetings: number; formations: number; assemblies: number }> = {}
+
+    for (const p of data || []) {
+      const uid = p.user_id
+      if (!counts[uid]) counts[uid] = { events: 0, meetings: 0, formations: 0, assemblies: 0 }
+
+      const activity = p.activity as { type?: string } | null
+      const type = activity?.type
+      if (type === 'event') counts[uid].events++
+      else if (type === 'meeting') counts[uid].meetings++
+      else if (type === 'formation') counts[uid].formations++
+      else if (type === 'general_assembly') counts[uid].assemblies++
+    }
+
+    return counts
+  },
+
+  /**
+   * Get total activities count by type since a given date
+   */
+  getActivityTypeCountsSince: async (sinceDate: string): Promise<{ events: number; meetings: number; formations: number; assemblies: number }> => {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('type')
+      .gte('activity_begin_date', sinceDate)
+
+    if (error) throw error
+
+    const counts = { events: 0, meetings: 0, formations: 0, assemblies: 0 }
+    for (const a of data || []) {
+      if (a.type === 'event') counts.events++
+      else if (a.type === 'meeting') counts.meetings++
+      else if (a.type === 'formation') counts.formations++
+      else if (a.type === 'general_assembly') counts.assemblies++
+    }
+    return counts
+  },
+
+  /**
    * Get member's participated activities with rate and notes
    */
   getMemberParticipations: async (memberId: string) => {

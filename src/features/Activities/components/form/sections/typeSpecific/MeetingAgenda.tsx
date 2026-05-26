@@ -67,18 +67,41 @@ export default function MeetingAgenda({ agenda, onChange, disabled = false }: Me
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 />
                 
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <input
-                    type="number"
-                    value={item.estimatedTime}
-                    onChange={(e) => handleUpdateItem(item.id, 'estimatedTime', parseInt(e.target.value) || 0)}
-                    min="0"
-                    placeholder="0"
-                    disabled={disabled}
-                    className="w-24 px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                  />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('activities.min')}</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                    {[2, 5, 10, 20].map(preset => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleUpdateItem(item.id, 'estimatedTime', preset)}
+                        disabled={disabled}
+                        className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                          item.estimatedTime === preset
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {preset} {t('activities.min')}
+                      </button>
+                    ))}
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={item.estimatedTime && ![2, 5, 10, 20].includes(item.estimatedTime) ? item.estimatedTime : ''}
+                        onChange={(e) => handleUpdateItem(item.id, 'estimatedTime', parseInt(e.target.value) || 0)}
+                        min="0"
+                        placeholder={t('activities.custom', 'Custom')}
+                        disabled={disabled}
+                        className={`w-16 px-2 py-1 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                          item.estimatedTime && ![2, 5, 10, 20].includes(item.estimatedTime)
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold'
+                            : 'border-gray-300'
+                        }`}
+                      />
+                      <span className="text-xs text-gray-400">{t('activities.min')}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 

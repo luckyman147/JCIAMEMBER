@@ -1,6 +1,10 @@
 import { useActivityForm } from '../hooks/useActivityForm'
 import type { ActivityFormValues } from '../schemas/activitySchema'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../Authentication/auth.context'
+import { EXECUTIVE_LEVELS } from '../../../utils/roles'
+import { Wallet } from 'lucide-react'
+import { FormSection, FormInput } from '../../../components'
 
 // Section Components - all from barrel file
 import {
@@ -49,6 +53,9 @@ export default function ActivityForm() {
     onCancel,
   } = useActivityForm()
 
+  const { role } = useAuth()
+  const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || '')
+  const { t } = useTranslation()
   const isDisabled = loading || uploading
 
   return (
@@ -118,6 +125,25 @@ export default function ActivityForm() {
             </div>
             <PaymentSection register={register} errors={errors} isPaid={isPaid} />
 
+            {isExecutive && !isEditMode && (
+              <FormSection title={t('treasury.budget', 'Budget')}>
+                <div className="text-start">
+                  <p className="text-sm text-gray-500 mb-3">{t('treasury.budgetOptional', 'Optionally allocate a budget for this activity')}</p>
+                  <div className="w-full sm:w-1/2 md:w-1/3">
+                    <FormInput
+                      id="budget_amount"
+                      label={`${t('treasury.allocated', 'Allocated')} (TND)`}
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      icon={<Wallet className="h-5 w-5 text-gray-400" />}
+                      register={register('budget_amount')}
+                      error={errors.budget_amount}
+                    />
+                  </div>
+                </div>
+              </FormSection>
+            )}
 
           </form>
         </div>

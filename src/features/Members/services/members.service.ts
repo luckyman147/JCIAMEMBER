@@ -40,7 +40,7 @@ export const getMembers = async (): Promise<Member[]> => {
             preferred_activity_type, preferred_meal, cotisation_status,
             strengths, weaknesses, personality_type, estimated_volunteering_hours,
             advisor_id, advisor:advisor_id(id, fullname, avatar_url),
-            poste:poste_id(id, role_id, name),
+            poste_id, poste:poste_id(id, role_id, name),
             jps_snapshots(score, category, month, year)
         `);
 
@@ -84,7 +84,7 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
             personality_type, estimated_volunteering_hours, advisor_id,
             advisor:advisor_id(id, fullname, avatar_url),
             advisees:profiles!advisor_id(id, fullname, avatar_url),
-            poste:poste_id(id, role_id, name),
+            poste_id, poste:poste_id(id, role_id, name),
             jps_snapshots(score, category, month, year)
         `)
         .eq('id', id)

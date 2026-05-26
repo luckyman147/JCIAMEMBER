@@ -86,11 +86,19 @@ function Header({ count, points, showForm, onToggle, canManage }: {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-                <User className="w-6 h-6 text-(--color-myPrimary)" />
+            <div className="relative">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                    <User className="w-6 h-6 text-(--color-myPrimary)" />
+                </div>
+                <span className="absolute -top-2 -right-2 w-5 h-5 bg-(--color-myPrimary) text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm shadow-blue-200">
+                    {count}
+                </span>
             </div>
             <div className="flex flex-col">
-                <span>{t('activities.participants')}</span>
+                <div className="flex items-center gap-2">
+                    <span>{t('activities.participants')}</span>
+                    <span className="text-xs font-bold text-(--color-myPrimary) bg-blue-50 px-2 py-0.5 rounded-full">{count} {t('activities.members')}</span>
+                </div>
                 <span className="text-xs font-normal text-gray-500">{t('activities.membersJoined', { count: count })}</span>
             </div>
           </h3>

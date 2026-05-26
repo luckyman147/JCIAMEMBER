@@ -2,7 +2,7 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../features/Authentication/auth.context'
 import logo from '../assets/logo.png'
 import { useState, useRef, useEffect } from 'react'
-import { Menu, X, LogOut, Home, Calendar, Users, Target, User, PieChart } from 'lucide-react'
+import { Menu, X, LogOut, Home, Calendar, Users, Target, User, PieChart, Wallet } from 'lucide-react'
 import { EXECUTIVE_LEVELS } from '../utils/roles'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -75,6 +75,13 @@ export default function Sidebar() {
             <Calendar className="w-5 h-5" />
             <span className="text-[10px] font-bold uppercase tracking-tighter">{t('nav.activities')}</span>
           </Link>
+
+          {user && hasExclusiveAccess && (
+            <Link to="/treasury" className={mobileTabClass('/treasury')}>
+              <Wallet className="w-5 h-5" />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">Treasury</span>
+            </Link>
+          )}
 
           {user && hasExclusiveAccess && (
             <Link to="/members" className={mobileTabClass('/members')}>
@@ -190,6 +197,10 @@ export default function Sidebar() {
             <>
               {hasExclusiveAccess && (
                 <>
+                  <NavLink to="/treasury" className={navLinkClass}>
+                    <Wallet className="w-4 h-4" />
+                    <span className="flex-1">Treasury</span>
+                  </NavLink>
                   <NavLink to="/recruitment" className={navLinkClass}>
                      <PieChart className="w-4 h-4" />
                     <span className="flex-1">{t('nav.recruitment')}</span>

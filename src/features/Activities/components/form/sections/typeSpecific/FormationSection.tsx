@@ -33,14 +33,14 @@ export default function FormationSection({
 
         <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 transition-all hover:bg-gray-100/50">
           <div className="flex flex-col gap-4">
+
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg bg-blue-100 text-blue-600`}>
                 <User className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t('activities.trainingType')}</p>
-              </div>
+              <p className="text-sm font-semibold text-gray-900">{t('activities.trainingType')}</p>
             </div>
+
             <select
               {...register('training_type')}
               className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
@@ -49,9 +49,13 @@ export default function FormationSection({
               <option value="official_session">{t('activities.officialSession')}</option>
               <option value="important_training">{t('activities.importantTraining')}</option>
               <option value="member_to_member">{t('activities.memberToMemberTraining')}</option>
+              <option value="Information Session">{t('activities.informationSession', 'Information Session')}</option>
             </select>
           </div>
         </div>
+
+
+
         <FileUpload
           label={t('activities.courseMaterialsOptional')}
           accept="document"

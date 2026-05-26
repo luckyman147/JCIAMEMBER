@@ -94,7 +94,7 @@ export default function CreateTeamModal({ open, onClose, onCreated, projectId }:
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center p-6 border-b">
                     <h2 className="text-xl font-bold text-gray-900">Create New Team</h2>

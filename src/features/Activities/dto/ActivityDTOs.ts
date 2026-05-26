@@ -17,6 +17,7 @@ interface ActivityDTOBase {
   video_url?: string | null
   recap_images?: string[] | null
   recap_videos?: string[] | null
+  budget_amount?: number
   leader_id: string
 }
 

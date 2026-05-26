@@ -11,6 +11,8 @@ import { activitySchema, type ActivityFormValues } from '../schemas/activitySche
 import { uploadActivityImage, uploadActivityAttachment, uploadRecapImages, uploadActivityVideo, uploadRecapVideos } from '../../../utils/uploadHelpers'
 import { parseAgenda, serializeAgenda, type AgendaItem } from '../models/MeetingAgenda'
 import type { CreateActivityDTO } from '../dto/ActivityDTOs'
+import { treasuryService } from '../../Treasury/services/treasury.service'
+import { EXECUTIVE_LEVELS } from '../../../utils/roles'
 
 export interface UseActivityFormReturn {
   // Form
@@ -309,6 +311,18 @@ export function useActivityForm(): UseActivityFormReturn {
         const result = await createActivity(payload)
         if (result.success && result.activity && selectedCategoryIds.length > 0) {
           await activityService.setActivityCategories(result.activity.id, selectedCategoryIds)
+        }
+        if (result.success && result.activity && data.budget_amount && data.budget_amount > 0 && EXECUTIVE_LEVELS.includes(user.role?.toLowerCase() || '')) {
+          try {
+            const session = await treasuryService.getActiveSession()
+            if (session) {
+              await treasuryService.allocateBudget({
+                session_id: session.id,
+                activity_id: result.activity.id,
+                allocated_amount: data.budget_amount,
+              })
+            }
+          } catch {}
         }
         toast.dismiss()
         toast.success('Activity created!')

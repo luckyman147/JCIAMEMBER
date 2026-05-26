@@ -1,5 +1,5 @@
 export type ActivityType = 'event' | 'formation' | 'meeting' | 'general_assembly'
-export type TrainingType = 'official_session' | 'important_training' | 'just_training' | 'member_to_member'
+export type TrainingType = 'official_session' | 'important_training' | 'just_training' | 'member_to_member' | 'Information Session'
 
 // Base interface with shared properties
 export interface ActivityBase {

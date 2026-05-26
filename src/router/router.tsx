@@ -21,6 +21,7 @@ import CandidateEvaluationPage from '../features/Recruitment/pages/CandidateEval
 import MembersPage from '../features/Members/pages/MembersPage'
 import MemberDetailsPage from '../features/Members/pages/MemberDetailsPage'
 import NotFoundPage from '../Global_Components/NotFoundPage'
+import TreasuryPage from '../features/Treasury/pages/TreasuryPage'
 import { EXECUTIVE_LEVELS } from '../utils/roles'
 
 export const router = createBrowserRouter([
@@ -162,6 +163,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
             <CandidateEvaluationPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Treasury route
+      {
+        path: '/treasury',
+        element: (
+          <ProtectedRoute allowedRoles={EXECUTIVE_LEVELS}>
+            <TreasuryPage />
           </ProtectedRoute>
         ),
       },

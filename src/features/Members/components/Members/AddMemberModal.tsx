@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Loader2, Shield, CheckCircle2 } from 'lucide-react';
+import { X, User, Loader2, Shield, CheckCircle2, XCircle } from 'lucide-react';
 import { useAddMemberForm } from '../../hooks/useAddMemberForm';
 
 interface AddMemberModalProps {
@@ -14,6 +14,7 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
         availableRoles,
         availablePostes,
         loading,
+        emailCheck,
         handleAddMember
     } = useAddMemberForm({ onSuccess: onClose });
 
@@ -40,6 +41,20 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
                                     placeholder="name@example.com"
                                     value={formData.email}
                                     onChange={(val) => setFormData({ ...formData, email: val })}
+                                    status={
+                                        formData.email.length > 0 && formData.email.includes('@')
+                                            ? emailCheck.checking
+                                                ? 'checking'
+                                                : emailCheck.exists
+                                                    ? 'error'
+                                                    : 'success'
+                                            : undefined
+                                    }
+                                    statusMessage={
+                                        emailCheck.exists
+                                            ? 'This email is already registered'
+                                            : undefined
+                                    }
                                 />
                                 <InputField
                                     label="Phone Number"
@@ -133,23 +148,48 @@ interface InputFieldProps {
     placeholder?: string;
     type?: string;
     maxLength?: number;
+    status?: 'checking' | 'success' | 'error';
+    statusMessage?: string;
 }
 
-function InputField({ label, value, onChange, placeholder, type = "text", maxLength }: InputFieldProps) {
+function InputField({ label, value, onChange, placeholder, type = "text", maxLength, status, statusMessage }: InputFieldProps) {
     return (
         <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                 {label}
             </label>
-            <input
-                type={type}
-                required
-                maxLength={maxLength}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                placeholder={placeholder}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-            />
+            <div className="relative">
+                <input
+                    type={type}
+                    required
+                    maxLength={maxLength}
+                    className={`w-full px-4 py-2.5 rounded-xl outline-none transition-all ${
+                        status === 'error'
+                            ? 'bg-red-50 border border-red-300 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 pr-10'
+                            : status === 'success'
+                                ? 'bg-emerald-50 border border-emerald-300 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 pr-10'
+                                : 'bg-gray-50 border border-gray-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'
+                    }`}
+                    placeholder={placeholder}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                />
+                {status === 'checking' && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                )}
+                {status === 'success' && (
+                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
+                )}
+                {status === 'error' && (
+                    <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />
+                )}
+            </div>
+            {statusMessage && status === 'error' && (
+                <p className="text-xs text-red-500 font-medium flex items-center gap-1">
+                    <XCircle className="w-3 h-3" />
+                    {statusMessage}
+                </p>
+            )}
         </div>
     );
 }

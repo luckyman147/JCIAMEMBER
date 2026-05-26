@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Navbar from "../../../Global_Components/navBar";
 import MembersGrowthChart from "../components/stats/dashboard/MembersGrowthChart";
 import MembersList from "../components/Members/MembersList";
@@ -7,7 +7,7 @@ import ComplaintsOverview from "../../../Global_Components/ComplaintsOverview";
 import { useMembers, useAllPointsHistory } from "../hooks/useMembers";
 import { useAllMemberTasks } from "../../Tasks/hooks/useTasks";
 import AddMemberModal from "../components/Members/AddMemberModal";
-import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard } from "lucide-react";
+import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard, Download, BarChart3, ArrowUp } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 import TopProgressors from "../components/stats/dashboard/TopProgressors";
@@ -15,7 +15,9 @@ import { JPSLeaderboardStats } from "../components/stats/dashboard/JPSLeaderboar
 
 import { useTranslation } from "react-i18next";
 import { cn } from "../../../lib/utils";
-// ... imports
+import { downloadMembersAsExcel } from "../utils";
+import { participationService } from "../../Activities/services/participationService";
+import { toast } from "sonner";
 
 export default function MembersPage() {
     const { t, i18n } = useTranslation();
@@ -30,8 +32,22 @@ export default function MembersPage() {
     const [cotisationFilter, setCotisationFilter] = useState("all");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [showStats, setShowStats] = useState(true);
+    const [showFloatingBtn, setShowFloatingBtn] = useState(false);
 
-    
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowFloatingBtn(window.scrollY > 600);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToStats = () => {
+        const el = document.getElementById('members-statistics');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
 
 
 
@@ -77,172 +93,255 @@ export default function MembersPage() {
     }, [members, searchTerm, sortBy, cotisationFilter]);
 
     return (
-          <div className="min-h-screen bg-gray-50">
-              <Navbar />
-                   <main className="md:ml-64 pt-16 md:pt-6 pb-24 md:pb-0">
+      <div className='min-h-screen bg-gray-50'>
+        <Navbar />
+        <main className='md:ml-64 pt-16 md:pt-6 pb-24 md:pb-0'>
+          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+            <div className='flex justify-between items-center mb-8'>
+              <div>
+                <h1 className='text-3xl font-bold text-gray-900'>
+                  {t('members.title')}
+                </h1>
+                <p className='text-gray-500 mt-1'>{t('members.subtitle')}</p>
+              </div>
+              <div className='flex items-center gap-3'>
+                <button
+                  onClick={() => setShowStats(!showStats)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-semibold text-sm border shadow-sm ${
+                    showStats
+                      ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                  }`}
+                  title={
+                    showStats ? t('profile.hideStats') : t('profile.showStats')
+                  }
+                >
+                  {showStats ? (
+                    <LayoutPanelTop className='w-4 h-4' />
+                  ) : (
+                    <LayoutPanelLeft className='w-4 h-4' />
+                  )}
+                  {showStats ? t('profile.hideStats') : t('profile.showStats')}
+                </button>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-             
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                   <h1 className="text-3xl font-bold text-gray-900">{t('members.title')}</h1>
-                   <p className="text-gray-500 mt-1">{t('members.subtitle')}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button 
-                        onClick={() => setShowStats(!showStats)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-semibold text-sm border shadow-sm ${
-                            showStats 
-                            ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50' 
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
-                        }`}
-                        title={showStats ? t('profile.hideStats') : t('profile.showStats')}
-                    >
-                        {showStats ? <LayoutPanelTop className="w-4 h-4" /> : <LayoutPanelLeft className="w-4 h-4" />}
-                        {showStats ? t('profile.hideStats') : t('profile.showStats')}
-                    </button>
-
-                    <button 
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="flex items-center gap-2 bg-(--color-myAccent) text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 font-semibold"
-                    >
-                        <UserPlus className="w-5 h-5" />
-                        {t('members.addMember')}
-                    </button>
-                </div>
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className='flex items-center gap-2 bg-(--color-myAccent) text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 font-semibold'
+                >
+                  <UserPlus className='w-5 h-5' />
+                  {t('members.addMember')}
+                </button>
+              </div>
             </div>
 
             {/* Quick Stats Ribbon */}
             {!loading && members.length > 0 && (
-                <div className={`flex flex-wrap gap-4 mb-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <div className="bg-white px-5 py-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                            <Users className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('members.totalMembers')}</p>
-                            <p className="text-xl font-bold text-gray-900">{members.length}</p>
-                        </div>
-                    </div>
-
-                    {roleStats.map(([role, count]) => (
-                        <div key={role} className="bg-white px-5 py-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
-                                {role.toLowerCase().includes('admin') || role.toLowerCase().includes('lead') ? (
-                                    <ShieldCheck className="w-5 h-5 text-amber-600" />
-                                ) : (
-                                    <User className="w-5 h-5 text-gray-600" />
-                                )}
-                            </div>
-                            <div>
-                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{role}</p>
-                                <p className="text-xl font-bold text-gray-900">{count}</p>
-                            </div>
-                        </div>
-                    ))}
+              <div
+                className={`flex flex-wrap gap-4 mb-8 ${isRTL ? 'flex-row-reverse' : ''}`}
+              >
+                <div className='bg-white px-5 py-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3'>
+                  <div className='w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center'>
+                    <Users className='w-5 h-5 text-blue-600' />
+                  </div>
+                  <div>
+                    <p className='text-xs font-semibold text-gray-500 uppercase tracking-wider'>
+                      {t('members.totalMembers')}
+                    </p>
+                    <p className='text-xl font-bold text-gray-900'>
+                      {members.length}
+                    </p>
+                  </div>
                 </div>
+
+                {roleStats.map(([role, count]) => (
+                  <div
+                    key={role}
+                    className='bg-white px-5 py-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3'
+                  >
+                    <div className='w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center'>
+                      {role.toLowerCase().includes('admin') ||
+                      role.toLowerCase().includes('lead') ? (
+                        <ShieldCheck className='w-5 h-5 text-amber-600' />
+                      ) : (
+                        <User className='w-5 h-5 text-gray-600' />
+                      )}
+                    </div>
+                    <div>
+                      <p className='text-xs font-semibold text-gray-500 uppercase tracking-wider'>
+                        {role}
+                      </p>
+                      <p className='text-xl font-bold text-gray-900'>{count}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
 
-            <AddMemberModal 
-                isOpen={isAddModalOpen} 
-                onClose={() => setIsAddModalOpen(false)} 
+            <AddMemberModal
+              isOpen={isAddModalOpen}
+              onClose={() => setIsAddModalOpen(false)}
             />
 
             {/* Leadership Tools Section */}
             {isExecutive && (
-                <div className="mb-10">
-                    <div className="flex items-center gap-2 mb-4 px-1">
-                        <ShieldCheck className="w-5 h-5 text-amber-600" />
-                        <h2 className="text-xl font-bold text-gray-900">{t('members.leadership')}</h2>
-                    </div>
-                    <ComplaintsOverview />
+              <div className='mb-10'>
+                <div className='flex items-center gap-2 mb-4 px-1'>
+                  <ShieldCheck className='w-5 h-5 text-amber-600' />
+                  <h2 className='text-xl font-bold text-gray-900'>
+                    {t('members.leadership')}
+                  </h2>
                 </div>
+                <ComplaintsOverview />
+              </div>
             )}
 
             {/* General Statistics */}
-            {!loading && members.length > 0 && showStats && (
-                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                    <MembersStatistics members={members} tasks={allTaskAssignments} />
-                    
-                    {/* Growth Section */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
-                        <div className="lg:col-span-1">
-                            <MembersGrowthChart history={history as any} />
-                        </div>
-                        <div className="lg:col-span-1">
-                            <TopProgressors history={history as any} />
-                        </div>
-                    </div>
-
-                    <div className="lg:col-span-12">
-                    <JPSLeaderboardStats initialMembers={members} />
-                </div>
-                </div>
-            )}
 
             {/* Search and Filter */}
-            <div className="flex flex-col md:flex-row gap-4 mb-8 items-center bg-white p-4 rounded-3xl shadow-sm border border-gray-100/80 backdrop-blur-sm">
-                <div className="relative flex-1 w-full group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder={t('common.search')}
-                        className="w-full pl-13 pr-5 py-4 bg-gray-50/50 border border-transparent rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 focus:bg-white transition-all text-sm font-medium placeholder:text-gray-400"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                
-                <div className="flex flex-wrap md:flex-nowrap gap-3 w-full md:w-auto">
-                    {/* Cotisation Filter Toggle */}
-                    <div className="flex bg-gray-100/50 p-1.5 rounded-2xl border border-gray-200/50 min-w-fit">
-                        {[
-                            { id: 'all', icon: <CreditCard className="w-3.5 h-3.5" />, label: t('members.filterCotisationAll', 'All') },
-                            { id: 'paid', icon: <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200" />, label: t('members.paidOnly', 'Paid') },
-                            { id: 'unpaid', icon: <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-sm shadow-rose-200" />, label: t('members.unpaidOnly', 'Unpaid') }
-                        ].map((opt) => (
-                            <button
-                                key={opt.id}
-                                onClick={() => setCotisationFilter(opt.id as any)}
-                                className={cn(
-                                    "flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                                    cotisationFilter === opt.id 
-                                    ? "bg-white text-blue-600 shadow-md shadow-blue-900/5 ring-1 ring-gray-100 scale-[1.02]" 
-                                    : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
-                                )}
-                            >
-                                {opt.icon}
-                                <span>{opt.label}</span>
-                            </button>
-                        ))}
-                    </div>
+            <div className='flex flex-col md:flex-row gap-4 mb-8 items-center bg-white p-4 rounded-3xl shadow-sm border border-gray-100/80 backdrop-blur-sm'>
+              <div className='relative flex-1 w-full group'>
+                <Search className='absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors' />
+                <input
+                  type='text'
+                  placeholder={t('common.search')}
+                  className='w-full pl-13 pr-5 py-4 bg-gray-50/50 border border-transparent rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 focus:bg-white transition-all text-sm font-medium placeholder:text-gray-400'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
 
-                    <div className="h-10 w-px bg-gray-100 hidden md:block" />
-
-                    {/* Sort Select */}
-                    <div className="relative group w-full md:w-64">
-                         <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 rounded-lg group-focus-within:bg-blue-600 group-hover:bg-blue-100 transition-colors">
-                            <ListFilter className="w-3.5 h-3.5 text-blue-600 group-focus-within:text-white transition-colors" />
-                         </div>
-                         <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full pl-12 pr-10 py-4 bg-gray-50/50 border border-transparent rounded-2xl outline-none appearance-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 focus:bg-white transition-all text-[11px] font-black uppercase tracking-widest text-gray-700 cursor-pointer"
-                        >
-                            <option value="default">{t('members.sortBy', 'Sort By')}</option>
-                            <option value="jps_desc">🏆 {t('members.sortJPSDesc', 'JPS: High to Low')}</option>
-                            <option value="jps_asc">📈 {t('members.sortJPSAsc', 'JPS: Low to High')}</option>
-                            <option value="volunteering_desc">⌛ {t('members.sortVolDesc', 'Hours: High to Low')}</option>
-                        </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-blue-500 transition-colors group-hover:translate-y-[-40%]" />
-                    </div>
+              <div className='flex flex-wrap md:flex-nowrap gap-3 w-full md:w-auto'>
+                {/* Cotisation Filter Toggle */}
+                <div className='flex bg-gray-100/50 p-1.5 rounded-2xl border border-gray-200/50 min-w-fit'>
+                  {[
+                    {
+                      id: 'all',
+                      icon: <CreditCard className='w-3.5 h-3.5' />,
+                      label: t('members.filterCotisationAll', 'All'),
+                    },
+                    {
+                      id: 'paid',
+                      icon: (
+                        <div className='w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200' />
+                      ),
+                      label: t('members.paidOnly', 'Paid'),
+                    },
+                    {
+                      id: 'unpaid',
+                      icon: (
+                        <div className='w-1.5 h-1.5 rounded-full bg-rose-500 shadow-sm shadow-rose-200' />
+                      ),
+                      label: t('members.unpaidOnly', 'Unpaid'),
+                    },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setCotisationFilter(opt.id as any)}
+                      className={cn(
+                        'flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300',
+                        cotisationFilter === opt.id
+                          ? 'bg-white text-blue-600 shadow-md shadow-blue-900/5 ring-1 ring-gray-100 scale-[1.02]'
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-white/50',
+                      )}
+                    >
+                      {opt.icon}
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
                 </div>
+
+                <div className='h-10 w-px bg-gray-100 hidden md:block' />
+
+                {/* Sort Select */}
+                <div className='relative group w-full md:w-64'>
+                  <div className='absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 rounded-lg group-focus-within:bg-blue-600 group-hover:bg-blue-100 transition-colors'>
+                    <ListFilter className='w-3.5 h-3.5 text-blue-600 group-focus-within:text-white transition-colors' />
+                  </div>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className='w-full pl-12 pr-10 py-4 bg-gray-50/50 border border-transparent rounded-2xl outline-none appearance-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 focus:bg-white transition-all text-[11px] font-black uppercase tracking-widest text-gray-700 cursor-pointer'
+                  >
+                    <option value='default'>
+                      {t('members.sortBy', 'Sort By')}
+                    </option>
+                    <option value='jps_desc'>
+                      🏆 {t('members.sortJPSDesc', 'JPS: High to Low')}
+                    </option>
+                    <option value='jps_asc'>
+                      📈 {t('members.sortJPSAsc', 'JPS: Low to High')}
+                    </option>
+                    <option value='volunteering_desc'>
+                      ⌛ {t('members.sortVolDesc', 'Hours: High to Low')}
+                    </option>
+                  </select>
+                  <ChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-blue-500 transition-colors group-hover:translate-y-[-40%]' />
+                </div>
+
+                <button
+                  onClick={async () => {
+                    try {
+                      const janFirst = `${new Date().getFullYear()}-01-01`
+                      const memberIds = members.filter(m => !m.email?.includes('jci.hs') && m.role && m.role !== 'JCI Hammam Sousse').map(m => m.id)
+                      const [participationMap, activityTypeCounts] = await Promise.all([
+                        participationService.getParticipationsSince(memberIds, janFirst),
+                        participationService.getActivityTypeCountsSince(janFirst),
+                      ])
+                      await downloadMembersAsExcel(members, participationMap, activityTypeCounts)
+                    } catch {
+                      toast.error('Failed to download Excel')
+                    }
+                  }}
+                  className='flex items-center gap-2 px-4 py-4 bg-emerald-50 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-all font-semibold text-xs uppercase tracking-widest border border-emerald-200 whitespace-nowrap'
+                  title={t('members.downloadExcel', 'Download Excel')}
+                >
+                  <Download className='w-4 h-4' />
+                  {t('members.downloadExcel', 'Download')}
+                </button>
+              </div>
             </div>
 
             {/* Members List */}
-            <MembersList members={filteredMembers} loading={loading} sortBy={sortBy} />
-        </div>
-                    </main>
-    </div>
-    );
+            <MembersList
+              members={filteredMembers}
+              loading={loading}
+              sortBy={sortBy}
+            />
+            {!loading && members.length > 0 && showStats && (
+              <div id="members-statistics" className='animate-in fade-in slide-in-from-top-4 duration-500'>
+                <MembersStatistics
+                  members={members}
+                  tasks={allTaskAssignments}
+                />
+
+                {/* Growth Section */}
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10'>
+                  <div className='lg:col-span-1'>
+                    <MembersGrowthChart history={history as any} />
+                  </div>
+                  <div className='lg:col-span-1'>
+                    <TopProgressors history={history as any} />
+                  </div>
+                </div>
+
+                <div className='lg:col-span-12'>
+                  <JPSLeaderboardStats initialMembers={members} />
+                </div>
+              </div>
+            )}
+          </div>
+          {showFloatingBtn && (
+            <button
+              onClick={scrollToStats}
+              className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-(--color-myAccent) text-white px-5 py-3.5 rounded-2xl shadow-2xl shadow-blue-900/30 hover:bg-blue-700 transition-all duration-300 hover:scale-105 active:scale-95 md:bottom-8 md:right-8"
+              title="Scroll to statistics"
+            >
+              <BarChart3 className="w-5 h-5" />
+              <span className="text-sm font-bold hidden sm:inline">Statistics</span>
+              <ArrowUp className="w-4 h-4" />
+            </button>
+          )}
+        </main>
+      </div>
+    )
 }

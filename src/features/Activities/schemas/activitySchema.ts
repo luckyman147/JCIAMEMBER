@@ -17,13 +17,14 @@ export const activitySchema = z.object({
   video_url: z.string().optional(),
   recap_images: z.array(z.string()).optional(),
   recap_videos: z.array(z.string()).optional(),
+  budget_amount: z.coerce.number().min(0).optional(),
   // Type-specific fields (all optional)
   registration_deadline: z.string().optional(),
   meeting_plan: z.string().optional(),
   pv_attachments: z.string().optional(),
   trainer_name: z.string().optional(),
   course_attachment: z.string().optional(),
-  training_type: z.enum(['official_session', 'important_training', 'just_training', 'member_to_member']).optional(),
+  training_type: z.enum(['official_session', 'important_training', 'just_training', 'member_to_member','Information Session']).optional(),
   assembly_type: z.enum(['local', 'zonal', 'national', 'international']).optional(),
 }).refine((data) => {
   if (data.is_paid && (data.price === undefined || data.price < 0)) {
