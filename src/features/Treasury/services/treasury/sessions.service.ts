@@ -73,6 +73,7 @@ export const sessionsService = {
     const newPlanned = payload.planned_budget ?? session.planned_budget
     const newReserved = payload.reserved_amount ?? session.reserved_amount
 
+
     if (payload.planned_budget !== undefined) updateData.planned_budget = payload.planned_budget
     if (payload.reserved_amount !== undefined) updateData.reserved_amount = payload.reserved_amount
     if (payload.start_date !== undefined) updateData.start_date = payload.start_date

@@ -4,7 +4,6 @@ import type { DashboardMetrics } from '../hooks/useTreasury'
 
 const FONT = { name: 'Arial', size: 11 }
 const FONT_BOLD = { name: 'Arial', size: 11, bold: true }
-const FONT_TITLE = { name: 'Arial', size: 16, bold: true }
 const FONT_SECTION = { name: 'Arial', size: 12, bold: true }
 
 const C_PRIMARY = 'FF1B3A5C'
@@ -19,8 +18,6 @@ const C_DARK_GRAY = 'FF666666'
 
 const GAIN_BG = 'FFE8F5F0'
 const EXPENSE_BG = 'FFFFEBEE'
-const HEADER_BG = 'FF1B3A5C'
-
 function fmtDate(iso: string): string {
   if (!iso) return ''
   const d = new Date(iso)
@@ -204,8 +201,6 @@ export async function exportOverallBudgetExcel(
   for (let i = 0; i < maxLen; i++) {
     const r = ws.getRow(row)
     r.height = 22
-    const altBg = i % 2 === 1 ? 'FFF9F9F9' : C_WHITE
-
     if (i < gains.length) {
       r.getCell(2).value = gains[i].categories?.name || '-'
       r.getCell(2).font = FONT

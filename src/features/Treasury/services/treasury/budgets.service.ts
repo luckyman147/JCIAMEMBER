@@ -289,7 +289,7 @@ export const budgetsService = {
     })
   },
 
-  reopenBudget: async (budgetId: string, userId: string): Promise<void> => {
+  reopenBudget: async (budgetId: string, _userId: string): Promise<void> => {
     const { data: budget, error: fetchError } = await supabase
       .from('treasury_activity_budgets')
       .select('*')

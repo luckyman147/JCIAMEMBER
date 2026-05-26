@@ -11,6 +11,7 @@ export interface CreateSessionDTO {
 
 export interface UpdateSessionDTO {
   planned_budget?: number
+  reserved_amount?: number
   start_date?: string
   end_date?: string
   status?: 'draft' | 'active' | 'archived'

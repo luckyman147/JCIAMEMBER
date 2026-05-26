@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Wallet, Plus, TrendingUp, TrendingDown, Clock, Banknote, PieChart, Pencil, Trash2, CheckCircle, CreditCard, RotateCcw, AlertTriangle } from 'lucide-react'
+import { Wallet, Plus, TrendingUp, TrendingDown, Banknote, PieChart, Pencil, Trash2, CheckCircle, CreditCard, RotateCcw, AlertTriangle } from 'lucide-react'
 import Navbar from '../../../Global_Components/navBar'
 import SessionSelector from '../components/SessionSelector'
 import TreasuryKpiCard from '../components/TreasuryKpiCard'
@@ -95,7 +95,6 @@ export default function TreasuryPage() {
     )
   }
 
-  const pendingCount = transactions?.filter((t) => t.status === 'pending').length || 0
   const isTreasurer = role?.toLowerCase() === 'tresorier'
 
   function budgetStatusBadge(status: string, t: (key: string, fallback: string) => string) {
