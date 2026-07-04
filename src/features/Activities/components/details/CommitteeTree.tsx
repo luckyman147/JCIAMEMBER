@@ -33,9 +33,6 @@ export default function CommitteeTree({ committees, projectId, treasurerId, gene
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
-  const getAvatarUrl = (member?: { avatar_url?: string }) =>
-    member?.avatar_url
-
   const committeeIcon = (name: string, className = 'w-5 h-5') => {
     switch (name) {
       case 'sponsoring': return <Handshake className={`${className} text-(--color-myPrimary)`} />

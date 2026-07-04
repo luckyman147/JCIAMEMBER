@@ -21,7 +21,7 @@ interface SimpleMember {
 type ModalMode = 'chef' | 'members' | 'officer'
 
 export default function CommitteeSection({ committees, onChange, officers, onOfficersChange }: CommitteeSectionProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [members, setMembers] = useState<SimpleMember[]>([])
   const [modalMode, setModalMode] = useState<ModalMode | null>(null)
