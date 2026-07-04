@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import Navbar from "../../../Global_Components/navBar";
-import MembersGrowthChart from "../components/stats/dashboard/MembersGrowthChart";
 import MembersList from "../components/Members/MembersList";
 import MembersStatistics from "../components/stats/MembersStatistics";
 import ComplaintsOverview from "../../../Global_Components/ComplaintsOverview";
@@ -10,8 +9,6 @@ import AddMemberModal from "../components/Members/AddMemberModal";
 import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard, Download, BarChart3, ArrowUp } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
-import TopProgressors from "../components/stats/dashboard/TopProgressors";
-import { JPSLeaderboardStats } from "../components/stats/dashboard/JPSLeaderboardStats";
 
 import { useTranslation } from "react-i18next";
 import { cn } from "../../../lib/utils";
@@ -32,6 +29,7 @@ export default function MembersPage() {
     const [cotisationFilter, setCotisationFilter] = useState("all");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [showStats, setShowStats] = useState(true);
+    const [statsExpanded, setStatsExpanded] = useState(false);
     const [showFloatingBtn, setShowFloatingBtn] = useState(false);
 
     useEffect(() => {
@@ -195,7 +193,32 @@ export default function MembersPage() {
               </div>
             )}
 
-            {/* General Statistics */}
+            {/* Statistics Charts */}
+            {!loading && members.length > 0 && showStats && (
+              <div className="mb-8">
+                <MembersStatistics
+                  members={members}
+                  tasks={allTaskAssignments}
+                  history={history}
+                  limit={statsExpanded ? Infinity : 2}
+                />
+                {!statsExpanded ? (
+                  <button
+                    onClick={() => setStatsExpanded(true)}
+                    className="w-full mt-2 py-3 bg-white border border-gray-200 border-dashed rounded-xl text-sm font-semibold text-gray-500 hover:text-(--color-myPrimary) hover:border-(--color-myPrimary)/30 hover:bg-blue-50/30 transition-all"
+                  >
+                    {t('members.showMoreStats', 'Show more statistics')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setStatsExpanded(false)}
+                    className="w-full mt-2 py-3 bg-white border border-gray-200 border-dashed rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all"
+                  >
+                    {t('members.showLessStats', 'Show less')}
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Search and Filter */}
             <div className='flex flex-col md:flex-row gap-4 mb-8 items-center bg-white p-4 rounded-3xl shadow-sm border border-gray-100/80 backdrop-blur-sm'>
@@ -283,11 +306,12 @@ export default function MembersPage() {
                     try {
                       const janFirst = `${new Date().getFullYear()}-01-01`
                       const memberIds = members.filter(m => !m.email?.includes('jci.hs') && m.role && m.role !== 'JCI Hammam Sousse').map(m => m.id)
-                      const [participationMap, activityTypeCounts] = await Promise.all([
+                      const [participationMap, activityTypeCounts, committeeMap] = await Promise.all([
                         participationService.getParticipationsSince(memberIds, janFirst),
                         participationService.getActivityTypeCountsSince(janFirst),
+                        import('../../Activities/services/committeeService').then(m => m.committeeService.getMembersCommitteeStats()),
                       ])
-                      await downloadMembersAsExcel(members, participationMap, activityTypeCounts)
+                      await downloadMembersAsExcel(members, participationMap, activityTypeCounts, committeeMap)
                     } catch {
                       toast.error('Failed to download Excel')
                     }
@@ -307,28 +331,7 @@ export default function MembersPage() {
               loading={loading}
               sortBy={sortBy}
             />
-            {!loading && members.length > 0 && showStats && (
-              <div id="members-statistics" className='animate-in fade-in slide-in-from-top-4 duration-500'>
-                <MembersStatistics
-                  members={members}
-                  tasks={allTaskAssignments}
-                />
 
-                {/* Growth Section */}
-                <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10'>
-                  <div className='lg:col-span-1'>
-                    <MembersGrowthChart history={history as any} />
-                  </div>
-                  <div className='lg:col-span-1'>
-                    <TopProgressors history={history as any} />
-                  </div>
-                </div>
-
-                <div className='lg:col-span-12'>
-                  <JPSLeaderboardStats initialMembers={members} />
-                </div>
-              </div>
-            )}
           </div>
           {showFloatingBtn && (
             <button

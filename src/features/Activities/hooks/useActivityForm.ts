@@ -11,8 +11,12 @@ import { activitySchema, type ActivityFormValues } from '../schemas/activitySche
 import { uploadActivityImage, uploadActivityAttachment, uploadRecapImages, uploadActivityVideo, uploadRecapVideos } from '../../../utils/uploadHelpers'
 import { parseAgenda, serializeAgenda, type AgendaItem } from '../models/MeetingAgenda'
 import type { CreateActivityDTO } from '../dto/ActivityDTOs'
+import type { EventActivity } from '../models/Activity'
 import { treasuryService } from '../../Treasury/services/treasury.service'
 import { EXECUTIVE_LEVELS } from '../../../utils/roles'
+import { committeeService } from '../services/committeeService'
+import { DEFAULT_COMMITTEE_STATE } from '../models/Committee'
+import type { CommitteeName, CommitteeFormState, EventOfficers } from '../models/Committee'
 
 export interface UseActivityFormReturn {
   // Form
@@ -43,6 +47,12 @@ export interface UseActivityFormReturn {
   recapVideos: ReturnType<typeof useFileUpload>
   
   
+  // Committee
+  committees: Record<CommitteeName, CommitteeFormState>
+  setCommittees: React.Dispatch<React.SetStateAction<Record<CommitteeName, CommitteeFormState>>>
+  officers: EventOfficers
+  setOfficers: React.Dispatch<React.SetStateAction<EventOfficers>>
+
   // Handlers
   setMeetingAgenda: React.Dispatch<React.SetStateAction<AgendaItem[]>>
   setSelectedCategoryIds: React.Dispatch<React.SetStateAction<number[]>>
@@ -102,6 +112,8 @@ export function useActivityForm(): UseActivityFormReturn {
   const [uploading, setUploading] = useState(false)
   const [meetingAgenda, setMeetingAgenda] = useState<AgendaItem[]>([])
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([])
+  const [committees, setCommittees] = useState<Record<CommitteeName, CommitteeFormState>>(DEFAULT_COMMITTEE_STATE)
+  const [officers, setOfficers] = useState<EventOfficers>({ treasurer_id: null, general_secretary_id: null })
 
   // Fetch activity data in edit mode
   useEffect(() => {
@@ -171,6 +183,30 @@ export function useActivityForm(): UseActivityFormReturn {
         // Fetch categories
         const categories = await activityService.getActivityCategories(id)
         setSelectedCategoryIds(categories.map((c: any) => c.id))
+
+        // Fetch committees & officers
+        if (activity.type === 'event') {
+          const eventActivity = activity as EventActivity
+          setOfficers({
+            treasurer_id: eventActivity.treasurer_id || null,
+            general_secretary_id: eventActivity.general_secretary_id || null,
+          })
+          const existingCommittees = await committeeService.getActivityCommittees(id)
+          if (existingCommittees.length > 0) {
+            const parsed: Record<string, CommitteeFormState> = { ...DEFAULT_COMMITTEE_STATE }
+            for (const c of existingCommittees) {
+              if (parsed[c.name]) {
+                const chef = c.members?.find(m => m.role === 'lead')
+                const members = c.members?.filter(m => m.role !== 'lead') || []
+                parsed[c.name] = {
+                  chef_id: chef?.member_id || null,
+                  member_ids: members.map(m => m.member_id),
+                }
+              }
+            }
+            setCommittees(parsed as Record<CommitteeName, CommitteeFormState>)
+          }
+        }
       } catch (error) {
         toast.error('Failed to load activity data')
         console.error('Error loading activity:', error)
@@ -256,6 +292,8 @@ export function useActivityForm(): UseActivityFormReturn {
           ...basePayload,
           type: 'event',
           registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : null,
+          treasurer_id: officers.treasurer_id,
+          general_secretary_id: officers.general_secretary_id,
         }
       case 'meeting':
         return {
@@ -280,7 +318,7 @@ export function useActivityForm(): UseActivityFormReturn {
           assembly_type: data.assembly_type,
         }
     }
-  }, [user, meetingAgenda])
+  }, [user, meetingAgenda, officers])
 
   // Submit handler
   const onSubmit = useCallback(async (data: ActivityFormValues) => {
@@ -299,12 +337,21 @@ export function useActivityForm(): UseActivityFormReturn {
       toast.loading('Saving activity...')
 
       const payload = buildPayload(data, urls)
+      let createdActivityId: string | undefined
 
       if (isEditMode && id) {
         await updateActivity(id, payload)
         if (selectedCategoryIds.length > 0) {
           await activityService.setActivityCategories(id, selectedCategoryIds)
         }
+        if (data.type === 'event') {
+          try {
+            await committeeService.saveActivityCommittees(id, committees, user.id)
+          } catch (err) {
+            console.error('Failed to update committees:', err)
+          }
+        }
+        createdActivityId = id
         toast.dismiss()
         toast.success('Activity updated!')
       } else {
@@ -324,11 +371,31 @@ export function useActivityForm(): UseActivityFormReturn {
             }
           } catch {}
         }
+
+        if (result.success && result.activity && data.type === 'event') {
+          try {
+            const projectId = await committeeService.ensureActivityProject(
+              result.activity.id,
+              result.activity.name,
+              user.id
+            )
+            await committeeService.saveActivityCommittees(
+              result.activity.id,
+              committees,
+              user.id,
+              projectId
+            )
+          } catch (err) {
+            console.error('Failed to save committees:', err)
+          }
+        }
+
+        createdActivityId = result.activity?.id
         toast.dismiss()
         toast.success('Activity created!')
       }
 
-      navigate('/')
+      navigate(`/activities/${createdActivityId || ''}/GET`)
     } catch (error: any) {
       toast.dismiss()
       toast.error(error.message || 'An error occurred')
@@ -336,7 +403,7 @@ export function useActivityForm(): UseActivityFormReturn {
     } finally {
       setUploading(false)
     }
-  }, [user, isEditMode, id, uploadFiles, buildPayload, selectedCategoryIds, createActivity, updateActivity, navigate])
+  }, [user, isEditMode, id, uploadFiles, buildPayload, selectedCategoryIds, createActivity, updateActivity, navigate, committees, officers])
 
   const onCancel = useCallback(() => navigate('/'), [navigate])
 
@@ -360,6 +427,10 @@ export function useActivityForm(): UseActivityFormReturn {
     recapImages,
     activityVideo,
     recapVideos,
+    committees,
+    setCommittees,
+    officers,
+    setOfficers,
     setMeetingAgenda,
     setSelectedCategoryIds,
     onSubmit,

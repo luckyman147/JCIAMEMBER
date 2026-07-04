@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "../../../../../lib/utils";
 import { useAuth } from '../../../../Authentication/auth.context';
 import { EXECUTIVE_LEVELS } from '../../../../../utils/roles';
+import supabase from '../../../../../utils/supabase';
 
 interface Props {
     initialMembers?: Member[];
@@ -53,8 +54,9 @@ export function JPSLeaderboardStats(_props: Props) {
                 const data = await jpsService.getTopMembersByPeriod(activePeriod as any, currentYear, value);
                 setLeaderboardData(data);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error loading JPS leaderboard:", error);
+            toast.error("Couldn't load the leaderboard: " + (error?.message ?? "unknown error"));
         } finally {
             setLoading(false);
         }
@@ -63,6 +65,27 @@ export function JPSLeaderboardStats(_props: Props) {
     useEffect(() => {
         loadData();
     }, [activePeriod]);
+
+    // The DB trigger recalculates jps_snapshots/jps_year_snapshots the instant a member's
+    // factors change — reload the leaderboard live instead of waiting for a manual "Recalculate" click.
+    useEffect(() => {
+        const channel = supabase
+            .channel('jps-leaderboard')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'jps_snapshots' }, () => loadData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'jps_year_snapshots' }, () => loadData())
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activePeriod]);
+
+    const lastUpdate = useMemo(() => {
+        const timestamps = leaderboardData.map(m => m.jps_updated_at).filter(Boolean) as string[];
+        if (!timestamps.length) return null;
+        return new Date(Math.max(...timestamps.map(t => new Date(t).getTime())));
+    }, [leaderboardData]);
 
     const refreshJPSMutation = useMutation({
         mutationFn: () => jpsService.refreshAllJPS(activePeriod === 'month' ? 'month' : 'trimester'),
@@ -85,25 +108,34 @@ export function JPSLeaderboardStats(_props: Props) {
         });
     };
 
-    // Group members by role and get top 3 for each role
-    const groupByRole = (members: any[]) => {
+    // Fixed bucket order/labels: Advisors first (mentors), then New Members, then Members.
+    const ROLE_GROUPS: { key: 'advisor' | 'new' | 'member'; label: string }[] = [
+        { key: 'advisor', label: t('members.advisors', 'Advisors') },
+        { key: 'new', label: t('members.newMembers', 'New Members') },
+        { key: 'member', label: t('members.members', 'Members') },
+    ];
+
+    // Group members by role group (advisor/new/member) and get top 3 for each
+    const groupByRoleGroup = (members: any[]) => {
         const grouped: Record<string, any[]> = {};
-        
+
         members.forEach(m => {
-            const roleName = m.role || 'Member';
-            if (!grouped[roleName]) grouped[roleName] = [];
-            if (grouped[roleName].length < 3) {
-                grouped[roleName].push(m);
+            const key = m.roleGroup || 'member';
+            if (!grouped[key]) grouped[key] = [];
+            if (grouped[key].length < 3) {
+                grouped[key].push(m);
             }
         });
 
-        return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
+        return ROLE_GROUPS
+            .filter(g => grouped[g.key]?.length)
+            .map(g => [g.label, grouped[g.key]] as [string, any[]]);
     };
 
-    // Best 3 members per role (highest JPS scores, excluding executives)
+    // Best 3 members per role group (highest JPS scores, excluding executives)
     const topMembersByRole = useMemo(() => {
         let filtered = filterOutExecutives([...leaderboardData]);
-        
+
         // Apply Cotisation Filter
         if (cotisationFilter !== 'all') {
             filtered = filtered.filter(m => {
@@ -121,7 +153,7 @@ export function JPSLeaderboardStats(_props: Props) {
             return b.jps_score - a.jps_score;
         });
 
-        return groupByRole(sorted);
+        return groupByRoleGroup(sorted);
     }, [leaderboardData, sortBy, cotisationFilter]);
 
     const periods: { id: PeriodType; label: string }[] = [
@@ -279,7 +311,9 @@ export function JPSLeaderboardStats(_props: Props) {
             <div className="bg-gray-50/50 p-6 border-t border-gray-100 flex flex-wrap items-center justify-center gap-6">
                 <div className="flex items-center gap-2 text-gray-400">
                     <Calendar className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">{t('common.lastSnapshot', 'Last Update')}: {new Date().toLocaleDateString()}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                        {t('common.lastSnapshot', 'Last Update')}: {lastUpdate ? lastUpdate.toLocaleString() : '—'}
+                    </span>
                 </div>
                 <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
                 <div className="flex items-center gap-2 text-gray-400">

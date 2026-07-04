@@ -344,7 +344,10 @@
   },
   "jps": {
     "calculating": "Calculating performance score...",
+    "monthPerformance": "This Month's Performance",
     "trimesterPerformance": "Trimester Performance",
+    "yearPerformance": "Year Performance",
+    "noSnapshotYet": "Not calculated yet for this period.",
     "memberScore": "JCI Member Score",
     "score": "JPS",
     "activities": "Activities",

@@ -1,35 +1,65 @@
 import { useEffect, useState } from "react";
 import { jpsService } from "../../../services/jpsService";
-import type { JPSResult } from "../../../services/jpsService";
+import type { JPSDetails, JPSPeriodScores } from "../../../services/jpsService";
 import { Loader, Trophy, Target, AlertCircle, TrendingUp, Info, ListTodo } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "../../../../../lib/utils";
+import supabase from "../../../../../utils/supabase";
 
 interface MemberJPSCardProps {
     memberId: string;
 }
 
+type Period = 'month' | 'trimester' | 'year';
+
+const EMPTY_DETAILS: JPSDetails = {
+    activityPoints: 0, meetingsPoints: 0, formationsPoints: 0, gaPoints: 0, eventsPoints: 0,
+    taskPoints: 0, earnedPoints: 0, participationRate: 0, actualParticipationRate: 0,
+    complaintsPenalty: 0, feeMultiplier: 1, committeeCount: 0, committeeIsChef: false, committeeFactor: 0,
+};
+
+const PERIOD_HEADER_KEY: Record<Period, string> = {
+    month: 'profile.jps.monthPerformance',
+    trimester: 'profile.jps.trimesterPerformance',
+    year: 'profile.jps.yearPerformance',
+};
+
 export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
     const { t } = useTranslation();
-    const [result, setResult] = useState<JPSResult | null>(null);
+    const [scores, setScores] = useState<JPSPeriodScores | null>(null);
     const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState<Period>('trimester');
 
     useEffect(() => {
-        const loadJPS = async () => {
+        let cancelled = false;
+
+        const load = async () => {
             try {
                 setLoading(true);
-                const data = await jpsService.calculateJPS(memberId);
-                setResult(data);
+                const data = await jpsService.getMemberPeriodScores(memberId);
+                if (!cancelled) setScores(data);
             } catch (error) {
-                console.error("Error calculating JPS:", error);
+                console.error("Error loading JPS scores:", error);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
-        loadJPS();
+        load();
+
+        // The DB triggers recalculate all three tables the instant a factor changes
+        // (a rating, a completed task, cotisation status...) — reload live numbers when they fire.
+        const channel = supabase
+            .channel(`jps-scores-${memberId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'jps_month_snapshots', filter: `member_id=eq.${memberId}` }, () => load())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'jps_snapshots', filter: `member_id=eq.${memberId}` }, () => load())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'jps_year_snapshots', filter: `member_id=eq.${memberId}` }, () => load())
+            .subscribe();
+
+        return () => {
+            cancelled = true;
+            supabase.removeChannel(channel);
+        };
     }, [memberId]);
-
-
 
     if (loading) return (
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center lg:col-span-2 min-h-[200px]">
@@ -38,9 +68,11 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
         </div>
     );
 
-    if (!result) return null;
+    if (!scores) return null;
 
-    const { score, category, details } = result;
+    const periodData = scores[period];
+    const { score, category } = periodData;
+    const details = periodData.details ?? EMPTY_DETAILS;
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col lg:col-span-2">
@@ -49,25 +81,44 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                 <div className="relative z-10">
                     <div className="flex justify-between items-start mb-2">
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">{t('profile.jps.trimesterPerformance')}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">{t(PERIOD_HEADER_KEY[period])}</span>
                             <h2 className="text-xl font-bold">{t('profile.jps.memberScore')}</h2>
                         </div>
                         <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
                             <Trophy className="w-6 h-6 text-white" />
                         </div>
                     </div>
-                    
+
                     <div className="flex items-baseline gap-2 mt-4">
                         <span className="text-5xl font-black">{score}</span>
                         <span className="text-sm font-bold opacity-80 uppercase tracking-widest">{t('profile.jps.score')}</span>
                     </div>
 
-                    <div className="mt-4 inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-md border border-white/10">
-                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{category}</span>
+                    <div className="mt-4 flex items-center gap-3">
+                        <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-md border border-white/10">
+                            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-xs font-bold uppercase tracking-wider">{category}</span>
+                        </div>
+
+                        {/* Period switcher */}
+                        <div className="inline-flex items-center gap-1 bg-white/10 p-1 rounded-full backdrop-blur-md border border-white/10">
+                            {(['month', 'trimester', 'year'] as Period[]).map(p => (
+                                <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => setPeriod(p)}
+                                    className={cn(
+                                        'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors',
+                                        period === p ? 'bg-white text-(--color-myPrimary)' : 'text-white/80 hover:text-white'
+                                    )}
+                                >
+                                    {t(`common.${p}`, p)}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
-                
+
                 {/* Abstract Background Design */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full translate-y-12 -translate-x-12 blur-xl" />
@@ -75,6 +126,12 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
 
             {/* Breakdown */}
             <div className="p-6 flex-1 space-y-6">
+                {!periodData.details && (
+                    <p className="text-xs text-gray-400 italic bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                        {t('profile.jps.noSnapshotYet')}
+                    </p>
+                )}
+
                 <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                         <div className="flex items-center gap-2 text-gray-400 mb-1.5">
@@ -115,8 +172,6 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         </span>
                     </div>
 
-
-
                     {details.complaintsPenalty > 0 && (
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -143,7 +198,7 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-blue-900/80">
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
-                                (({details.meetingsPoints.toFixed(1)}M + {details.formationsPoints.toFixed(1)}F + {details.gaPoints.toFixed(1)}G + {details.eventsPoints.toFixed(1)}E) + {details.taskPoints.toFixed(1)}T + {details.earnedPoints}P)
+                                (({details.meetingsPoints.toFixed(1)}M + {details.formationsPoints.toFixed(1)}F + {details.gaPoints.toFixed(1)}G + {details.eventsPoints.toFixed(1)}E) + {details.taskPoints.toFixed(1)}T + {details.earnedPoints}P + {details.committeeFactor.toFixed(1)}C)
                             </span>
                             <span>×</span>
                             <span className="bg-white px-1.5 py-0.5 rounded border border-blue-100 shadow-sm font-bold">
@@ -171,12 +226,13 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         </p>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                             {[
-                                { color: 'bg-blue-400', label: 'M: Meetings (Imp × Rate × 0.1)' },
-                                { color: 'bg-indigo-400', label: 'F: Formations (Imp × Rate × 0.1)' },
-                                { color: 'bg-emerald-400', label: 'G: Assemblies (Imp × Rate × 0.1)' },
-                                { color: 'bg-purple-400', label: 'E: Events (Imp × Rate × 0.1)' },
+                                { color: 'bg-blue-400', label: 'M: Meetings attended (activity_points)' },
+                                { color: 'bg-indigo-400', label: 'F: Formations attended (activity_points)' },
+                                { color: 'bg-emerald-400', label: 'G: Assemblies attended (activity_points)' },
+                                { color: 'bg-purple-400', label: 'E: Events attended (activity_points)' },
                                 { color: 'bg-orange-400', label: 'T: Tasks' },
                                 { color: 'bg-amber-400', label: 'P: Points Earned' },
+                                { color: 'bg-teal-400', label: 'C: Committees (Count × 1.5 if Chef)' },
                                 { color: 'bg-gray-400', label: 'Rate: Participation' },
                                 { color: 'bg-gray-400', label: 'Fee: Membership' }
                             ].map((item, idx) => (
@@ -188,7 +244,7 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         </div>
                         <p className="text-[9px] text-gray-400 italic mt-2 bg-gray-50/80 p-2 rounded-lg leading-relaxed">
                             <Info className="w-2.5 h-2.5 inline-block mr-1 -mt-0.5" />
-                            Activity scores are weighted by the quality of participation (1-5 stars × 0.1).
+                            Each attended activity contributes its own configured points value (set when the activity was created) — not a generic rating-based multiplier.
                         </p>
                     </div>
                 </div>
@@ -200,11 +256,11 @@ export default function MemberJPSCard({ memberId }: MemberJPSCardProps) {
                         <span>{category}</span>
                     </div>
                     <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                        <div 
+                        <div
                             className="h-full bg-(--color-myAccent) rounded-full transition-all duration-1000"
                             style={{ width: `${Math.min(100, (score / 800) * 100)}%` }}
                         />
-                    </div> 
+                    </div>
                 </div>
             </div>
         </div>

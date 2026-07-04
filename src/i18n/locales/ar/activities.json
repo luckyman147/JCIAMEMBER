@@ -135,6 +135,12 @@
     "distributionByType": "التوزيع حسب النوع",
     "activityTrends": "اتجاهات النشاط",
     "avgAttendanceByType": "متوسط الحضور حسب النوع",
+    "mostAttended": "الأكثر حضورًا",
+    "mostAttendedSubtitle": "متوسط الحضور حسب نوع النشاط",
+    "mostAttendedCallout": "<b>{{type}}</b> تجذب أكبر عدد من الحضور، بمعدل <b>{{avg}}</b> مشاركًا",
+    "noAttendanceData": "لا توجد بيانات حضور كافية بعد",
+    "basedOnActivities_one": "بناءً على نشاط واحد",
+    "basedOnActivities_other": "بناءً على {{count}} أنشطة",
     "interested": "مهتم",
     "notInterested": "غير مهتم",
     "markingInterest": "جاري التحديد...",
@@ -149,6 +155,16 @@
     "recapVideosDescription": "ارفع عدة فيديوهات لتوثيق هذا النشاط.",
     "activityVideos": "فيديوهات النشاط",
     "activityVideo": "فيديو النشاط",
-    "recapVideos": "فيديوهات الملخص"
+    "recapVideos": "فيديوهات الملخص",
+    "activityCalendar": "تقويم الأنشطة",
+    "gridView": "شبكة",
+    "calendarView": "تقويم",
+    "thisWeek": "هذا الأسبوع",
+    "previousWeek": "الأسبوع السابق",
+    "nextWeek": "الأسبوع القادم",
+    "recent": "الأخيرة",
+    "noActivitiesOnDay": "لا توجد أنشطة في هذا اليوم",
+    "noUpcomingActivities": "لا توجد أنشطة قادمة",
+    "noRecentActivities": "لا توجد أنشطة حديثة"
   }
 }

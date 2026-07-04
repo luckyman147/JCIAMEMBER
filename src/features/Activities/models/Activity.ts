@@ -29,6 +29,10 @@ export interface ActivityBase {
 export interface EventActivity extends ActivityBase {
   type: 'event'
   registration_deadline?: string
+  committees?: import('./Committee').ActivityCommittee[]
+  project_id?: string
+  treasurer_id?: string
+  general_secretary_id?: string
 }
 
 // Meeting-specific properties

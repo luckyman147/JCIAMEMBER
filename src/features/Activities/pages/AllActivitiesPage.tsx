@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { ActivityType } from "../models/Activity";
 import ActivityCard from "../components/list/ActivityCard";
+import ActivityCalendar from "../components/calendar/ActivityCalendar";
 import ActivityCharts from "../components/analytics/ActivityCharts";
 import Navbar from "../../../Global_Components/navBar";
-import { Plus, Search, Filter, Calendar } from "lucide-react";
+import { Plus, Search, Filter, Calendar, LayoutGrid, CalendarDays } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { useActivities } from "../hooks/useActivities";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
@@ -22,6 +23,7 @@ export default function AllActivitiesPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedType, setSelectedType] = useState<ActivityType | 'all'>('all');
     const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+    const [view, setView] = useState<'grid' | 'calendar'>('grid');
 
     const filteredActivities = (activities as any[]).filter((activity: any) => {
         // Search
@@ -114,11 +116,36 @@ export default function AllActivitiesPage() {
                                 <option value="past">{t('activities.past')}</option>
                             </select>
                         </div>
+
+                        {/* View Toggle */}
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setView('grid')}
+                                aria-pressed={view === 'grid'}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === 'grid' ? 'bg-white text-(--color-myPrimary) shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <LayoutGrid className="w-4 h-4" /> {t('activities.gridView')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setView('calendar')}
+                                aria-pressed={view === 'calendar'}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === 'calendar' ? 'bg-white text-(--color-myPrimary) shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <CalendarDays className="w-4 h-4" /> {t('activities.calendarView')}
+                            </button>
+                        </div>
                    </div>
                 </div>
 
+                {/* Calendar View */}
+                {view === 'calendar' && (
+                    <ActivityCalendar activities={filteredActivities} loading={loading} className="mb-6" />
+                )}
+
                 {/* Grid */}
-                {loading ? (
+                {view === 'grid' && (loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3, 4, 5, 6].map(i => (
                             <div key={i} className="bg-white h-96 rounded-xl animate-pulse shadow-sm" />
@@ -146,7 +173,7 @@ export default function AllActivitiesPage() {
                             </div>
                         ))}
                     </div>
-                )}
+                ))}
             </div>
                 </main>
         </div>

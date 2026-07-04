@@ -9,85 +9,108 @@ import { MemberTalentStats } from './dashboard/MemberTalentStats';
 import { CotisationStats } from './dashboard/CotisationStats';
 import { AvailabilityStats } from './dashboard/AvailabilityStats';
 import { VolunteeringStats } from './dashboard/VolunteeringStats';
-import { Zap, Heart, CreditCard, Calendar, Target, Brain, Clock } from 'lucide-react';
+import { Zap, Heart, CreditCard, Calendar, Target, Brain, Clock, Trophy, Activity } from 'lucide-react';
+import { JPSLeaderboardStats } from './dashboard/JPSLeaderboardStats';
+import MembersGrowthChart from './dashboard/MembersGrowthChart';
+import MostAttendedChart from './dashboard/MostAttendedChart';
 
 interface MembersStatisticsProps {
     members: Member[];
     tasks?: MemberTask[];
+    history?: any[];
+    limit?: number;
 }
 
-export default function MembersStatistics({ members, tasks = [] }: MembersStatisticsProps) {
+export default function MembersStatistics({ members, tasks = [], history = [], limit = Infinity }: MembersStatisticsProps) {
     const { t } = useTranslation();
 
     if (members.length === 0) return null;
 
+    const sections = [
+        <section key="jps" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-purple-500 pl-4 py-1">
+                <Trophy className="w-5 h-5 text-purple-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.jpsLeaderboard', 'JPS Score')}</h2>
+            </div>
+            <JPSLeaderboardStats initialMembers={members} />
+        </section>,
+
+        <section key="most-attended" className="space-y-6">
+            <MostAttendedChart />
+        </section>,
+
+        <section key="growth" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-sky-500 pl-4 py-1">
+                <Activity className="w-5 h-5 text-sky-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.memberGrowth', 'Member Growth')}</h2>
+            </div>
+            <MembersGrowthChart history={history} />
+        </section>,
+
+        <section key="demographics" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-blue-500 pl-4 py-1">
+                <Brain className="w-5 h-5 text-blue-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.demographicsTitle', 'Community Overview')}</h2>
+            </div>
+            <DemographicStats members={members} />
+        </section>,
+
+        <section key="talent" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-amber-500 pl-4 py-1">
+                <Target className="w-5 h-5 text-amber-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.talentGrowthTitle', 'Talent & Growth Hub')}</h2>
+            </div>
+            <MemberTalentStats members={members} />
+            <div className="mt-8">
+                <PersonalityStats members={members} />
+            </div>
+        </section>,
+
+        <section key="engagement" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-emerald-500 pl-4 py-1">
+                <Zap className="w-5 h-5 text-emerald-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.performanceTitle', 'Task Performance')}</h2>
+            </div>
+            <EngagementStats members={members} tasks={tasks} />
+            <div className="mt-8">
+                <div className="flex items-center border-l-4 border-(--color-mySecondary) pl-4 py-1 gap-3 mb-6">
+                    <Clock className="w-5 h-5 text-(--color-mySecondary)" />
+                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.volunteeringSection', 'Volunteering Commitment')}</h3>
+                </div>
+                <VolunteeringStats members={members} />
+            </div>
+        </section>,
+
+        <section key="availability" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-orange-500 pl-4 py-1">
+                <Calendar className="w-5 h-5 text-orange-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.availabilityTitle', 'Availability')}</h2>
+            </div>
+            <AvailabilityStats members={members} />
+        </section>,
+
+        <section key="cotisation" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-indigo-500 pl-4 py-1">
+                <CreditCard className="w-5 h-5 text-indigo-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.financialsTitle', 'Membership Fees')}</h2>
+            </div>
+            <CotisationStats members={members} />
+        </section>,
+
+        <section key="preferences" className="space-y-6">
+            <div className="flex items-center gap-3 border-l-4 border-pink-500 pl-4 py-1">
+                <Heart className="w-5 h-5 text-pink-500" />
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.preferencesTitle', 'Interests & Preferences')}</h2>
+            </div>
+            <PreferenceStats members={members} />
+        </section>,
+    ];
+
+    const visible = sections.slice(0, limit);
+
     return (
         <div className="space-y-12 mb-12">
-            {/* 1. Community Overview */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-l-4 border-blue-500 pl-4 py-1">
-                    <Brain className="w-5 h-5 text-blue-500" />
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.demographicsTitle', 'Community Overview')}</h2>
-                </div>
-                <DemographicStats members={members} />
-              
-            </section>
-
-            {/* 2. Talent & Growth Potential */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-l-4 border-amber-500 pl-4 py-1">
-                    <Target className="w-5 h-5 text-amber-500" />
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.talentGrowthTitle', 'Talent & Growth Hub')}</h2>
-                </div>
-                <MemberTalentStats members={members} /> 
-                 <div className="mt-8">
-                    <PersonalityStats members={members} />
-                </div>
-            </section>
-
-            {/* 3. Engagement & Performance */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-l-4 border-emerald-500 pl-4 py-1">
-                    <Zap className="w-5 h-5 text-emerald-500" />
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.performanceTitle', 'Task Performance')}</h2>
-                </div>
-                <EngagementStats members={members} tasks={tasks} />
-                
-                <div className="mt-8">
-                    <div className="flex items-center border-l-4 border-(--color-mySecondary) pl-4 py-1 gap-3 mb-6">
-                        <Clock className="w-5 h-5 text-(--color-mySecondary)" />
-                        <h3 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.volunteeringSection', 'Volunteering Commitment')}</h3>
-                    </div>
-                    <VolunteeringStats members={members} />
-                </div>
-            </section>
-
-            {/* 4. Availability */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-l-4 border-orange-500 pl-4 py-1">
-                    <Calendar className="w-5 h-5 text-orange-500" />
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.availabilityTitle', 'Availability')}</h2>
-                </div>
-                <AvailabilityStats members={members} />
-            </section>
-
-            {/* 5. Cotisation & Financials */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-l-4 border-indigo-500 pl-4 py-1">
-                    <CreditCard className="w-5 h-5 text-indigo-500" />
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.financialsTitle', 'Membership Fees')}</h2>
-                </div>
-                <CotisationStats members={members} />
-            </section>
-
-            {/* 6. Personal Preferences */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-l-4 border-pink-500 pl-4 py-1">
-                    <Heart className="w-5 h-5 text-pink-500" />
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.preferencesTitle', 'Interests & Preferences')}</h2>
-                </div>
-                <PreferenceStats members={members} />
-            </section>
+            {visible}
         </div>
     );
 }

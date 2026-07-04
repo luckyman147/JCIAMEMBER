@@ -16,6 +16,7 @@ export const getTeams = async (userId?: string): Promise<Team[]> => {
             team_members!left (member_id)
         `)
         .is('project_id', null)
+        .is('activity_id', null)
         .order('created_at', { ascending: false });
 
     if (error) {

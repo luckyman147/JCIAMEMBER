@@ -11,6 +11,7 @@ export { default as RecapGallery } from './details/RecapGallery';
 export { default as ActivityVideo } from './details/ActivityVideo';
 export { default as RecapVideoGallery } from './details/RecapVideoGallery';
 export { default as AttachmentLink } from './details/AttachmentLink';
+export { default as CommitteeTree } from './details/CommitteeTree';
 export { default as ActivityCard } from './list/ActivityCard';
 export { default as MediaPreviewModal } from './modals/MediaPreviewModal';
 export * from './form/sections';

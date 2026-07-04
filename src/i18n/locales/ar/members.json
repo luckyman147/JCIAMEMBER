@@ -2,6 +2,9 @@
   "members": {
     "title": "الأعضاء",
     "subtitle": "إدارة أعضاء المنظمة وإحصائياتهم",
+    "advisors": "المستشارون",
+    "newMembers": "الأعضاء الجدد",
+    "members": "الأعضاء",
     "socialMediaStats": "التواجد على وسائل التواصل الاجتماعي",
     "activityStats": "تفضيلات الأنشطة",
     "committeeStats": "تفضيلات اللجنة",

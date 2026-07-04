@@ -21,6 +21,7 @@ import {
   FormationSection,
   RegistrationSection,
   GeneralAssemblySection,
+  CommitteeSection,
 } from '../components/form/sections'
 
 // Layout
@@ -47,6 +48,10 @@ export default function ActivityForm() {
     recapImages,
     activityVideo,
     recapVideos,
+    committees,
+    setCommittees,
+    officers,
+    setOfficers,
     setMeetingAgenda,
     setSelectedCategoryIds,
     onSubmit,
@@ -143,6 +148,15 @@ export default function ActivityForm() {
                   </div>
                 </div>
               </FormSection>
+            )}
+
+            {activityType === 'event' && isExecutive && (
+              <CommitteeSection
+                committees={committees}
+                onChange={setCommittees}
+                officers={officers}
+                onOfficersChange={setOfficers}
+              />
             )}
 
           </form>

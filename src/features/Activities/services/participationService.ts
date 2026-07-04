@@ -184,6 +184,38 @@ export const participationService = {
   },
 
   /**
+   * Get top N most attended members with their total participation count
+   */
+  getTopAttendedMembers: async (limit = 3): Promise<{ member_id: string; fullname: string; avatar_url?: string | null; count: number }[]> => {
+    const { data, error } = await supabase
+      .from('activity_participants')
+      .select(`
+        user_id,
+        member:profiles(fullname, avatar_url)
+      `)
+      .not('is_interested', 'eq', true)
+
+    if (error) throw error
+
+    const countMap = new Map<string, { fullname: string; avatar_url?: string | null; count: number }>()
+
+    for (const p of data || []) {
+      const uid = p.user_id
+      const memberData = p.member as { fullname?: string; avatar_url?: string | null } | null
+      if (!uid || !memberData?.fullname) continue
+      if (!countMap.has(uid)) {
+        countMap.set(uid, { fullname: memberData.fullname, avatar_url: memberData.avatar_url, count: 0 })
+      }
+      countMap.get(uid)!.count++
+    }
+
+    return Array.from(countMap.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, limit)
+      .map(([member_id, data]) => ({ member_id, ...data }))
+  },
+
+  /**
    * Get member's participated activities with rate and notes
    */
   getMemberParticipations: async (memberId: string) => {

@@ -17,7 +17,8 @@ import {
   RecapGallery,
   ActivityVideo,
   RecapVideoGallery,
-  AttachmentLink
+  AttachmentLink,
+  CommitteeTree
 } from '../components'
 import { useActivityDetail } from '../hooks/useActivityDetail'
 import { useActivityBudgetByActivity, useApproveBudget, useReopenBudget, useDeleteBudget, useTransactions } from '../../Treasury/hooks/useTreasury'
@@ -29,7 +30,7 @@ export default function ActivityDetails() {
   const { id } = useParams<{ id: string }>()
   const { user, role } = useAuth()
   const { t, i18n } = useTranslation()
-  const { activity, categories, otherActivities, loading, deleteActivity } = useActivityDetail(id)
+  const { activity, categories, otherActivities, committees, members, loading, deleteActivity, treasurerId, generalSecretaryId } = useActivityDetail(id)
 
   const [preview, setPreview] = useState<{ items: {url: string; title: string}[]; activeIndex: number; isOpen: boolean }>({
     items: [],
@@ -150,6 +151,18 @@ export default function ActivityDetails() {
               </div>
             </div>
           </div>
+
+          {(activity.type === 'event' && (committees.length > 0 || treasurerId || generalSecretaryId)) && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+              <CommitteeTree
+                committees={committees}
+                projectId={activity.project_id}
+                treasurerId={treasurerId}
+                generalSecretaryId={generalSecretaryId}
+                members={members}
+              />
+            </div>
+          )}
 
           {isExecutive && (
             <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-4 mb-8">
@@ -405,9 +418,29 @@ export default function ActivityDetails() {
             </div>
           )}
 
-          {user && (
+          {user ? (
             <div className="mt-12">
               <ParticipationSection activityId={activity.id} activityPoints={activity.activity_points} />
+            </div>
+          ) : (
+            <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 text-center">
+              <p className="text-blue-800 font-semibold">
+                {t('activities.signupToSeeMore', 'Sign up to participate and view full activity details')}
+              </p>
+              <div className="mt-3 flex items-center justify-center gap-3">
+                <Link
+                  to="/register"
+                  className="inline-flex px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  {t('auth.createAccount', 'Create Account')}
+                </Link>
+                <Link
+                  to="/login"
+                  className="inline-flex px-5 py-2 bg-white text-blue-600 border border-blue-300 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors"
+                >
+                  {t('auth.signIn', 'Sign In')}
+                </Link>
+              </div>
             </div>
           )}
 

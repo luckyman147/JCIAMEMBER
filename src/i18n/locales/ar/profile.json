@@ -308,7 +308,10 @@
     },
     "jps": {
       "calculating": "جاري حساب درجة الأداء...",
+      "monthPerformance": "أداء هذا الشهر",
       "trimesterPerformance": "أداء الفصل",
+      "yearPerformance": "أداء السنة",
+      "noSnapshotYet": "لم يُحسب بعد لهذه الفترة.",
       "memberScore": "درجة عضو JCI",
       "score": "JPS",
       "activities": "الأنشطة",

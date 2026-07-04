@@ -10,6 +10,9 @@ export interface JPSDetails {
     actualParticipationRate: number; // Raw rate for display
     complaintsPenalty:       number;
     feeMultiplier:           number;
+    committeeCount:          number; // Activity-committees (teams with an activity_id) the member belongs to
+    committeeIsChef:         boolean;
+    committeeFactor:         number; // committeeCount × 1.5 if chef of any, else × 1
 }
 
 export interface JPSComparison {
@@ -25,6 +28,22 @@ export interface JPSResult {
     category:   PerformanceCategory;
     details:    JPSDetails;
     comparison: JPSComparison;
+}
+
+// A single period's score as maintained live in the DB by the JPS triggers
+// (jps_month_snapshots / jps_snapshots / jps_year_snapshots), rather than
+// recomputed client-side.
+export interface JPSPeriodScore {
+    score:     number;
+    category:  PerformanceCategory;
+    details:   JPSDetails | null;
+    updatedAt: string | null;
+}
+
+export interface JPSPeriodScores {
+    month:     JPSPeriodScore;
+    trimester: JPSPeriodScore;
+    year:      JPSPeriodScore;
 }
 
 export type PerformanceCategory =

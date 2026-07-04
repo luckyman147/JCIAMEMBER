@@ -91,10 +91,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/activities/:id/GET',
-        element: (
-            <ActivityDetails />
-        
-        ),
+        element: <ActivityDetails />,
       },
 
       // Teams routes

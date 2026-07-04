@@ -1,8 +1,9 @@
+
 import supabase from '../../../../utils/supabase';
-import { getJPSCategory, type JPSResult } from './types';
+import { getJPSCategory, type JPSResult, type JPSPeriodScore, type JPSPeriodScores } from './types';
 import {
     getPeriodDates, getTrimester,
-    getActivityMultiplier, getTaskMultiplier,
+    getTaskMultiplier,
     calculateMCI, calculateMomentum, calculateCD, calculateDoE,
     type PeriodType,
 } from './helpers';
@@ -36,7 +37,7 @@ async function saveSnapshot(memberId: string, result: JPSResult) {
         .eq('month', currentMonth).eq('trimester', currentTrimester)
         .maybeSingle();
 
-    const payload = { score: result.score, category: result.category, details: result.details };
+    const payload = { score: result.score, category: result.category, details: result.details, updated_at: now.toISOString() };
     const { error } = existing?.id
         ? await supabase.from('jps_snapshots').update(payload).eq('id', existing.id)
         : await supabase.from('jps_snapshots').insert({ member_id: memberId, year, month: currentMonth, trimester: currentTrimester, ...payload });
@@ -57,7 +58,7 @@ export const jpsService = {
 
         // Step 1: Fetch activities in period → resolve participations safely
         const { data: acts } = await supabase.from('activities')
-            .select('id, type, formations(*), meetings(*), general_assemblies(*)')
+            .select('id, type, activity_points')
             .gte('activity_begin_date', startISO).lte('activity_begin_date', cutoff);
 
         const actMap = new Map((acts ?? []).map(a => [a.id, a]));
@@ -76,15 +77,16 @@ export const jpsService = {
             supabase.from('profiles').select('cotisation_status, created_at, points').eq('id', memberId).single(),
         ]);
         const effectiveStart = (member?.created_at ?? startISO) > startISO ? member!.created_at : startISO;
-        const [{ count: totalActivities }, { count: complaintsCount }] = await Promise.all([
+        const [{ count: totalActivities }, { count: complaintsCount }, { data: committeeMemberships }] = await Promise.all([
             supabase.from('activities').select('*', { count: 'exact', head: true }).gte('activity_begin_date', effectiveStart).lte('activity_begin_date', cutoff),
             supabase.from('complaints').select('*', { count: 'exact', head: true }).eq('member_id', memberId).eq('status', 'resolved').gte('created_at', startISO).lte('created_at', endISO),
+            supabase.from('team_members').select('team_id, role, team:teams!inner(activity_id)').eq('member_id', memberId).not('team.activity_id', 'is', null),
         ]);
 
         // Step 3: Compute scores
         let activityPoints = 0, meetingsPoints = 0, formationsPoints = 0, gaPoints = 0, eventsPoints = 0;
         participations.forEach(p => {
-            const total = getActivityMultiplier(p) * ((p.rate ?? 3) * 0.1);
+            const total = p.activity?.activity_points ?? 0; // presence × the activity's own configured points
             activityPoints += total;
             switch (p.activity?.type) {
                 case 'meeting':          meetingsPoints   += total; break;
@@ -103,7 +105,10 @@ export const jpsService = {
         const participationRate   = Math.min(1, count < 3 ? Math.max(0.8, actualRate) : Math.max(0.1, actualRate));
         const feeMultiplier       = member?.cotisation_status?.every(Boolean) ? 1.1 : 1.0;
         const complaintsPenalty   = (complaintsCount ?? 0) * 25;
-        const finalScore          = Math.max(0, (activityPoints + taskPoints + earnedPoints) * participationRate * feeMultiplier - complaintsPenalty);
+        const committeeCount      = new Set((committeeMemberships ?? []).map(m => m.team_id)).size;
+        const committeeIsChef     = (committeeMemberships ?? []).some(m => m.role === 'lead');
+        const committeeFactor     = committeeCount * (committeeIsChef ? 1.5 : 1);
+        const finalScore          = Math.max(0, (activityPoints + taskPoints + earnedPoints + committeeFactor) * participationRate * feeMultiplier - complaintsPenalty);
 
         // Step 4: Historical metrics
         const { data: snaps } = await supabase.from('jps_snapshots').select('score, year, month, trimester')
@@ -112,7 +117,7 @@ export const jpsService = {
         return {
             score:    Math.round(finalScore),
             category: getJPSCategory(finalScore).name,
-            details:  { activityPoints, meetingsPoints, formationsPoints, gaPoints, eventsPoints, taskPoints, earnedPoints, participationRate, actualParticipationRate: actualRate, complaintsPenalty, feeMultiplier },
+            details:  { activityPoints, meetingsPoints, formationsPoints, gaPoints, eventsPoints, taskPoints, earnedPoints, participationRate, actualParticipationRate: actualRate, complaintsPenalty, feeMultiplier, committeeCount, committeeIsChef, committeeFactor },
             comparison: {
                 mentorshipImpact:    await fetchMIS(memberId),
                 consistencyIndex:    calculateMCI(snaps ?? []),
@@ -140,13 +145,60 @@ export const jpsService = {
 
     async getTopMembersByPeriod(period: 'month' | 'trimester' | 'year' | 'all', year: number, value: number) {
         const { data: allMembers, error: mErr } = await supabase.from('profiles')
-            .select('id, fullname, avatar_url, roles(name), leaderboard_privacy, poste:poste_id(id, name), estimated_volunteering_hours, cotisation_status');
+            .select('id, fullname, avatar_url, roles(name), leaderboard_privacy, poste:poste_id(id, name), estimated_volunteering_hours, cotisation_status, created_at, advisor_id');
         if (mErr) throw mErr;
 
-        let query = supabase.from('jps_snapshots').select('score, category, month, year, trimester, member_id').eq('year', year);
-        if (period === 'month')     query = query.eq('month', value).eq('trimester', Math.ceil(value / 3));
-        if (period === 'trimester') query = query.eq('trimester', value);
-        const { data: snaps, error: sErr } = await query;
+        // Advisors = anyone at least one other member has picked as their advisor.
+        // New Members = joined within the last 6 months and not already an advisor.
+        // Everyone else = Members. (Assumption on the 6-month window — easy to adjust.)
+        const advisorIds = new Set((allMembers ?? []).map(m => m.advisor_id).filter(Boolean));
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        const getRoleGroup = (m: { id: string; created_at?: string }): 'advisor' | 'new' | 'member' => {
+            if (advisorIds.has(m.id)) return 'advisor';
+            if (m.created_at && new Date(m.created_at) >= sixMonthsAgo) return 'new';
+            return 'member';
+        };
+
+        const buildResult = (snapshotMap: Map<string, any>) => (allMembers ?? [])
+            .filter(m => !m.leaderboard_privacy)
+            .map(m => {
+                const snap = snapshotMap.get(m.id);
+                return {
+                    id: m.id, fullname: m.fullname, avatar_url: m.avatar_url,
+                    role: (m.roles as { name: string }[])?.[0]?.name ?? 'Member',
+                    roleGroup: getRoleGroup(m),
+                    jps_score: snap?.score ?? 0, jps_category: snap?.category ?? 'Observer', jps_updated_at: snap?.updated_at ?? null,
+                    poste: m.poste, estimated_volunteering_hours: m.estimated_volunteering_hours, cotisation_status: m.cotisation_status,
+                };
+            })
+            .sort((a, b) => b.jps_score - a.jps_score);
+
+        // Year and All read the dedicated annual aggregate (Jan 1 -> today), a real
+        // cumulative score — not just whichever trimester snapshot happens to exist.
+        if (period === 'year' || period === 'all') {
+            const { data: yearSnaps, error: yErr } = await supabase.from('jps_year_snapshots')
+                .select('score, category, member_id, updated_at').eq('year', year);
+            if (yErr) throw yErr;
+            const snapshotMap = new Map((yearSnaps ?? []).map(s => [s.member_id, s]));
+            return buildResult(snapshotMap);
+        }
+
+        // Month reads the dedicated calendar-month table — genuinely month-scoped,
+        // not the trimester-window score that jps_snapshots stores.
+        if (period === 'month') {
+            const { data: monthSnaps, error: monErr } = await supabase.from('jps_month_snapshots')
+                .select('score, category, member_id, updated_at').eq('year', year).eq('month', value);
+            if (monErr) throw monErr;
+            const snapshotMap = new Map((monthSnaps ?? []).map(s => [s.member_id, s]));
+            return buildResult(snapshotMap);
+        }
+
+        // Trimester: jps_snapshots is trimester-scoped despite its `month` column
+        // (see 20250704010000_jps_realtime_triggers.sql) — pick the latest month's row within it.
+        const { data: snaps, error: sErr } = await supabase.from('jps_snapshots')
+            .select('score, category, month, year, trimester, member_id, updated_at').eq('year', year).eq('trimester', value);
         if (sErr) throw sErr;
 
         const snapshotMap = new Map<string, any>();
@@ -155,17 +207,30 @@ export const jpsService = {
             if (!ex || s.year > ex.year || (s.year === ex.year && (s.month ?? 0) > (ex.month ?? 0))) snapshotMap.set(s.member_id, s);
         });
 
-        return (allMembers ?? [])
-            .filter(m => !m.leaderboard_privacy)
-            .map(m => {
-                const snap = snapshotMap.get(m.id);
-                return {
-                    id: m.id, fullname: m.fullname, avatar_url: m.avatar_url,
-                    role: (m.roles as { name: string }[])?.[0]?.name ?? 'Member',
-                    jps_score: snap?.score ?? 0, jps_category: snap?.category ?? 'Observer',
-                    poste: m.poste, estimated_volunteering_hours: m.estimated_volunteering_hours, cotisation_status: m.cotisation_status,
-                };
-            })
-            .sort((a, b) => b.jps_score - a.jps_score);
+        return buildResult(snapshotMap);
+    },
+
+    // Reads the three live, trigger-maintained scores for one member directly
+    // from the DB (month/trimester/year), instead of recomputing client-side.
+    async getMemberPeriodScores(memberId: string): Promise<JPSPeriodScores> {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const trimester = getTrimester(now);
+
+        const empty: JPSPeriodScore = { score: 0, category: 'Observer', details: null, updatedAt: null };
+        const toResult = (row: any): JPSPeriodScore =>
+            row ? { score: row.score, category: row.category, details: row.details ?? null, updatedAt: row.updated_at ?? null } : empty;
+
+        const [{ data: monthRow }, { data: trimesterRow }, { data: yearRow }] = await Promise.all([
+            supabase.from('jps_month_snapshots').select('score, category, details, updated_at')
+                .eq('member_id', memberId).eq('year', year).eq('month', month).maybeSingle(),
+            supabase.from('jps_snapshots').select('score, category, details, updated_at')
+                .eq('member_id', memberId).eq('year', year).eq('month', month).eq('trimester', trimester).maybeSingle(),
+            supabase.from('jps_year_snapshots').select('score, category, details, updated_at')
+                .eq('member_id', memberId).eq('year', year).maybeSingle(),
+        ]);
+
+        return { month: toResult(monthRow), trimester: toResult(trimesterRow), year: toResult(yearRow) };
     },
 };

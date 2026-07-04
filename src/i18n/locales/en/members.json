@@ -1,6 +1,9 @@
 {
   "title": "Members",
   "subtitle": "Manage organization members and their statistics",
+  "advisors": "Advisors",
+  "newMembers": "New Members",
+  "members": "Members",
   "socialMediaStats": "Social Media Presence",
   "activityStats": "Activity Preferences",
   "committeeStats": "Committee Preferences",

@@ -17,6 +17,7 @@ import { getMemberById } from '../../Members/services/members.service'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import ActivityCard from '../../Activities/components/list/ActivityCard'
+import ActivityCalendar from '../../Activities/components/calendar/ActivityCalendar'
 
 const Home = () => {
   const { t, i18n } = useTranslation() 
@@ -138,6 +139,11 @@ const Home = () => {
               <h2 className='text-3xl font-bold text-gray-900'>{t('home.activitiesTitle')}</h2>
               <p className='text-gray-500 mt-2'>{t('home.activitiesSubtitle')}</p>
             </div>
+          </div>
+
+          {/* Calendar */}
+          <div className="mb-10">
+            <ActivityCalendar activities={activities} loading={loading} linkToAllActivities />
           </div>
 
           {/* Filters */}

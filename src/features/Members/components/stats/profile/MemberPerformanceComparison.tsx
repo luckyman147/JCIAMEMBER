@@ -3,6 +3,7 @@ import { jpsService } from "../../../services/jpsService";
 import type { JPSResult } from "../../../services/jpsService";
 import { Loader, Users, Zap, Calendar, Target, TrendingUp, Info } from "lucide-react";
 import { cn } from "../../../../../lib/utils";
+import supabase from "../../../../../utils/supabase";
 
 interface MemberPerformanceComparisonProps {
     memberId: string;
@@ -13,18 +14,34 @@ export default function MemberPerformanceComparison({ memberId }: MemberPerforma
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let cancelled = false;
+
         const loadMetrics = async () => {
             try {
                 setLoading(true);
                 const data = await jpsService.calculateJPS(memberId);
-                setResult(data);
+                if (!cancelled) setResult(data);
             } catch (error) {
                 console.error("Error loading performance metrics:", error);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
         loadMetrics();
+
+        const channel = supabase
+            .channel(`jps-comparison-${memberId}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'jps_snapshots', filter: `member_id=eq.${memberId}` },
+                () => loadMetrics()
+            )
+            .subscribe();
+
+        return () => {
+            cancelled = true;
+            supabase.removeChannel(channel);
+        };
     }, [memberId]);
 
     if (loading) return (

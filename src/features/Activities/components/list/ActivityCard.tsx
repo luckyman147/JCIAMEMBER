@@ -2,6 +2,7 @@ import { Calendar, MapPin, Video, DollarSign, ArrowRight, Users } from 'lucide-r
 import type { Activity } from '../../models/Activity'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { getActivityTypeBadgeClass } from '../../utils/activityTypeStyles'
 
 interface ActivityCardProps {
   activity: Activity
@@ -22,15 +23,7 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
     }).format(date)
   }
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'event': return 'bg-(--color-myPrimary)  text-white'
-      case 'meeting': return 'bg-blue-100 text-blue-800'
-      case 'formation': return 'bg-orange-100 text-orange-800'
-      case 'general_assembly': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
+  const getTypeColor = (type: Activity['type']) => getActivityTypeBadgeClass(type)
 
   const getPlaceholderImage = (type: string) => {
     switch (type) {

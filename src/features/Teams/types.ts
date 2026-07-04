@@ -8,6 +8,7 @@ export interface Project {
     name: string;
     description?: string;
     leader_id?: string;
+    activity_id?: string;
     created_at: string;
     teams?: Team[];
     members?: ProjectMember[];

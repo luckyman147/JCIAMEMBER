@@ -1,5 +1,6 @@
 
 import type { Member } from './types';
+import type { MemberCommitteeStats } from '../Activities/services/committeeService';
 import ExcelJS from 'exceljs';
 
 export interface MemberParticipationMap {
@@ -20,9 +21,9 @@ const roleColors: Record<string, { bg: string; text: string }> = {
     'VP': { bg: 'FF56BDA3', text: 'FFFFFFFF' },
 };
 
-const columnColors = ['FF1B3A5C', 'FF56BDA3', 'FFE8A838', 'FF3B82F6', 'FF8B5CF6', 'FF10B981', 'FF0EA5E9', 'FFF59E0B', 'FFEF4444', 'FF6366F1', 'FF8B5CF6', 'FF64748B'];
-const columnHeaders = ['#', 'Name', 'Email', 'Phone', 'Role', 'Post', 'Events', 'Meetings', 'Trainings', 'Assembly', 'Overall', 'Status'];
-const columnWidths = [6, 28, 35, 18, 20, 25, 10, 10, 12, 12, 10, 12];
+const columnColors = ['FF1B3A5C', 'FF56BDA3', 'FFE8A838', 'FF3B82F6', 'FF8B5CF6', 'FF10B981', 'FF0EA5E9', 'FFF59E0B', 'FFEF4444', 'FF6366F1', 'FF8B5CF6', 'FF64748B', 'FF1B3A5C', 'FF56BDA3', 'FFE8A838', 'FF10B981', 'FF6366F1'];
+const columnHeaders = ['#', 'Name', 'Email', 'Phone', 'Role', 'Post', 'Events', 'Meetings', 'Trainings', 'Assembly', 'Overall', 'Status', 'Committees', 'Sponsoring', 'Media', 'Program', 'Logistic'];
+const columnWidths = [6, 28, 35, 18, 20, 25, 10, 10, 12, 12, 10, 12, 12, 12, 10, 10, 10];
 const TOTAL_COLS = columnHeaders.length;
 
 const getPhoneDisplay = (phone?: string): string => {
@@ -41,7 +42,8 @@ const getAvgDisplay = (counts: { events: number; meetings: number; formations: n
 export const downloadMembersAsExcel = async (
   members: Member[],
   participationMap?: MemberParticipationMap,
-  activityTypeCounts?: { events: number; meetings: number; formations: number; assemblies: number }
+  activityTypeCounts?: { events: number; meetings: number; formations: number; assemblies: number },
+  committeeMap?: Record<string, MemberCommitteeStats>
 ): Promise<void> => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Members');
@@ -111,6 +113,12 @@ export const downloadMembersAsExcel = async (
             row.getCell(10).value = counts?.assemblies ?? '-';
             row.getCell(11).value = getAvgDisplay(counts);
             row.getCell(12).value = member.is_banned ? 'Banned' : 'Active';
+            const cStats = committeeMap?.[member.id];
+            row.getCell(13).value = cStats ? cStats.totalCommittees : 0;
+            row.getCell(14).value = cStats?.sponsoring ?? 0;
+            row.getCell(15).value = cStats?.media ?? 0;
+            row.getCell(16).value = cStats?.program ?? 0;
+            row.getCell(17).value = cStats?.logistic ?? 0;
 
             const bgColor = memberIndex % 2 === 0 ? colors.bg : 'FFF9FAFB';
             for (let col = 1; col <= TOTAL_COLS; col++) {
@@ -271,6 +279,73 @@ export const downloadMembersAsExcel = async (
         }
         currentRow++;
     });
+
+    if (committeeMap) {
+        currentRow++;
+
+        ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
+        const comTitleRow = ws.getRow(currentRow);
+        comTitleRow.getCell(1).value = 'COMMITTEE PARTICIPATION SUMMARY';
+        comTitleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+        comTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B3A5C' } };
+        comTitleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+        comTitleRow.height = 28;
+        currentRow++;
+
+        let totalSponsoring = 0;
+        let totalMedia = 0;
+        let totalProgram = 0;
+        let totalLogistic = 0;
+        let totalCommittees = 0;
+        let membersWithCommittees = 0;
+
+        Object.values(committeeMap).forEach(stats => {
+            totalSponsoring += stats.sponsoring;
+            totalMedia += stats.media;
+            totalProgram += stats.program;
+            totalLogistic += stats.logistic;
+            totalCommittees += stats.totalCommittees;
+            if (stats.totalCommittees > 0) membersWithCommittees++;
+        });
+
+        const avgSponsoring = membersWithCommittees > 0 ? (totalSponsoring / membersWithCommittees).toFixed(1) : '0';
+        const avgMedia = membersWithCommittees > 0 ? (totalMedia / membersWithCommittees).toFixed(1) : '0';
+        const avgProgram = membersWithCommittees > 0 ? (totalProgram / membersWithCommittees).toFixed(1) : '0';
+        const avgLogistic = membersWithCommittees > 0 ? (totalLogistic / membersWithCommittees).toFixed(1) : '0';
+        const avgTotal = membersWithCommittees > 0 ? (totalCommittees / membersWithCommittees).toFixed(1) : '0';
+
+        const comStatsRows: [string, string, string, string, string, string][] = [
+            ['Total Committee Memberships', totalSponsoring.toString(), totalMedia.toString(), totalProgram.toString(), totalLogistic.toString(), totalCommittees.toString()],
+            ['Average per Member', avgSponsoring, avgMedia, avgProgram, avgLogistic, avgTotal],
+        ];
+
+        comStatsRows.forEach(([label, sp, me, pr, lo, total]) => {
+            const row = ws.getRow(currentRow);
+            row.getCell(2).value = label;
+            row.getCell(2).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF374151' } };
+            row.getCell(13).value = total;
+            row.getCell(13).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } };
+            row.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+            row.getCell(14).value = sp;
+            row.getCell(14).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+            row.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
+            row.getCell(15).value = me;
+            row.getCell(15).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+            row.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
+            row.getCell(16).value = pr;
+            row.getCell(16).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+            row.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+            row.getCell(17).value = lo;
+            row.getCell(17).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+            row.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+            row.height = 22;
+            for (let col = 2; col <= TOTAL_COLS; col++) {
+                row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F4FA' } };
+                row.getCell(col).border = { bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } } };
+            }
+            currentRow++;
+        });
+    }
 
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

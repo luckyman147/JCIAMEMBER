@@ -29,7 +29,7 @@ type TimeFrame = 'all' | 'year' | 'quarter' | 'month';
 export default function MembersGrowthChart({ history }: ChartProps) {
     const { t } = useTranslation();
     const [hoveredMember, setHoveredMember] = useState<string | null>(null);
-    const [timeFrame, setTimeFrame] = useState<TimeFrame>('month');
+    const [timeFrame, setTimeFrame] = useState<TimeFrame>('year');
 
     const { chartData, maxScore } = useMemo(() => {
         if (!history || history.length === 0) return { chartData: [], maxScore: 0 };

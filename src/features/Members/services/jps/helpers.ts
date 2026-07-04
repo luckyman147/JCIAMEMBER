@@ -19,34 +19,6 @@ export function getPeriodDates(periodType: PeriodType = 'trimester', date: Date 
     };
 }
 
-// ─── Activity Multiplier ──────────────────────────────────────────────────────
-
-const nested = (obj: any, key: string) => {
-    const v = obj?.[key]; return Array.isArray(v) ? v[0] : v;
-};
-
-export function getActivityMultiplier(p: any): number {
-    const { type } = p.activity ?? {};
-    if (type === 'general_assembly') {
-        const gaType = nested(p.activity, 'general_assemblies')?.assembly_type;
-        if (gaType === 'national' || gaType === 'international') return 12;
-        return gaType === 'zonal' ? 9 : 6;
-    }
-    if (type === 'meeting') {
-        const mt = nested(p.activity, 'meetings')?.meeting_type;
-        if (mt === 'official') return 10;
-        return mt === 'committee' ? 7 : 8;
-    }
-    if (type === 'formation') {
-        const tt = nested(p.activity, 'formations')?.training_type;
-        if (tt === 'official_session')   return 9;
-        if (tt === 'important_training') return 7;
-        if (tt === 'member_to_member')   return 4;
-        return 5;
-    }
-    return type === 'event' ? 8 : 5;
-}
-
 export function getTaskMultiplier(complexity: string): number {
     return ({ lead: 15, major: 10, minor: 4 } as Record<string, number>)[complexity] ?? 4;
 }

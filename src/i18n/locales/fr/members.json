@@ -1,6 +1,9 @@
 {
   "title": "Membres",
   "subtitle": "Gérez les membres de l'organisation et leurs statistiques",
+  "advisors": "Conseillers",
+  "newMembers": "Nouveaux Membres",
+  "members": "Membres",
   "socialMediaStats": "Présence sur les réseaux sociaux",
   "activityStats": "Préférences d'activités",
   "committeeStats": "Préférences de comité",
