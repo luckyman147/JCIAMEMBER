@@ -58,8 +58,8 @@ export default function MembersPage() {
         promises.push(committeePromise);
         promises.push(participationService.getParticipationsWithDates(memberIds, earliestDataDate));
         promises.push(participationService.getAllActivitiesSince(earliestDataDate));
-        promises.push(participationService.getAllActivitiesWithDetails(earliestDataDate));
-        promises.push(participationService.getParticipationsWithActivityId(memberIds, earliestDataDate));
+        promises.push(participationService.getAllActivitiesWithDetails(periodStart, periodEnd));
+        promises.push(participationService.getParticipationsWithActivityId(memberIds, periodStart, periodEnd));
 
         const [participationMap, activityTypeCounts, committeeMap, rawParticipations, rawActivities, activityDetails, participationsWithActivityId] = await Promise.all(promises);
 

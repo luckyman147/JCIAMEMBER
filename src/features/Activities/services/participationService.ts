@@ -184,35 +184,128 @@ export const participationService = {
   },
 
   /**
-   * Get top N most attended members with their total participation count
+   * Get raw participations with registered_at dates for multiple members
    */
-  getTopAttendedMembers: async (limit = 3): Promise<{ member_id: string; fullname: string; avatar_url?: string | null; count: number }[]> => {
+  getParticipationsWithDates: async (memberIds: string[], sinceDate: string) => {
+    if (memberIds.length === 0) return [];
+
     const { data, error } = await supabase
       .from('activity_participants')
       .select(`
         user_id,
-        member:profiles(fullname, avatar_url)
+        registered_at,
+        activity:activity_id(type)
+      `)
+      .in('user_id', memberIds)
+      .gte('registered_at', sinceDate)
+      .not('is_interested', 'eq', true)
+
+    if (error) throw error
+    return data || []
+  },
+
+  /**
+   * Get total activities with their begin dates and types since a date
+   */
+  getAllActivitiesSince: async (sinceDate: string) => {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('type, activity_begin_date')
+      .gte('activity_begin_date', sinceDate)
+
+    if (error) throw error
+    return data || []
+  },
+
+  /**
+   * Get all activities with id, name, type, begin_date within a date range
+   */
+  getAllActivitiesWithDetails: async (sinceDate: string, untilDate: string) => {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('id, name, type, activity_begin_date')
+      .gte('activity_begin_date', sinceDate)
+      .lte('activity_begin_date', untilDate)
+      .order('activity_begin_date', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  },
+
+  /**
+   * Get detailed participations with activity id for matrix building, within a date range
+   */
+  getParticipationsWithActivityId: async (memberIds: string[], sinceDate: string, untilDate: string) => {
+    if (memberIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('activity_participants')
+      .select(`
+        user_id,
+        activity:activity_id(id)
+      `)
+      .in('user_id', memberIds)
+      .gte('registered_at', sinceDate)
+      .lte('registered_at', untilDate)
+      .not('is_interested', 'eq', true)
+
+    if (error) throw error
+    return data || []
+  },
+
+  /**
+   * Get top N most attended members with their total participation count
+   */
+  getTopAttendedMembers: async (): Promise<Record<string, { member_id: string; fullname: string; avatar_url?: string | null; count: number }[]>> => {
+    const { data, error } = await supabase
+      .from('activity_participants')
+      .select(`
+        user_id,
+        member:profiles(fullname, avatar_url, role_id)
       `)
       .not('is_interested', 'eq', true)
 
     if (error) throw error
 
-    const countMap = new Map<string, { fullname: string; avatar_url?: string | null; count: number }>()
+    const { data: rolesData, error: rolesError } = await supabase
+      .from('roles')
+      .select('id, name')
+
+    if (rolesError) throw rolesError
+
+    const roleNameById = new Map((rolesData || []).map(r => [r.id, r.name]))
+
+    const countMap = new Map<string, { fullname: string; avatar_url?: string | null; role: string; count: number }>()
 
     for (const p of data || []) {
       const uid = p.user_id
-      const memberData = p.member as { fullname?: string; avatar_url?: string | null } | null
+      const memberData = p.member as { fullname?: string; avatar_url?: string | null; role_id?: string } | null
       if (!uid || !memberData?.fullname) continue
       if (!countMap.has(uid)) {
-        countMap.set(uid, { fullname: memberData.fullname, avatar_url: memberData.avatar_url, count: 0 })
+        countMap.set(uid, {
+          fullname: memberData.fullname,
+          avatar_url: memberData.avatar_url,
+          role: roleNameById.get(memberData.role_id || '') || 'Member',
+          count: 0,
+        })
       }
       countMap.get(uid)!.count++
     }
 
-    return Array.from(countMap.entries())
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, limit)
-      .map(([member_id, data]) => ({ member_id, ...data }))
+    const grouped: Record<string, { member_id: string; fullname: string; avatar_url?: string | null; count: number }[]> = {}
+
+    for (const [member_id, data] of countMap) {
+      const role = data.role
+      if (!grouped[role]) grouped[role] = []
+      grouped[role].push({ member_id, fullname: data.fullname, avatar_url: data.avatar_url, count: data.count })
+    }
+
+    for (const role of Object.keys(grouped)) {
+      grouped[role].sort((a, b) => b.count - a.count)
+      grouped[role] = grouped[role].slice(0, 3)
+    }
+
+    return grouped
   },
 
   /**
