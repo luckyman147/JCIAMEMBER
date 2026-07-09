@@ -84,6 +84,16 @@ const TEAM_COLUMN_DEFS = [
 
 const DECISION_COLUMN_DEF = { key: 'decision', header: 'Décision', width: 20, color: 'FFDC2626' };
 
+// periodEnd is a date-only string ("YYYY-MM-DD"); new Date() parses that as
+// midnight UTC, so anything timestamped later that same day would otherwise
+// be incorrectly treated as "after" the period end. Use end-of-day instead
+// so the whole periodEnd calendar day is inclusive.
+const getEndOfDay = (dateStr: string): Date => {
+  const d = new Date(dateStr);
+  d.setUTCHours(23, 59, 59, 999);
+  return d;
+};
+
 const getPhoneDisplay = (phone?: string): string => {
     if (!phone) return '-';
     const cleaned = phone.replace(/\D/g, '');
@@ -109,12 +119,12 @@ const getPresenceRate = (
   }
 
   const memberJoinDate = member.joined_at ? new Date(member.joined_at) : new Date(member.created_at);
-  if (memberJoinDate > new Date(periodEnd)) {
+  if (memberJoinDate > getEndOfDay(periodEnd)) {
     return { rate: '-', percent: -2, joinedAfterPeriod: true };
   }
 
   const startDate = new Date(periodStart);
-  const endDate = new Date(periodEnd);
+  const endDate = getEndOfDay(periodEnd);
 
   const memberParticipationsInPeriod = rawParticipations.filter(p => {
     if (p.user_id !== member.id) return false;
@@ -161,7 +171,7 @@ export const downloadMembersAsExcel = async (
 ): Promise<void> => {
     const { selectedRoles, includeTeams, periodStart, periodEnd, participationMap, committeeMap, rawParticipations, rawActivities, activityDetails, participationsWithActivityId } = options;
 
-    const periodEndDate = new Date(periodEnd);
+    const periodEndDate = getEndOfDay(periodEnd);
 
     const groupedMembers = members.reduce((acc, member) => {
         if (!member.role || member.role === 'JCI Hammam Sousse') return acc;
@@ -674,7 +684,7 @@ export const addDistributionTable = (
   headerRow.height = 32;
   row++;
 
-  const periodEndDate = new Date(periodEnd);
+  const periodEndDate = getEndOfDay(periodEnd);
 
   filteredMembers.forEach((member, memberIdx) => {
     const rowObj = ws.getRow(row);
@@ -765,7 +775,7 @@ const addChartsSection = (
     { label: 'Assemblée', value: totalAssemblies, color: argbToHex('FFEF4444') },
   ];
 
-  const periodEndDate = new Date(periodEnd);
+  const periodEndDate = getEndOfDay(periodEnd);
   const eligibleCount = filteredMembersForCharts.filter(m => {
     const joinDate = m.joined_at ? new Date(m.joined_at) : (m.created_at ? new Date(m.created_at) : null);
     return !(joinDate && joinDate > periodEndDate);
