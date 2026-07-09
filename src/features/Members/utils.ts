@@ -94,6 +94,40 @@ const getEndOfDay = (dateStr: string): Date => {
   return d;
 };
 
+// Builds member -> set of activity ids attended directly from the
+// activity_participants join table, so this is the single source of truth
+// for "did this member attend this activity" used by the count columns,
+// the distribution matrix, and the charts alike.
+const buildAttendanceByActivity = (
+  memberIds: Set<string>,
+  participationsWithActivityId: ParticipationActivityId[]
+): Record<string, Set<string>> => {
+  const attendanceByActivity: Record<string, Set<string>> = {};
+  for (const p of participationsWithActivityId) {
+    const actId = p.activity?.id;
+    if (!actId || !memberIds.has(p.user_id)) continue;
+    if (!attendanceByActivity[actId]) attendanceByActivity[actId] = new Set();
+    attendanceByActivity[actId].add(p.user_id);
+  }
+  return attendanceByActivity;
+};
+
+const getTypeCountsForMember = (
+  memberId: string,
+  activityDetails: ActivityDetail[],
+  attendanceByActivity: Record<string, Set<string>>
+): { events: number; meetings: number; formations: number; assemblies: number } => {
+  const counts = { events: 0, meetings: 0, formations: 0, assemblies: 0 };
+  for (const activity of activityDetails) {
+    if (!attendanceByActivity[activity.id]?.has(memberId)) continue;
+    if (activity.type === 'event') counts.events++;
+    else if (activity.type === 'meeting') counts.meetings++;
+    else if (activity.type === 'formation') counts.formations++;
+    else if (activity.type === 'general_assembly') counts.assemblies++;
+  }
+  return counts;
+};
+
 const getPhoneDisplay = (phone?: string): string => {
     if (!phone) return '-';
     const cleaned = phone.replace(/\D/g, '');
@@ -184,6 +218,11 @@ export const downloadMembersAsExcel = async (
         return acc;
     }, {} as Record<string, Member[]>);
 
+    const filteredMemberIds = new Set(Object.values(groupedMembers).flat().map(m => m.id));
+    const attendanceByActivity: Record<string, Set<string>> = participationsWithActivityId
+      ? buildAttendanceByActivity(filteredMemberIds, participationsWithActivityId)
+      : {};
+
     const sortedRoles = Object.keys(groupedMembers).sort();
     const isSingleRole = sortedRoles.length === 1;
 
@@ -262,7 +301,7 @@ export const downloadMembersAsExcel = async (
 
         roleMembers.forEach((member, memberIndex) => {
             const row = ws.getRow(currentRow);
-            const counts = participationMap?.[member.id];
+            const counts = activityDetails ? getTypeCountsForMember(member.id, activityDetails, attendanceByActivity) : null;
             const cStats = committeeMap?.[member.id];
             const presence = getPresenceRate(member, periodStart, periodEnd, rawParticipations, rawActivities);
 
@@ -598,11 +637,8 @@ export const downloadMembersAsExcel = async (
 
     currentRow += 2;
 
-    let attendanceByActivity: Record<string, Set<string>> = {};
     if (activityDetails && participationsWithActivityId) {
-      const distributionResult = addDistributionTable(ws, currentRow, groupedMembers, activityDetails, participationsWithActivityId, periodEnd);
-      currentRow = distributionResult.nextRow;
-      attendanceByActivity = distributionResult.attendanceByActivity;
+      currentRow = addDistributionTable(ws, currentRow, groupedMembers, activityDetails, attendanceByActivity, periodEnd);
     }
 
     if (participationMap) {
@@ -624,19 +660,10 @@ export const addDistributionTable = (
   startRow: number,
   groupedMembers: Record<string, Member[]>,
   activityDetails: ActivityDetail[],
-  participationsWithActivityId: ParticipationActivityId[],
+  attendanceByActivity: Record<string, Set<string>>,
   periodEnd: string
-): { nextRow: number; attendanceByActivity: Record<string, Set<string>> } => {
+): number => {
   const filteredMembers = Object.values(groupedMembers).flat();
-  const memberSet = new Set(filteredMembers.map(m => m.id));
-
-  const attendanceByActivity: Record<string, Set<string>> = {};
-  for (const p of participationsWithActivityId) {
-    const actId = p.activity?.id;
-    if (!actId || !memberSet.has(p.user_id)) continue;
-    if (!attendanceByActivity[actId]) attendanceByActivity[actId] = new Set();
-    attendanceByActivity[actId].add(p.user_id);
-  }
 
   let row = startRow;
 
@@ -648,7 +675,7 @@ export const addDistributionTable = (
     ws.getCell(row, 1).value = 'Aucune activité dans la période sélectionnée';
     ws.getCell(row, 1).font = { name: 'Arial', size: 11, italic: true, color: { argb: 'FF9CA3AF' } };
     row++;
-    return { nextRow: row + 1, attendanceByActivity };
+    return row + 1;
   }
 
   const SECTION_COLS = activityDetails.length + 2;
@@ -723,7 +750,7 @@ export const addDistributionTable = (
     row++;
   });
 
-  return { nextRow: row + 1, attendanceByActivity };
+  return row + 1;
 };
 
 const addChartsSection = (
