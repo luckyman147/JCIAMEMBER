@@ -572,14 +572,13 @@ export const downloadMembersAsExcel = async (
         });
     }
 
-    currentRow += 5;
+    currentRow += 2;
 
-    if (participationMap) {
-      currentRow = addDistributionTable(ws, currentRow, groupedMembers, participationMap);
-    }
-
+    let attendanceByActivity: Record<string, Set<string>> = {};
     if (activityDetails && participationsWithActivityId) {
-      buildActivityMatrix(ws, currentRow, groupedMembers, activityDetails, participationsWithActivityId, periodStart, periodEnd);
+      const distributionResult = addDistributionTable(ws, currentRow, groupedMembers, activityDetails, participationsWithActivityId, periodEnd);
+      currentRow = distributionResult.nextRow;
+      attendanceByActivity = distributionResult.attendanceByActivity;
     }
 
     const buf = await wb.xlsx.writeBuffer();
@@ -592,95 +591,17 @@ export const downloadMembersAsExcel = async (
     URL.revokeObjectURL(url);
 };
 
-const addDistributionTable = (ws: ExcelJS.Worksheet, startRow: number, groupedMembers: Record<string, Member[]>, participationMap: MemberParticipationMap): number => {
-  const filteredMembers = Object.values(groupedMembers).flat();
-  const chartHeaders = ['Type', 'Présents', 'Total Membres', 'Taux %'];
-  const typeLabels = ['Événements', 'Réunions', 'Formations', 'Assemblée'];
-  const typeKeys = ['events', 'meetings', 'formations', 'assemblies'] as const;
-  const typeColors = ['FF6366F1', 'FF0EA5E9', 'FFF59E0B', 'FFEF4444'];
-  const TOTAL_CHART_COLS = 4;
-  const totalMembers = filteredMembers.length;
-
-  let row = startRow;
-
-  ws.mergeCells(row, 1, row, TOTAL_CHART_COLS);
-  const titleRow = ws.getRow(row);
-  titleRow.getCell(1).value = `DISTRIBUTION PAR TYPE D'ACTIVITÉ`;
-  titleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-  titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
-  titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-  titleRow.height = 28;
-  row++;
-
-  const headerRow = ws.getRow(row);
-  headerRow.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-  headerRow.height = 24;
-  for (let i = 0; i < TOTAL_CHART_COLS; i++) {
-    const cell = headerRow.getCell(i + 1);
-    cell.value = chartHeaders[i];
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i === 0 ? 'FF1B3A5C' : 'FF0D2137' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = {
-      top: { style: 'medium', color: { argb: 'FF000000' } },
-      bottom: { style: 'medium', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } },
-    };
-  }
-  row++;
-
-  typeKeys.forEach((key, idx) => {
-    let present = 0;
-    filteredMembers.forEach(m => {
-      const c = participationMap[m.id];
-      if (c && c[key] > 0) present++;
-    });
-    const rate = totalMembers > 0 ? Math.round((present / totalMembers) * 100) : 0;
-
-    const rowObj = ws.getRow(row);
-    rowObj.getCell(1).value = typeLabels[idx];
-    rowObj.getCell(1).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF374151' } };
-    rowObj.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
-    rowObj.getCell(2).value = present;
-    rowObj.getCell(2).font = { name: 'Arial', size: 11, bold: true, color: { argb: typeColors[idx] } };
-    rowObj.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-    rowObj.getCell(3).value = totalMembers;
-    rowObj.getCell(3).font = { name: 'Arial', size: 11, color: { argb: 'FF374151' } };
-    rowObj.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-    rowObj.getCell(4).value = `${rate}%`;
-    rowObj.getCell(4).font = {
-      name: 'Arial', size: 11, bold: true,
-      color: { argb: rate < 30 ? 'FFFF0000' : rate < 50 ? 'FFFF8C00' : 'FF10B981' }
-    };
-    rowObj.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
-    rowObj.height = 22;
-    for (let c = 1; c <= TOTAL_CHART_COLS; c++) {
-      rowObj.getCell(c).border = { bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } } };
-    }
-    row++;
-  });
-  return row;
-};
-
-const buildActivityMatrix = (
-  ws: ExcelJS.Workbook,
+export const addDistributionTable = (
+  ws: ExcelJS.Worksheet,
   startRow: number,
   groupedMembers: Record<string, Member[]>,
   activityDetails: ActivityDetail[],
   participationsWithActivityId: ParticipationActivityId[],
-  periodStart: string,
   periodEnd: string
-) => {
-  const sheet = ws.addWorksheet('Présences par activité');
-
+): { nextRow: number; attendanceByActivity: Record<string, Set<string>> } => {
   const filteredMembers = Object.values(groupedMembers).flat();
-
-  if (activityDetails.length === 0 || filteredMembers.length === 0) {
-    sheet.getCell(1, 1).value = 'Aucune activité dans la période sélectionnée';
-    return;
-  }
-
   const memberSet = new Set(filteredMembers.map(m => m.id));
+
   const attendanceByActivity: Record<string, Set<string>> = {};
   for (const p of participationsWithActivityId) {
     const actId = p.activity?.id;
@@ -689,53 +610,65 @@ const buildActivityMatrix = (
     attendanceByActivity[actId].add(p.user_id);
   }
 
-  const periodEndDate = new Date(periodEnd);
-  const headers = ['Membre', ...activityDetails.map(a => a.name)];
-  const TOTAL_COLS = headers.length;
+  let row = startRow;
 
-  sheet.columns = headers.map((_, i) => ({
-    width: i === 0 ? 32 : Math.min(22, Math.max(8, headers[i].length + 4)),
-  }));
+  if (activityDetails.length === 0 || filteredMembers.length === 0) {
+    ws.getCell(row, 1).value = `DISTRIBUTION PAR ACTIVITÉ`;
+    ws.getCell(row, 1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+    ws.getCell(row, 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
+    row++;
+    ws.getCell(row, 1).value = 'Aucune activité dans la période sélectionnée';
+    ws.getCell(row, 1).font = { name: 'Arial', size: 11, italic: true, color: { argb: 'FF9CA3AF' } };
+    row++;
+    return { nextRow: row + 1, attendanceByActivity };
+  }
 
-  let row = 1;
+  const SECTION_COLS = activityDetails.length + 2;
 
-  sheet.mergeCells(row, 1, row, TOTAL_COLS);
-  const titleRow = sheet.getRow(row);
-  titleRow.getCell(1).value = `MATRICE DES PRÉSENCES (${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()})`;
+  ws.mergeCells(row, 1, row, SECTION_COLS);
+  const titleRow = ws.getRow(row);
+  titleRow.getCell(1).value = `DISTRIBUTION PAR ACTIVITÉ`;
   titleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
   titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
   titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-  titleRow.height = 30;
+  titleRow.height = 28;
   row++;
 
-  const headerRow = sheet.getRow(row);
-  headerRow.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getColumn(2).width = Math.max(ws.getColumn(2).width ?? 0, 34);
+  activityDetails.forEach((activity, i) => {
+    const col = i + 3;
+    const desired = Math.max(22, activity.name.length + 4);
+    ws.getColumn(col).width = Math.max(ws.getColumn(col).width ?? 0, desired);
+  });
+
+  const headerRow = ws.getRow(row);
+  headerRow.getCell(2).value = 'Membre';
+  headerRow.getCell(2).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B3A5C' } };
+  headerRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+  activityDetails.forEach((activity, i) => {
+    const cell = headerRow.getCell(i + 3);
+    cell.value = activity.name;
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+  });
   headerRow.height = 32;
-  for (let i = 0; i < TOTAL_COLS; i++) {
-    const cell = headerRow.getCell(i + 1);
-    cell.value = headers[i];
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i === 0 ? 'FF1B3A5C' : 'FF0D2137' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: i > 0 };
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF000000' } },
-      right: { style: 'thin', color: { argb: 'FF000000' } },
-    };
-  }
   row++;
+
+  const periodEndDate = new Date(periodEnd);
 
   filteredMembers.forEach((member, memberIdx) => {
-    const rowObj = sheet.getRow(row);
+    const rowObj = ws.getRow(row);
     const memberJoin = member.joined_at ? new Date(member.joined_at) : (member.created_at ? new Date(member.created_at) : null);
-    const joinedAfterPeriod = memberJoin && memberJoin > periodEndDate;
+    const joinedAfterPeriod = memberJoin ? memberJoin > periodEndDate : false;
 
-    rowObj.getCell(1).value = member.fullname;
-    rowObj.getCell(1).font = { name: 'Arial', size: 10, bold: true };
-    rowObj.getCell(1).alignment = { vertical: 'middle' };
+    rowObj.getCell(2).value = member.fullname;
+    rowObj.getCell(2).font = { name: 'Arial', size: 10, bold: true };
+    rowObj.getCell(2).alignment = { vertical: 'middle' };
 
-    activityDetails.forEach((activity, actIdx) => {
-      const cell = rowObj.getCell(actIdx + 2);
+    activityDetails.forEach((activity, i) => {
+      const cell = rowObj.getCell(i + 3);
 
       if (joinedAfterPeriod) {
         cell.value = '-';
@@ -758,9 +691,11 @@ const buildActivityMatrix = (
       }
     });
 
-    rowObj.height = 20;
+    rowObj.height = 26;
     row++;
   });
+
+  return { nextRow: row + 1, attendanceByActivity };
 };
 
 export const getRankColor = (tier: string): string => {
