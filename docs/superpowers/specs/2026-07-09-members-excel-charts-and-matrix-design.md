@@ -7,9 +7,15 @@ The "Membres" Excel export (`src/features/Members/utils.ts`, `downloadMembersAsE
 - ✗ if the member did not attend
 - `-` if the member was not yet a member at the time
 
+Both the matrix's columns and rows need to be sized generously (wide columns, tall rows) so activity names and member names aren't cramped.
+
 The export should also include several graphical charts (role distribution, activity-type participation, per-activity attendance rate, member status breakdown) so the file communicates trends visually, not just as tables.
 
 The user also wants the per-member table itself to drop the `Rôle` and `Poste` columns when the export contains only one distinct role (e.g. downloading a single-role filter), since repeating the same role on every row is redundant — the role should instead be shown once, in the main title.
+
+Finally, the export needs a "final decision" indicator per member: who should be flagged for exclusion (low engagement) vs. who should be encouraged (below-average but not critical). This only applies to regular members (`Member`/`New Member` roles) — leadership rows are left blank.
+
+All text added to the workbook (new column header, decision values, chart titles, chart legends) must be in French, consistent with the rest of the export.
 
 ## Existing code that already solves half the problem
 
@@ -25,6 +31,7 @@ The user also wants the per-member table itself to drop the `Rôle` and `Poste` 
    - Per-activity attendance rate (bar): % of eligible members who attended, one bar per individual activity
    - Member status breakdown (pie): Active / Inactive / Suspended / Not yet member
 4. **Single-role collapse.** When the exported members reduce to exactly one distinct role, the `Rôle` and `Poste` columns are dropped from the table entirely, and the role name is appended to the main title instead (e.g. `MEMBRES JCI HAMMAM SOUSSE — PRÉSIDENT`).
+5. **Décision column, not a separate list.** A `Décision` column is added as the last column of the main table (after `Taux présence`), populated only for `Member`/`New Member` rows: `À exclure` (presence 0-20%, same range the table already colors red as "Inactif") or `À encourager` (presence 21-40%). Leadership rows and members outside both ranges get `-`.
 
 ## Design
 
@@ -49,6 +56,10 @@ These types already match `ActivityDetail[]` / `ParticipationActivityId[]` in `u
   - If `activityDetails` is empty or there are no members, render a single "Aucune activité dans la période sélectionnée" row (same fallback text as today), so the section degrades gracefully instead of rendering an empty table.
   - Returns the next free row index, same contract as today, so the chart section below can keep stacking.
 - Call site: `downloadMembersAsExcel` already gates the old call behind `if (participationMap)`; change the gate to also require `activityDetails && participationsWithActivityId`, matching how `buildActivityMatrix` used to be gated. If either is missing, skip the section entirely (no broken partial table).
+- **Sizing, and the shared-column-width gotcha:** ExcelJS column widths are set per column *index* for the whole sheet, not per section — so the matrix can't call `ws.columns = [...]` the way the old standalone-sheet version did, or it would silently overwrite the widths already set for the main table's `N°`/`Nom`/`Email`/etc. columns. Instead:
+  - The matrix's `Membre` name column reuses column 2 (the same column already used for `Nom` in the main table, and for section labels like `Total des membres :` elsewhere in the sheet) — bump its width up (e.g. to 34) rather than leaving it at 32, since the user wants generous sizing.
+  - Activity columns start at column 3. For each one, set `ws.getColumn(col).width = Math.max(ws.getColumn(col).width ?? 0, 22)` (22 as a floor, wider if the activity name is long) — `Math.max` so we never shrink a width some other section already needs at that index.
+  - Matrix rows get `row.height = 26` (up from the old matrix's 20), matching the "rows must be big too" ask. Row height has no cross-section sharing issue since each row index belongs to one section only.
 
 ### 3. Chart rendering — new file `src/features/Members/chartRenderer.ts`
 
@@ -74,7 +85,11 @@ After the existing "RÉSUMÉ DES COMITÉS" section (or after the new distributio
   3. Per-activity attendance rate — derived from the same `attendanceByActivity` map used by the distribution matrix: `rate = attendees / eligibleMembers * 100` per activity, where eligible members are those not showing `-` for that activity (i.e., joined on/before `periodEnd`, consistent with the matrix's own eligibility rule).
   4. Member status counts — tally `getStatus()` results (`Actif` / `Inactif` / `Suspendu` / `Pas encore membre`) while iterating members in the main loop (small addition: bump a counter object instead of only writing the cell value).
 - Renders each dataset to a PNG via `chartRenderer`, registers it with `wb.addImage(...)`, and places it with `ws.addImage(imageId, { tl: { col, row }, ext: { width, height } })` in a 2×2 grid (~8 columns / ~18 rows per chart cell, tuned to roughly 400×300px charts).
-- Adds a bold title cell above each chart image (reusing the section-title styling already used elsewhere).
+- Adds a bold title cell above each chart image (reusing the section-title styling already used elsewhere). Exact French titles and data labels (all labels reuse strings already used elsewhere in the sheet, for consistency):
+  1. "RÉPARTITION PAR RÔLE" — pie, one slice per role name from `groupedMembers`.
+  2. "PARTICIPATION PAR TYPE D'ACTIVITÉ" — bar, labels `Événements` / `Réunions` / `Formations` / `Assemblée` (same `typeLabels` array the old aggregate table used).
+  3. "TAUX DE PRÉSENCE PAR ACTIVITÉ" — bar, one bar per `activityDetails[i].name`, value = attendance rate %.
+  4. "RÉPARTITION PAR STATUT" — pie, labels `Actif` / `Inactif` / `Suspendu` / `Pas encore membre` (same strings `getStatus()` already returns).
 
 ### 5. Single-role column collapse — `utils.ts`
 
@@ -95,6 +110,21 @@ Today `downloadMembersAsExcel` builds `columnDefs` (deciding whether to include 
    (`Poste` is never inserted in single-role mode since that branch is skipped entirely.)
 5. Title row: `titleRow.getCell(1).value = isSingleRole ? \`MEMBRES JCI HAMMAM SOUSSE — ${sortedRoles[0].toUpperCase()}\` : 'MEMBRES JCI HAMMAM SOUSSE'`.
 6. Everything downstream (the per-role member loop, `cellValues.role`/`cellValues.post` assignment, summary sections) is unaffected: `cellValues` still sets `role`/`post` keys, they're just silently unused when absent from `columnDefs` — same pattern the code already relies on elsewhere (`columnDefs.forEach(def => cell.value = cellValues[def.key] ?? '-')`).
+
+### 6. `Décision` column — `utils.ts`
+
+- Add `{ key: 'decision', header: 'Décision', width: 20, color: 'FFDC2626' }` to the end of `BASE_COLUMN_DEFS`, after the `presence` entry — it's always the last column, independent of single-role collapse or `includeTeams`/post logic (those only affect columns before it).
+- New helper, next to `getPresenceRate`/`getStatus`:
+  ```ts
+  const getDecision = (role: string, presencePercent: number): string => {
+    if (!isSimpleRole(role)) return '-';
+    if (presencePercent >= 0 && presencePercent <= 20) return 'À exclure';
+    if (presencePercent >= 21 && presencePercent <= 40) return 'À encourager';
+    return '-';
+  };
+  ```
+  Called per row as `getDecision(role, presence.percent)`, reusing the `presence` value already computed in the row loop (`presence.percent` is `-1`/`-2` for "no data"/"not yet member" cases, which `getDecision` naturally passes through as `-` since neither branch matches).
+- Cell coloring follows the same pattern as the existing `isPresenceCol`/`isStatusCol` conditional-font block: `À exclure` → bold red (`FFFF0000`), `À encourager` → bold orange (`FFFF8C00`), `-` → default row color.
 
 ## Non-goals
 
