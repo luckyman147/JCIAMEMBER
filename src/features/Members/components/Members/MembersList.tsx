@@ -13,7 +13,7 @@ interface MembersListProps {
 }
 
 export default function MembersList({ members, loading, sortBy }: MembersListProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const table_classe = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
 
@@ -103,7 +103,7 @@ export default function MembersList({ members, loading, sortBy }: MembersListPro
                                     <th className={table_classe}>{t('profile.member', 'Member')}</th>
                                     <th className={table_classe}>{t('profile.validation', 'Status')}</th>
                                     <th className={table_classe}>{t('profile.role', 'Role')}</th>
-                                    <th className={table_classe}>{t('profile.jpsScore', 'JPS Score')}</th>
+                                    <th className={table_classe}>{t('profile.joined', 'Joined')}</th>
 
                                     <th className={table_classe}>{t('profile.volunteering', 'Volunteering')}</th>
                                     <th className={table_classe}>{t('profile.cotisation', 'Cotisation')}</th>
@@ -158,19 +158,11 @@ export default function MembersList({ members, loading, sortBy }: MembersListPro
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-white bg-(--color-mySecondary) px-2 py-0.5 rounded-xl   ">
-                                                        {member.jps_score !== undefined && member.jps_score !== null 
-                                                            ? member.jps_score.toFixed(1) 
-                                                            : 'N/A'}
-                                                    </span>
-                                                    {member.jps_category && (
-                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-(--color-myPrimary) font-medium">
-                                                            {member.jps_category}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                                                {new Date(member.joined_at || member.created_at!).toLocaleDateString(
+                                                    i18n.language === 'ar' ? 'ar-TN' : i18n.language === 'fr' ? 'fr-FR' : 'en-US',
+                                                    { year: 'numeric', month: 'short', day: 'numeric' }
+                                                )}
                                             </td>
 
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
@@ -242,19 +234,13 @@ export default function MembersList({ members, loading, sortBy }: MembersListPro
                                     </div>
 
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.jpsScore', 'JPS Score')}</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-bold text-gray-900">
-                                                {member.jps_score !== undefined && member.jps_score !== null 
-                                                    ? member.jps_score.toFixed(1) 
-                                                    : 'N/A'}
-                                            </span>
-                                            {member.jps_category && (
-                                                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
-                                                    {member.jps_category}
-                                                </span>
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.joined', 'Joined')}</span>
+                                        <span className="text-sm font-semibold text-gray-900">
+                                            {new Date(member.joined_at || member.created_at!).toLocaleDateString(
+                                                i18n.language === 'ar' ? 'ar-TN' : i18n.language === 'fr' ? 'fr-FR' : 'en-US',
+                                                { year: 'numeric', month: 'short', day: 'numeric' }
                                             )}
-                                        </div>
+                                        </span>
                                     </div>
 
                                     <div className="flex items-center justify-between border-t border-gray-50 pt-2">

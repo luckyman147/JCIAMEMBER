@@ -61,5 +61,18 @@
   "topGrowth": "Meilleure Progression",
   "pointGains": "Points Gagnés",
   "monthlyGains": "Gains de Points Mensuels",
-  "noPointsActivity": "Aucune activité de points trouvée pour cette période."
+  "noPointsActivity": "Aucune activité de points trouvée pour cette période.",
+  "downloadExcel": "Télécharger",
+  "downloadOptions": "Options de téléchargement",
+  "rolesToInclude": "Rôles à inclure",
+  "allRoles": "Tous les rôles",
+  "rolesSelected": "rôle(s) sélectionné(s)",
+  "period": "Période",
+  "to": "au",
+  "includeCommittees": "Inclure les comités",
+  "download": "Télécharger",
+  "lastMonth": "Mois dernier",
+  "trimester": "Trimestre",
+  "semester": "Semestre",
+  "custom": "Personnalisé"
 }

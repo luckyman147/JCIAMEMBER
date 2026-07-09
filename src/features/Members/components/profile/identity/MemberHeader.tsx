@@ -183,6 +183,17 @@ export default function MemberHeader({
                 </span>
               </div>
             )}
+            {(member.joined_at || member.created_at) && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-gray-500 text-xs">{t('profile.joined', 'Joined')}:</span>
+                <span className="font-semibold text-white bg-(--color-mySecondary) px-2 py-1 rounded-full text-xs">
+                  {new Date(member.joined_at || member.created_at!).toLocaleDateString(currentLocale, {
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

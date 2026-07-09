@@ -114,6 +114,7 @@ export const activityService = {
           registration_deadline: activity.registration_deadline ?? null,
           treasurer_id: (activity as any).treasurer_id ?? null,
           general_secretary_id: (activity as any).general_secretary_id ?? null,
+          event_chef_id: (activity as any).event_chef_id ?? null,
         })
         break
       }
@@ -176,11 +177,12 @@ export const activityService = {
 
     const type = updates.type || parent?.type
     if (type === 'event') {
-      const { registration_deadline, treasurer_id, general_secretary_id } = updates as any
+      const { registration_deadline, treasurer_id, general_secretary_id, event_chef_id } = updates as any
       const eventUpdates: any = {}
       if (registration_deadline !== undefined) eventUpdates.registration_deadline = registration_deadline
       if (treasurer_id !== undefined) eventUpdates.treasurer_id = treasurer_id
       if (general_secretary_id !== undefined) eventUpdates.general_secretary_id = general_secretary_id
+      if (event_chef_id !== undefined) eventUpdates.event_chef_id = event_chef_id
       if (Object.keys(eventUpdates).length > 0) {
         await supabase.from('events').update(eventUpdates).eq('id', id)
       }

@@ -20,7 +20,7 @@ export default function MembersPage() {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === 'ar';
     const { data: members = [], isLoading: membersLoading } = useMembers();
-    const { data: history = [], isLoading: historyLoading } = useAllPointsHistory();
+    const { isLoading: historyLoading } = useAllPointsHistory();
     const { data: allTaskAssignments = [], isLoading: tasksLoading } = useAllMemberTasks();
     const { role } = useAuth();
     const isExecutive = EXECUTIVE_LEVELS.includes(role?.toLowerCase() || "");
@@ -248,7 +248,6 @@ export default function MembersPage() {
                 <MembersStatistics
                   members={members}
                   tasks={allTaskAssignments}
-                  history={history}
                   limit={statsExpanded ? Infinity : 2}
                 />
                 {!statsExpanded ? (

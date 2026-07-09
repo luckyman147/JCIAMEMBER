@@ -173,5 +173,7 @@
   "recent": "Recent",
   "noActivitiesOnDay": "No activities on this day",
   "noUpcomingActivities": "No upcoming activities",
-  "noRecentActivities": "No recent activities"
+  "noRecentActivities": "No recent activities",
+  "eventChef": "Event Chief",
+  "eventChefLabel": "Event Chief"
 }

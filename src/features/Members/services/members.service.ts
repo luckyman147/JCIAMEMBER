@@ -34,7 +34,7 @@ export const getMembers = async (): Promise<Member[]> => {
         .from('profiles')
         .select(`
             id, fullname, avatar_url, email, phone, is_validated, points,
-            roles(name), birth_date, job_title, specialties,
+            created_at, joined_at, roles(name), birth_date, job_title, specialties,
             availability_days, availability_time, astrological_sign,
             preferred_social_media, social_media_link, preferred_committee,
             preferred_activity_type, preferred_meal, cotisation_status,
@@ -76,7 +76,7 @@ export const getMemberById = async (id: string): Promise<Member | null> => {
         .select(`
             id, fullname, avatar_url, email, phone, roles(name),
             cotisation_status, is_validated, points, description,
-            strengths, weaknesses, created_at, birth_date,
+            strengths, weaknesses, created_at, joined_at, birth_date,
             complaints (id, content, status, created_at,member_id),
             job_title, specialties, availability_days, availability_time,
             astrological_sign, preferred_social_media, social_media_link,
@@ -143,7 +143,7 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
 
         const finalPayload: any = {};
         const selfFields = [
-            'fullname', 'phone', 'birth_date', 'description', 'avatar_url', 
+            'fullname', 'phone', 'birth_date', 'joined_at', 'description', 'avatar_url', 
             'strengths', 'weaknesses', 'job_title', 'specialties', 
             'availability_days', 'availability_time', 'estimated_volunteering_hours',
             'astrological_sign', 'preferred_social_media', 'social_media_link',

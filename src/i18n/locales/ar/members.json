@@ -62,6 +62,19 @@
     "topGrowth": "الأكثر تطوراً",
     "pointGains": "زيادة النقاط",
     "monthlyGains": "زيادة النقاط الشهرية",
-    "noPointsActivity": "لا يوجد نشاط نقاط لهذه الفترة."
+    "noPointsActivity": "لا يوجد نشاط نقاط لهذه الفترة.",
+    "downloadExcel": "تحميل",
+    "downloadOptions": "خيارات التحميل",
+    "rolesToInclude": "الأدوار المراد تضمينها",
+    "allRoles": "جميع الأدوار",
+    "rolesSelected": "الدور/الأدوار المحددة",
+    "period": "الفترة",
+    "to": "إلى",
+    "includeCommittees": "تضمين اللجان",
+    "download": "تحميل",
+    "lastMonth": "الشهر الماضي",
+    "trimester": "ربع سنوي",
+    "semester": "نصف سنوي",
+    "custom": "مخصص"
   }
 }

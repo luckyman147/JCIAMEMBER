@@ -41,6 +41,7 @@ export interface Member {
     complaints?: Complaint[];  
     
     created_at?: string;
+    joined_at?: string;
     birth_date?: string;
     is_banned?: boolean;
 

@@ -168,5 +168,7 @@
   "recent": "Récentes",
   "noActivitiesOnDay": "Aucune activité ce jour-là",
   "noUpcomingActivities": "Aucune activité à venir",
-  "noRecentActivities": "Aucune activité récente"
+  "noRecentActivities": "Aucune activité récente",
+  "eventChef": "Chef d'Événement",
+  "eventChefLabel": "Chef d'Événement"
 }

@@ -26,6 +26,7 @@ export const useEditMemberForm = ({ member, isOpen, onClose, onSave }: UseEditMe
   const [fullname, setFullname] = useState(member.fullname);
   const [phone, setPhone] = useState(member.phone || '');
   const [birthday, setBirthday] = useState(member.birth_date || '');
+  const [joinedAt, setJoinedAt] = useState(member.joined_at || member.created_at?.split('T')[0] || '');
   const [role, setRole] = useState(member.role);
   const [posteId, setPosteId] = useState(member.poste_id || '');
   
@@ -53,6 +54,7 @@ export const useEditMemberForm = ({ member, isOpen, onClose, onSave }: UseEditMe
       setPhone(member.phone || '');
       const formattedDate = member.birth_date ? member.birth_date.split('T')[0] : '';
       setBirthday(formattedDate);
+      setJoinedAt(member.joined_at || member.created_at?.split('T')[0] || '');
       setRole(member.role);
       setPosteId(member.poste_id || '');
       avatarImage.setUrls(member.avatar_url ? [member.avatar_url] : []);
@@ -96,6 +98,7 @@ export const useEditMemberForm = ({ member, isOpen, onClose, onSave }: UseEditMe
         updates.fullname = fullname;
         updates.phone = phone;
         updates.birth_date = birthday;
+        if (joinedAt) updates.joined_at = joinedAt;
         updates.avatar_url = imageUrl || member.avatar_url;
       }
 
@@ -164,14 +167,14 @@ export const useEditMemberForm = ({ member, isOpen, onClose, onSave }: UseEditMe
 
   return {
     state: {
-      fullname, phone, birthday, role, posteId,
+      fullname, phone, birthday, joinedAt, role, posteId,
       availableRoles, availablePostes, loading,
       isManagingPoste, newPosteName, editingPosteId, editPosteName,
       allRolesDetailed, selectedRoleIdForNew,
       canEditExclusive, isOwnProfile, avatarImage, currentUserRole
     },
     setters: {
-      setFullname, setPhone, setBirthday, setRole, setPosteId,
+      setFullname, setPhone, setBirthday, setJoinedAt, setRole, setPosteId,
       setNewPosteName, setEditingPosteId, setEditPosteName, setSelectedRoleIdForNew
     },
     handlers: {

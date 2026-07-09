@@ -30,7 +30,7 @@ export default function ActivityDetails() {
   const { id } = useParams<{ id: string }>()
   const { user, role } = useAuth()
   const { t, i18n } = useTranslation()
-  const { activity, categories, otherActivities, committees, members, loading, deleteActivity, treasurerId, generalSecretaryId } = useActivityDetail(id)
+  const { activity, categories, otherActivities, committees, members, loading, deleteActivity, treasurerId, generalSecretaryId, eventChefId } = useActivityDetail(id)
 
   const [preview, setPreview] = useState<{ items: {url: string; title: string}[]; activeIndex: number; isOpen: boolean }>({
     items: [],
@@ -152,13 +152,14 @@ export default function ActivityDetails() {
             </div>
           </div>
 
-          {(activity.type === 'event' && (committees.length > 0 || treasurerId || generalSecretaryId)) && (
+          {(activity.type === 'event' && (committees.length > 0 || treasurerId || generalSecretaryId || eventChefId)) && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
               <CommitteeTree
                 committees={committees}
                 projectId={activity.project_id}
                 treasurerId={treasurerId}
                 generalSecretaryId={generalSecretaryId}
+                eventChefId={eventChefId}
                 members={members}
               />
             </div>

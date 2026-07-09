@@ -27,6 +27,7 @@ export interface CreateEventDTO extends ActivityDTOBase {
   registration_deadline?: string | null
   treasurer_id?: string | null
   general_secretary_id?: string | null
+  event_chef_id?: string | null
 }
 
 // Meeting-specific DTO

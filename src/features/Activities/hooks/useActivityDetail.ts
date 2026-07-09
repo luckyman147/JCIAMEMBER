@@ -85,5 +85,6 @@ export function useActivityDetail(id: string | undefined) {
     refetch: () => id && loadActivity(id),
     treasurerId: eventActivity?.treasurer_id,
     generalSecretaryId: eventActivity?.general_secretary_id,
+    eventChefId: eventActivity?.event_chef_id,
   }
 }

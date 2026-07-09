@@ -1,4 +1,4 @@
-import { Crown, Users, ExternalLink, Handshake, Camera, ClipboardList, Package, ChevronDown, Landmark, FileText } from 'lucide-react'
+import { Crown, Users, ExternalLink, Handshake, Camera, ClipboardList, Package, ChevronDown, Landmark, FileText, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { COMMITTEE_LABELS, OFFICER_LABELS } from '../../models/Committee'
@@ -16,10 +16,11 @@ interface CommitteeTreeProps {
   projectId?: string
   treasurerId?: string
   generalSecretaryId?: string
+  eventChefId?: string
   members?: SimpleMember[]
 }
 
-export default function CommitteeTree({ committees, projectId, treasurerId, generalSecretaryId, members = [] }: CommitteeTreeProps) {
+export default function CommitteeTree({ committees, projectId, treasurerId, generalSecretaryId, eventChefId, members = [] }: CommitteeTreeProps) {
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
 
@@ -74,14 +75,14 @@ export default function CommitteeTree({ committees, projectId, treasurerId, gene
 
       {!collapsed && (
         <div className="space-y-6">
-          {(treasurerId || generalSecretaryId) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(['treasurer', 'general_secretary'] as const).map(role => {
-                const officerId = role === 'treasurer' ? treasurerId : generalSecretaryId
+          {(treasurerId || generalSecretaryId || eventChefId) && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(['event_chef', 'treasurer', 'general_secretary'] as const).map(role => {
+                const officerId = role === 'event_chef' ? eventChefId : role === 'treasurer' ? treasurerId : generalSecretaryId
                 if (!officerId) return null
                 const officer = members.find(m => m.id === officerId)
                 if (!officer) return null
-                const Icon = role === 'treasurer' ? Landmark : FileText
+                const Icon = role === 'event_chef' ? Star : role === 'treasurer' ? Landmark : FileText
                 return (
                   <div key={role} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
                     <div className="w-9 h-9 rounded-lg bg-(--color-myPrimary)/10 flex items-center justify-center shrink-0">

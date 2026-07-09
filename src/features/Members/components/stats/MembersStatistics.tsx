@@ -9,43 +9,27 @@ import { MemberTalentStats } from './dashboard/MemberTalentStats';
 import { CotisationStats } from './dashboard/CotisationStats';
 import { AvailabilityStats } from './dashboard/AvailabilityStats';
 import { VolunteeringStats } from './dashboard/VolunteeringStats';
-import { Zap, Heart, CreditCard, Calendar, Target, Brain, Clock, Trophy, Activity } from 'lucide-react';
-import { JPSLeaderboardStats } from './dashboard/JPSLeaderboardStats';
-import MembersGrowthChart from './dashboard/MembersGrowthChart';
+import { Zap, Heart, CreditCard, Calendar, Target, Brain, Clock } from 'lucide-react';
+
 import MostAttendedChart from './dashboard/MostAttendedChart';
 
 interface MembersStatisticsProps {
     members: Member[];
     tasks?: MemberTask[];
-    history?: any[];
     limit?: number;
 }
 
-export default function MembersStatistics({ members, tasks = [], history = [], limit = Infinity }: MembersStatisticsProps) {
+export default function MembersStatistics({ members, tasks = [], limit = Infinity }: MembersStatisticsProps) {
     const { t } = useTranslation();
 
     if (members.length === 0) return null;
 
     const sections = [
-        <section key="jps" className="space-y-6">
-            <div className="flex items-center gap-3 border-l-4 border-purple-500 pl-4 py-1">
-                <Trophy className="w-5 h-5 text-purple-500" />
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.jpsLeaderboard', 'JPS Score')}</h2>
-            </div>
-            <JPSLeaderboardStats initialMembers={members} />
-        </section>,
-
         <section key="most-attended" className="space-y-6">
             <MostAttendedChart />
         </section>,
 
-        <section key="growth" className="space-y-6">
-            <div className="flex items-center gap-3 border-l-4 border-sky-500 pl-4 py-1">
-                <Activity className="w-5 h-5 text-sky-500" />
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">{t('members.memberGrowth', 'Member Growth')}</h2>
-            </div>
-            <MembersGrowthChart history={history} />
-        </section>,
+        
 
         <section key="demographics" className="space-y-6">
             <div className="flex items-center gap-3 border-l-4 border-blue-500 pl-4 py-1">

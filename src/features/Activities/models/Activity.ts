@@ -33,6 +33,7 @@ export interface EventActivity extends ActivityBase {
   project_id?: string
   treasurer_id?: string
   general_secretary_id?: string
+  event_chef_id?: string
 }
 
 // Meeting-specific properties

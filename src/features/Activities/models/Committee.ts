@@ -1,18 +1,21 @@
-export type OfficerRole = 'treasurer' | 'general_secretary'
+export type OfficerRole = 'treasurer' | 'general_secretary' | 'event_chef'
 
 export interface EventOfficers {
   treasurer_id: string | null
   general_secretary_id: string | null
+  event_chef_id: string | null
 }
 
 export const OFFICER_LABELS: Record<OfficerRole, string> = {
   treasurer: 'Trésorier',
   general_secretary: 'Secrétaire Général',
+  event_chef: 'Chef d\'Événement',
 }
 
 export const OFFICER_ICONS: Record<OfficerRole, string> = {
   treasurer: 'Landmark',
   general_secretary: 'FileText',
+  event_chef: 'Star',
 }
 
 export type CommitteeName = 'sponsoring' | 'media' | 'program' | 'logistic'

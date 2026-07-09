@@ -113,7 +113,7 @@ export function useActivityForm(): UseActivityFormReturn {
   const [meetingAgenda, setMeetingAgenda] = useState<AgendaItem[]>([])
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([])
   const [committees, setCommittees] = useState<Record<CommitteeName, CommitteeFormState>>(DEFAULT_COMMITTEE_STATE)
-  const [officers, setOfficers] = useState<EventOfficers>({ treasurer_id: null, general_secretary_id: null })
+  const [officers, setOfficers] = useState<EventOfficers>({ treasurer_id: null, general_secretary_id: null, event_chef_id: null })
 
   // Fetch activity data in edit mode
   useEffect(() => {
@@ -190,6 +190,7 @@ export function useActivityForm(): UseActivityFormReturn {
           setOfficers({
             treasurer_id: eventActivity.treasurer_id || null,
             general_secretary_id: eventActivity.general_secretary_id || null,
+            event_chef_id: eventActivity.event_chef_id || null,
           })
           const existingCommittees = await committeeService.getActivityCommittees(id)
           if (existingCommittees.length > 0) {
@@ -294,6 +295,7 @@ export function useActivityForm(): UseActivityFormReturn {
           registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : null,
           treasurer_id: officers.treasurer_id,
           general_secretary_id: officers.general_secretary_id,
+          event_chef_id: officers.event_chef_id,
         }
       case 'meeting':
         return {
@@ -345,11 +347,7 @@ export function useActivityForm(): UseActivityFormReturn {
           await activityService.setActivityCategories(id, selectedCategoryIds)
         }
         if (data.type === 'event') {
-          try {
-            await committeeService.saveActivityCommittees(id, committees, user.id)
-          } catch (err) {
-            console.error('Failed to update committees:', err)
-          }
+          await committeeService.saveActivityCommittees(id, committees, user.id)
         }
         createdActivityId = id
         toast.dismiss()

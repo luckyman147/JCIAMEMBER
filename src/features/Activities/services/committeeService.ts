@@ -23,9 +23,9 @@ export const committeeService = {
     const { data: teams, error } = await supabase
       .from('teams')
       .select(`
-        *,
+        id, name, activity_id, project_id,
         members:team_members (
-          *,
+          id, team_id, member_id, role, custom_title,
           member:profiles (id, fullname, avatar_url)
         )
       `)
@@ -103,52 +103,37 @@ export const committeeService = {
 
       const { data: existingRows } = await supabase
         .from('team_members')
-        .select('id, member_id, role')
+        .select('member_id, role')
         .eq('team_id', team.id)
 
-      const existingMembers = existingRows || []
+      const currentMap = new Map((existingRows || []).map((r: any) => [r.member_id, r.role]))
       const newLeadId = data.chef_id
-      const newMemberIds = data.member_ids.filter(id => id !== newLeadId)
+      const newMemberIds = data.member_ids.filter((id: string) => id !== newLeadId)
+      const desiredIds = new Set(newMemberIds)
+      if (newLeadId) desiredIds.add(newLeadId)
 
-      const oldLead = existingMembers.find(m => m.role === 'lead')
-      if (oldLead && oldLead.member_id !== newLeadId) {
-        if (newMemberIds.includes(oldLead.member_id)) {
-          await updateTeamMember(team.id, oldLead.member_id, { role: 'member' })
-        } else {
-          await leaveTeam(team.id, oldLead.member_id)
+      for (const existing of (existingRows || [])) {
+        if (!desiredIds.has(existing.member_id)) {
+          try { await leaveTeam(team.id, existing.member_id) } catch (e) {
+            console.error(`Failed to remove ${existing.member_id} from ${name}:`, e)
+          }
         }
       }
 
       if (newLeadId) {
-        const existingLeadEntry = existingMembers.find(m => m.member_id === newLeadId)
-        if (existingLeadEntry) {
-          if (existingLeadEntry.role !== 'lead') {
-            await updateTeamMember(team.id, newLeadId, { role: 'lead' })
-          }
-        } else {
+        const currentRole = currentMap.get(newLeadId)
+        if (!currentRole) {
           await addTeamMember(team.id, newLeadId, 'lead')
-        }
-      }
-
-      const currentMemberIds = existingMembers.map(m => m.member_id)
-      const finalMemberIds = new Set(currentMemberIds)
-
-      if (newLeadId) finalMemberIds.add(newLeadId)
-      for (const mid of newMemberIds) finalMemberIds.add(mid)
-
-      for (const existing of existingMembers) {
-        const shouldKeep =
-          (existing.role === 'lead' && existing.member_id === newLeadId) ||
-          (existing.role === 'lead' && !newLeadId)
-
-        if (!shouldKeep && !newMemberIds.includes(existing.member_id) && existing.member_id !== newLeadId) {
-          await leaveTeam(team.id, existing.member_id)
+        } else if (currentRole !== 'lead') {
+          try { await updateTeamMember(team.id, newLeadId, { role: 'lead' }) } catch (e) {
+            await leaveTeam(team.id, newLeadId)
+            await addTeamMember(team.id, newLeadId, 'lead')
+          }
         }
       }
 
       for (const mid of newMemberIds) {
-        const alreadyExists = existingMembers.some(e => e.member_id === mid)
-        if (!alreadyExists) {
+        if (!currentMap.has(mid)) {
           await addTeamMember(team.id, mid, 'member')
         }
       }

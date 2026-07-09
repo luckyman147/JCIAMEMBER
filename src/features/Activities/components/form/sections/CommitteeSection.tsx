@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronUp, Crown, Users, X, Handshake, Camera, ClipboardList, Package, Landmark, FileText } from 'lucide-react'
+import { ChevronDown, ChevronUp, Crown, Users, X, Handshake, Camera, ClipboardList, Package, Landmark, FileText, Star } from 'lucide-react'
 import { activityService } from '../../../services/activityService'
 import { COMMITTEES, COMMITTEE_LABELS, OFFICER_LABELS } from '../../../models/Committee'
 import type { CommitteeName, CommitteeFormState, EventOfficers } from '../../../models/Committee'
@@ -26,7 +26,7 @@ export default function CommitteeSection({ committees, onChange, officers, onOff
   const [members, setMembers] = useState<SimpleMember[]>([])
   const [modalMode, setModalMode] = useState<ModalMode | null>(null)
   const [modalCommittee, setModalCommittee] = useState<CommitteeName | null>(null)
-  const [modalOfficerRole, setModalOfficerRole] = useState<'treasurer' | 'general_secretary' | null>(null)
+  const [modalOfficerRole, setModalOfficerRole] = useState<'treasurer' | 'general_secretary' | 'event_chef' | null>(null)
 
   useEffect(() => {
     activityService.getMembers().then(setMembers).catch(() => {})
@@ -92,11 +92,11 @@ export default function CommitteeSection({ committees, onChange, officers, onOff
 
           <div>
             <h4 className="text-sm font-bold text-gray-700 mb-3">{t('activities.eventOfficers', 'Event Officers')}</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(['treasurer', 'general_secretary'] as const).map(role => (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(['event_chef', 'treasurer', 'general_secretary'] as const).map(role => (
                 <div key={role} className="border border-gray-200 rounded-xl p-4">
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                    {role === 'treasurer' ? <Landmark className="w-3.5 h-3.5 inline mr-1 text-emerald-500" /> : <FileText className="w-3.5 h-3.5 inline mr-1 text-indigo-500" />}
+                    {role === 'event_chef' ? <Star className="w-3.5 h-3.5 inline mr-1 text-amber-500" /> : role === 'treasurer' ? <Landmark className="w-3.5 h-3.5 inline mr-1 text-emerald-500" /> : <FileText className="w-3.5 h-3.5 inline mr-1 text-indigo-500" />}
                     {OFFICER_LABELS[role]}
                   </label>
                   <button

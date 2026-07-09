@@ -15,14 +15,14 @@ interface EditMemberModalProps {
 export default function EditMemberModal(props: EditMemberModalProps) {
   const { state, setters, handlers } = useEditMemberForm(props);
   const { 
-    fullname, phone, birthday, role, posteId,
+    fullname, phone, birthday, joinedAt, role, posteId,
     availableRoles, availablePostes, loading,
     isManagingPoste, newPosteName, editingPosteId, editPosteName,
     canEditExclusive, isOwnProfile, avatarImage, currentUserRole
   } = state;
 
   const {
-    setFullname, setPhone, setBirthday, setRole, setPosteId,
+    setFullname, setPhone, setBirthday, setJoinedAt, setRole, setPosteId,
     setNewPosteName, setEditingPosteId, setEditPosteName
   } = setters;
 
@@ -53,6 +53,7 @@ export default function EditMemberModal(props: EditMemberModalProps) {
                 fullname={fullname} setFullname={setFullname}
                 phone={phone} setPhone={setPhone}
                 birthday={birthday} setBirthday={setBirthday}
+                joinedAt={joinedAt} setJoinedAt={setJoinedAt}
                 isOwnProfile={isOwnProfile}
                 canEditExclusive={canEditExclusive}
               />

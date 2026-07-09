@@ -61,5 +61,18 @@
   "topGrowth": "Top Growth",
   "pointGains": "Point gains",
   "monthlyGains": "Monthly point gains",
-  "noPointsActivity": "No points activity found for this period."
+  "noPointsActivity": "No points activity found for this period.",
+  "downloadExcel": "Download",
+  "downloadOptions": "Download Options",
+  "rolesToInclude": "Roles to Include",
+  "allRoles": "All Roles",
+  "rolesSelected": "role(s) selected",
+  "period": "Period",
+  "to": "to",
+  "includeCommittees": "Include Committees",
+  "download": "Download",
+  "lastMonth": "Last Month",
+  "trimester": "Quarter",
+  "semester": "Semester",
+  "custom": "Custom"
 }

@@ -165,6 +165,8 @@
     "recent": "الأخيرة",
     "noActivitiesOnDay": "لا توجد أنشطة في هذا اليوم",
     "noUpcomingActivities": "لا توجد أنشطة قادمة",
-    "noRecentActivities": "لا توجد أنشطة حديثة"
+"noRecentActivities": "لا توجد أنشطة حديثة",
+    "eventChef": "رئيس الحدث",
+    "eventChefLabel": "رئيس الحدث"
   }
 }

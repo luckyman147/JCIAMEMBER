@@ -8,6 +8,8 @@ interface BasicInfoFieldsProps {
   setPhone: (val: string) => void;
   birthday: string;
   setBirthday: (val: string) => void;
+  joinedAt: string;
+  setJoinedAt: (val: string) => void;
   isOwnProfile: boolean;
   canEditExclusive: boolean;
 }
@@ -16,6 +18,7 @@ export const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({
   fullname, setFullname,
   phone, setPhone,
   birthday, setBirthday,
+  joinedAt, setJoinedAt,
   isOwnProfile, canEditExclusive
 }) => {
   const { t } = useTranslation();
@@ -61,6 +64,19 @@ export const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({
           className={inputClass}
           value={birthday}
           onChange={(e) => setBirthday(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className='block text-sm font-medium text-gray-700 mb-1'>
+          {t('profile.joined', 'Date d\'adhésion')}
+        </label>
+        <input
+          type='date'
+          disabled={isDisabled}
+          className={inputClass}
+          value={joinedAt}
+          onChange={(e) => setJoinedAt(e.target.value)}
         />
       </div>
     </>
