@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Navbar from "../../../Global_Components/navBar";
 import MembersList from "../components/Members/MembersList";
 import MembersStatistics from "../components/stats/MembersStatistics";
@@ -6,7 +6,7 @@ import ComplaintsOverview from "../../../Global_Components/ComplaintsOverview";
 import { useMembers, useAllPointsHistory } from "../hooks/useMembers";
 import { useAllMemberTasks } from "../../Tasks/hooks/useTasks";
 import AddMemberModal from "../components/Members/AddMemberModal";
-import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard, Download, BarChart3, ArrowUp } from "lucide-react";
+import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard, Download, X } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 
@@ -30,24 +30,58 @@ export default function MembersPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [showStats, setShowStats] = useState(true);
     const [statsExpanded, setStatsExpanded] = useState(false);
-    const [showFloatingBtn, setShowFloatingBtn] = useState(false);
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
+    const [selectedRolesForDownload, setSelectedRolesForDownload] = useState<string[]>([]);
+    const [includeTeams, setIncludeTeams] = useState(true);
+    const [periodStart, setPeriodStart] = useState(`${new Date().getFullYear()}-01-01`);
+    const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0]);
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setShowFloatingBtn(window.scrollY > 600);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    const handleDownload = async () => {
+      try {
+        const dataStart = Math.min(
+          new Date(periodStart).getTime(),
+          ...members.map(m => m.created_at ? new Date(m.created_at).getTime() : Infinity)
+        );
+        const earliestDataDate = new Date(dataStart).toISOString().split('T')[0];
 
-    const scrollToStats = () => {
-        const el = document.getElementById('members-statistics');
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const memberIds = members.filter(m => !m.email?.includes('jci.hs') && m.role && m.role !== 'JCI Hammam Sousse').map(m => m.id);
+
+        const promises: Promise<any>[] = [
+          participationService.getParticipationsSince(memberIds, periodStart),
+          participationService.getActivityTypeCountsSince(periodStart),
+        ];
+
+        let committeePromise: Promise<any> = Promise.resolve(undefined);
+        if (includeTeams) {
+          committeePromise = import('../../Activities/services/committeeService').then(m => m.committeeService.getMembersCommitteeStats());
         }
+        promises.push(committeePromise);
+        promises.push(participationService.getParticipationsWithDates(memberIds, earliestDataDate));
+        promises.push(participationService.getAllActivitiesSince(earliestDataDate));
+        promises.push(participationService.getAllActivitiesWithDetails(earliestDataDate));
+        promises.push(participationService.getParticipationsWithActivityId(memberIds, earliestDataDate));
+
+        const [participationMap, activityTypeCounts, committeeMap, rawParticipations, rawActivities, activityDetails, participationsWithActivityId] = await Promise.all(promises);
+
+        await downloadMembersAsExcel(members, {
+          selectedRoles: selectedRolesForDownload,
+          includeTeams,
+          periodStart,
+          periodEnd,
+          participationMap,
+          activityTypeCounts,
+          committeeMap,
+          rawParticipations,
+          rawActivities,
+          activityDetails,
+          participationsWithActivityId,
+        });
+
+        setShowDownloadModal(false);
+      } catch {
+        toast.error('Failed to download Excel');
+      }
     };
-
-
 
     const loading = membersLoading || historyLoading || tasksLoading;
 
@@ -89,6 +123,16 @@ export default function MembersPage() {
 
         return result;
     }, [members, searchTerm, sortBy, cotisationFilter]);
+
+    const uniqueRoles = useMemo(() => {
+      const roles = new Set<string>();
+      members.forEach(m => {
+        if (m.role && m.role !== 'JCI Hammam Sousse' && !m.email?.includes('jci.hs')) {
+          roles.add(m.role);
+        }
+      });
+      return Array.from(roles).sort();
+    }, [members]);
 
     return (
       <div className='min-h-screen bg-gray-50'>
@@ -302,25 +346,12 @@ export default function MembersPage() {
                 </div>
 
                 <button
-                  onClick={async () => {
-                    try {
-                      const janFirst = `${new Date().getFullYear()}-01-01`
-                      const memberIds = members.filter(m => !m.email?.includes('jci.hs') && m.role && m.role !== 'JCI Hammam Sousse').map(m => m.id)
-                      const [participationMap, activityTypeCounts, committeeMap] = await Promise.all([
-                        participationService.getParticipationsSince(memberIds, janFirst),
-                        participationService.getActivityTypeCountsSince(janFirst),
-                        import('../../Activities/services/committeeService').then(m => m.committeeService.getMembersCommitteeStats()),
-                      ])
-                      await downloadMembersAsExcel(members, participationMap, activityTypeCounts, committeeMap)
-                    } catch {
-                      toast.error('Failed to download Excel')
-                    }
-                  }}
+                  onClick={() => setShowDownloadModal(true)}
                   className='flex items-center gap-2 px-4 py-4 bg-emerald-50 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-all font-semibold text-xs uppercase tracking-widest border border-emerald-200 whitespace-nowrap'
-                  title={t('members.downloadExcel', 'Download Excel')}
+                  title={t('members.downloadExcel', 'Télécharger Excel')}
                 >
                   <Download className='w-4 h-4' />
-                  {t('members.downloadExcel', 'Download')}
+                  {t('members.downloadExcel', 'Télécharger')}
                 </button>
               </div>
             </div>
@@ -333,16 +364,125 @@ export default function MembersPage() {
             />
 
           </div>
-          {showFloatingBtn && (
-            <button
-              onClick={scrollToStats}
-              className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-(--color-myAccent) text-white px-5 py-3.5 rounded-2xl shadow-2xl shadow-blue-900/30 hover:bg-blue-700 transition-all duration-300 hover:scale-105 active:scale-95 md:bottom-8 md:right-8"
-              title="Scroll to statistics"
-            >
-              <BarChart3 className="w-5 h-5" />
-              <span className="text-sm font-bold hidden sm:inline">Statistics</span>
-              <ArrowUp className="w-4 h-4" />
-            </button>
+
+          {showDownloadModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Options de téléchargement
+                  </h2>
+                  <button
+                    onClick={() => setShowDownloadModal(false)}
+                    className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Rôles à inclure
+                    </p>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {uniqueRoles.map(role => (
+                        <label key={role} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedRolesForDownload.length === 0 || selectedRolesForDownload.includes(role)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedRolesForDownload(prev =>
+                                  prev.length === 0 ? prev : [...prev, role]
+                                );
+                              } else {
+                                setSelectedRolesForDownload(prev =>
+                                  prev.length === 0
+                                    ? uniqueRoles.filter(r => r !== role)
+                                    : prev.filter(r => r !== role)
+                                );
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{role}</span>
+                        </label>
+                      ))}
+                      {uniqueRoles.length > 1 && (
+                        <label className="flex items-center gap-2 cursor-pointer border-t border-gray-100 pt-2 mt-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedRolesForDownload.length === 0}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedRolesForDownload([]);
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm font-semibold text-gray-700">Tous les rôles</span>
+                        </label>
+                      )}
+                    </div>
+                    {selectedRolesForDownload.length > 0 && selectedRolesForDownload.length < uniqueRoles.length && (
+                      <p className="text-xs text-gray-400 mt-1">{selectedRolesForDownload.length} rôle(s) sélectionné(s)</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Période
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={periodStart}
+                        onChange={e => setPeriodStart(e.target.value)}
+                        className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                      <span className="text-xs text-gray-400 self-center">au</span>
+                      <input
+                        type="date"
+                        value={periodEnd}
+                        onChange={e => setPeriodEnd(e.target.value)}
+                        className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Inclure les comités
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIncludeTeams(!includeTeams)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${includeTeams ? 'bg-blue-600' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${includeTeams ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      </button>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-gray-100 flex gap-2 shrink-0">
+                  <button
+                    onClick={() => setShowDownloadModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-semibold text-sm"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-semibold text-sm"
+                  >
+                    Télécharger
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </main>
       </div>
