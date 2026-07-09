@@ -128,9 +128,9 @@ export const participationService = {
   },
 
   /**
-   * Get participation counts per member by activity type since a given date
+   * Get participation counts per member by activity type within a date range
    */
-  getParticipationsSince: async (memberIds: string[], sinceDate: string) => {
+  getParticipationsSince: async (memberIds: string[], sinceDate: string, untilDate: string) => {
     if (memberIds.length === 0) return {}
 
     const { data, error } = await supabase
@@ -141,6 +141,7 @@ export const participationService = {
       `)
       .in('user_id', memberIds)
       .gte('registered_at', sinceDate)
+      .lte('registered_at', untilDate)
       .not('is_interested', 'eq', true)
 
     if (error) throw error
@@ -163,13 +164,14 @@ export const participationService = {
   },
 
   /**
-   * Get total activities count by type since a given date
+   * Get total activities count by type within a date range
    */
-  getActivityTypeCountsSince: async (sinceDate: string): Promise<{ events: number; meetings: number; formations: number; assemblies: number }> => {
+  getActivityTypeCountsSince: async (sinceDate: string, untilDate: string): Promise<{ events: number; meetings: number; formations: number; assemblies: number }> => {
     const { data, error } = await supabase
       .from('activities')
       .select('type')
       .gte('activity_begin_date', sinceDate)
+      .lte('activity_begin_date', untilDate)
 
     if (error) throw error
 

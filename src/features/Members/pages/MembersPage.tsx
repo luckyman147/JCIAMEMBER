@@ -47,8 +47,8 @@ export default function MembersPage() {
         const memberIds = members.filter(m => !m.email?.includes('jci.hs') && m.role && m.role !== 'JCI Hammam Sousse').map(m => m.id);
 
         const promises: Promise<any>[] = [
-          participationService.getParticipationsSince(memberIds, periodStart),
-          participationService.getActivityTypeCountsSince(periodStart),
+          participationService.getParticipationsSince(memberIds, periodStart, periodEnd),
+          participationService.getActivityTypeCountsSince(periodStart, periodEnd),
         ];
 
         let committeePromise: Promise<any> = Promise.resolve(undefined);
