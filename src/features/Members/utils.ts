@@ -632,7 +632,7 @@ export const downloadMembersAsExcel = async (
     }
 
     if (participationMap) {
-      currentRow = addChartsSection(wb, ws, currentRow, groupedMembers, statusCounts, participationMap, activityDetails ?? [], attendanceByActivity, periodEnd);
+      currentRow = addChartsSection(wb, ws, currentRow, groupedMembers, statusCounts, participationMap);
     }
 
     const buf = await wb.xlsx.writeBuffer();
@@ -749,10 +749,7 @@ const addChartsSection = (
   startRow: number,
   groupedMembers: Record<string, Member[]>,
   statusCounts: Record<string, number>,
-  participationMap: MemberParticipationMap,
-  activityDetails: ActivityDetail[],
-  attendanceByActivity: Record<string, Set<string>>,
-  periodEnd: string
+  participationMap: MemberParticipationMap
 ): number => {
   const argbToHex = (argb: string): string => `#${argb.slice(2)}`;
 
@@ -792,17 +789,6 @@ const addChartsSection = (
     { label: 'Assemblée', value: totalAssemblies, color: argbToHex('FFEF4444') },
   ];
 
-  const periodEndDate = getEndOfDay(periodEnd);
-  const eligibleCount = filteredMembersForCharts.filter(m => {
-    const joinDate = m.joined_at ? new Date(m.joined_at) : (m.created_at ? new Date(m.created_at) : null);
-    return !(joinDate && joinDate > periodEndDate);
-  }).length;
-  const activityRateData: ChartDatum[] = activityDetails.map(activity => {
-    const attendees = attendanceByActivity[activity.id]?.size ?? 0;
-    const rate = eligibleCount > 0 ? Math.round((attendees / eligibleCount) * 100) : 0;
-    return { label: activity.name, value: rate, color: argbToHex('FF10B981') };
-  });
-
   const statusColors: Record<string, string> = {
     'Actif': argbToHex('FF10B981'),
     'Inactif': argbToHex('FFEF4444'),
@@ -818,7 +804,6 @@ const addChartsSection = (
   const charts: { title: string; imageDataUrl: string }[] = [
     { title: 'RÉPARTITION PAR RÔLE', imageDataUrl: renderPieChart(roleData) },
     { title: "PARTICIPATION PAR TYPE D'ACTIVITÉ", imageDataUrl: renderBarChart(typeData) },
-    { title: 'TAUX DE PRÉSENCE PAR ACTIVITÉ (%)', imageDataUrl: renderBarChart(activityRateData) },
     { title: 'RÉPARTITION PAR STATUT', imageDataUrl: renderPieChart(statusData) },
   ];
 
