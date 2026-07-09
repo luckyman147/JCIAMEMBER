@@ -93,7 +93,8 @@ const getPhoneDisplay = (phone?: string): string => {
 
 const isSimpleRole = (role: string) => {
   const lower = role.trim().toLowerCase();
-  return lower === 'member' || lower === 'new member' || lower === 'membre' || lower === 'nouveau membre';
+  return lower === 'member' || lower === 'new member' || lower === 'new-member'
+    || lower === 'membre' || lower === 'nouveau membre' || lower === 'nouveau-membre';
 };
 
 const getPresenceRate = (
@@ -134,8 +135,7 @@ const getPresenceRate = (
   return { rate: `${percent}%`, percent, joinedAfterPeriod: false };
 };
 
-export const getDecision = (role: string, presencePercent: number): string => {
-  if (!isSimpleRole(role)) return '-';
+export const getDecision = (presencePercent: number): string => {
   if (presencePercent >= 0 && presencePercent <= 20) return 'À exclure';
   if (presencePercent >= 21 && presencePercent <= 40) return 'À encourager';
   return '-';
@@ -261,7 +261,7 @@ export const downloadMembersAsExcel = async (
                 assembly: counts?.assemblies ?? '-',
                 status: status,
                 presence: presence.joinedAfterPeriod ? '-' : presence.rate,
-                decision: getDecision(role, presence.percent),
+                decision: getDecision(presence.percent),
             };
 
             if (!hidePost) {

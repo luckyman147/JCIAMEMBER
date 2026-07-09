@@ -370,7 +370,7 @@ export default function MembersPage() {
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
                   <h2 className="text-xl font-semibold text-gray-900">
-                    Options de téléchargement
+                    {t('members.downloadOptions')}
                   </h2>
                   <button
                     onClick={() => setShowDownloadModal(false)}
@@ -383,7 +383,7 @@ export default function MembersPage() {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                      Rôles à inclure
+                      {t('members.rolesToInclude')}
                     </p>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {uniqueRoles.map(role => (
@@ -421,18 +421,18 @@ export default function MembersPage() {
                             }}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="text-sm font-semibold text-gray-700">Tous les rôles</span>
+                          <span className="text-sm font-semibold text-gray-700">{t('members.allRoles')}</span>
                         </label>
                       )}
                     </div>
                     {selectedRolesForDownload.length > 0 && selectedRolesForDownload.length < uniqueRoles.length && (
-                      <p className="text-xs text-gray-400 mt-1">{selectedRolesForDownload.length} rôle(s) sélectionné(s)</p>
+                      <p className="text-xs text-gray-400 mt-1">{selectedRolesForDownload.length} {t('members.rolesSelected')}</p>
                     )}
                   </div>
 
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                      Période
+                      {t('members.period')}
                     </p>
                     <div className="flex gap-2">
                       <input
@@ -441,7 +441,7 @@ export default function MembersPage() {
                         onChange={e => setPeriodStart(e.target.value)}
                         className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
-                      <span className="text-xs text-gray-400 self-center">au</span>
+                      <span className="text-xs text-gray-400 self-center">{t('members.to')}</span>
                       <input
                         type="date"
                         value={periodEnd}
@@ -454,7 +454,7 @@ export default function MembersPage() {
                   <div>
                     <label className="flex items-center justify-between cursor-pointer">
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Inclure les comités
+                        {t('members.includeCommittees')}
                       </span>
                       <button
                         type="button"
@@ -472,13 +472,13 @@ export default function MembersPage() {
                     onClick={() => setShowDownloadModal(false)}
                     className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-semibold text-sm"
                   >
-                    Annuler
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={handleDownload}
                     className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-semibold text-sm"
                   >
-                    Télécharger
+                    {t('members.download')}
                   </button>
                 </div>
               </div>
