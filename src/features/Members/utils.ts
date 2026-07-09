@@ -1,4 +1,3 @@
-
 import type { Member } from './types';
 import type { MemberCommitteeStats } from '../Activities/services/committeeService';
 import ExcelJS from 'exceljs';
@@ -12,6 +11,41 @@ export interface MemberParticipationMap {
   }
 }
 
+export interface RawParticipation {
+  user_id: string;
+  registered_at: string;
+  activity: { type: string } | null;
+}
+
+export interface RawActivity {
+  type: string;
+  activity_begin_date: string;
+}
+export interface ActivityDetail {
+  id: string;
+  name: string;
+  type: string;
+  activity_begin_date: string;
+}
+export interface ParticipationActivityId {
+  user_id: string;
+  activity: { id: string } | null;
+}
+
+export interface DownloadOptions {
+  selectedRoles: string[];
+  includeTeams: boolean;
+  periodStart: string;
+  periodEnd: string;
+  participationMap?: MemberParticipationMap;
+  activityTypeCounts?: { events: number; meetings: number; formations: number; assemblies: number };
+  committeeMap?: Record<string, MemberCommitteeStats>;
+  rawParticipations?: RawParticipation[];
+  rawActivities?: RawActivity[];
+  activityDetails?: ActivityDetail[];
+  participationsWithActivityId?: ParticipationActivityId[];
+}
+
 const roleColors: Record<string, { bg: string; text: string }> = {
     'President': { bg: 'FF1B3A5C', text: 'FFFFFFFF' },
     'Vice-President': { bg: 'FF56BDA3', text: 'FFFFFFFF' },
@@ -21,10 +55,35 @@ const roleColors: Record<string, { bg: string; text: string }> = {
     'VP': { bg: 'FF56BDA3', text: 'FFFFFFFF' },
 };
 
-const columnColors = ['FF1B3A5C', 'FF56BDA3', 'FFE8A838', 'FF3B82F6', 'FF8B5CF6', 'FF10B981', 'FF0EA5E9', 'FFF59E0B', 'FFEF4444', 'FF6366F1', 'FF8B5CF6', 'FF64748B', 'FF1B3A5C', 'FF56BDA3', 'FFE8A838', 'FF10B981', 'FF6366F1'];
-const columnHeaders = ['#', 'Name', 'Email', 'Phone', 'Role', 'Post', 'Events', 'Meetings', 'Trainings', 'Assembly', 'Overall', 'Status', 'Committees', 'Sponsoring', 'Media', 'Program', 'Logistic'];
-const columnWidths = [6, 28, 35, 18, 20, 25, 10, 10, 12, 12, 10, 12, 12, 12, 10, 10, 10];
-const TOTAL_COLS = columnHeaders.length;
+const BASE_COLUMN_DEFS = [
+  { key: 'index', header: 'N°', width: 8, color: 'FF1B3A5C' },
+  { key: 'name', header: 'Nom', width: 32, color: 'FF56BDA3' },
+  { key: 'email', header: 'Email', width: 38, color: 'FFE8A838' },
+  { key: 'phone', header: 'Téléphone', width: 22, color: 'FF3B82F6' },
+  { key: 'role', header: 'Rôle', width: 24, color: 'FF8B5CF6' },
+  { key: 'joined', header: 'Adhésion', width: 18, color: 'FF0EA5E9' },
+  { key: 'events', header: 'Événements', width: 14, color: 'FFF59E0B' },
+  { key: 'meetings', header: 'Réunions', width: 14, color: 'FFEF4444' },
+  { key: 'trainings', header: 'Formations', width: 14, color: 'FF6366F1' },
+  { key: 'assembly', header: 'Assemblée', width: 14, color: 'FF8B5CF6' },
+  { key: 'overall', header: 'Moyenne', width: 12, color: 'FF64748B' },
+  { key: 'status', header: 'Statut', width: 18, color: 'FF1B3A5C' },
+  { key: 'presence', header: 'Taux présence', width: 18, color: 'FF56BDA3' },
+];
+
+const COLUMNS_WITH_POST = [
+  { key: 'post', header: 'Poste', width: 28, color: 'FF10B981' },
+];
+
+const TEAM_COLUMN_DEFS = [
+  { key: 'committees', header: 'Comités', width: 14, color: 'FFE8A838' },
+  { key: 'sponsoring', header: 'Sponsoring', width: 15, color: 'FF10B981' },
+  { key: 'media', header: 'Média', width: 14, color: 'FF6366F1' },
+  { key: 'program', header: 'Programme', width: 15, color: 'FF1B3A5C' },
+  { key: 'logistic', header: 'Logistique', width: 15, color: 'FF56BDA3' },
+];
+
+const DECISION_COLUMN_DEF = { key: 'decision', header: 'Décision', width: 20, color: 'FFDC2626' };
 
 const getPhoneDisplay = (phone?: string): string => {
     if (!phone) return '-';
@@ -39,14 +98,103 @@ const getAvgDisplay = (counts: { events: number; meetings: number; formations: n
     return total > 0 ? (total / 4).toFixed(1) : '-';
 };
 
+const isSimpleRole = (role: string) => {
+  const lower = role.toLowerCase();
+  return lower === 'member' || lower === 'new member' || lower === 'membre' || lower === 'nouveau membre';
+};
+
+const getPresenceRate = (
+  member: Member,
+  periodStart: string,
+  periodEnd: string,
+  rawParticipations?: RawParticipation[],
+  rawActivities?: RawActivity[]
+): { rate: string; percent: number; joinedAfterPeriod: boolean } => {
+  if (!rawParticipations || !rawActivities || !member.created_at) {
+    return { rate: '-', percent: -1, joinedAfterPeriod: false };
+  }
+
+  if (new Date(member.created_at) > new Date(periodEnd)) {
+    return { rate: '-', percent: -2, joinedAfterPeriod: true };
+  }
+
+  const memberJoin = member.joined_at ? new Date(member.joined_at) : new Date(member.created_at);
+  const startDate = new Date(Math.max(memberJoin.getTime(), new Date(periodStart).getTime()));
+  const endDate = new Date(periodEnd);
+
+  const memberParticipationsInPeriod = rawParticipations.filter(p => {
+    if (p.user_id !== member.id) return false;
+    const d = new Date(p.registered_at);
+    return d >= startDate && d <= endDate;
+  });
+
+  const totalActivitiesSinceMember = rawActivities.filter(a => {
+    const d = new Date(a.activity_begin_date);
+    return d >= memberJoin && d <= endDate;
+  });
+
+  if (totalActivitiesSinceMember.length === 0) {
+    return { rate: memberParticipationsInPeriod.length > 0 ? '100%' : '0%', percent: memberParticipationsInPeriod.length > 0 ? 100 : 0, joinedAfterPeriod: false };
+  }
+
+  const percent = Math.round((memberParticipationsInPeriod.length / totalActivitiesSinceMember.length) * 100);
+  return { rate: `${percent}%`, percent, joinedAfterPeriod: false };
+};
+
+export const getDecision = (role: string, presencePercent: number): string => {
+  if (!isSimpleRole(role)) return '-';
+  if (presencePercent >= 0 && presencePercent <= 20) return 'À exclure';
+  if (presencePercent >= 21 && presencePercent <= 40) return 'À encourager';
+  return '-';
+};
+
 export const downloadMembersAsExcel = async (
   members: Member[],
-  participationMap?: MemberParticipationMap,
-  activityTypeCounts?: { events: number; meetings: number; formations: number; assemblies: number },
-  committeeMap?: Record<string, MemberCommitteeStats>
+  options: DownloadOptions
 ): Promise<void> => {
+    const { selectedRoles, includeTeams, periodStart, periodEnd, participationMap, committeeMap, rawParticipations, rawActivities, activityDetails, participationsWithActivityId } = options;
+
+    const groupedMembers = members.reduce((acc, member) => {
+        if (!member.role || member.role === 'JCI Hammam Sousse') return acc;
+        if (member.email?.includes('jci.hs')) return acc;
+        if (selectedRoles.length > 0 && !selectedRoles.includes(member.role)) return acc;
+        if (!acc[member.role]) acc[member.role] = [];
+        acc[member.role].push(member);
+        return acc;
+    }, {} as Record<string, Member[]>);
+
+    const sortedRoles = Object.keys(groupedMembers).sort();
+    const isSingleRole = sortedRoles.length === 1;
+
+    const hidePost = isSingleRole
+      ? true
+      : (selectedRoles.length === 0
+          ? members.every(m => isSimpleRole(m.role))
+          : selectedRoles.every(r => isSimpleRole(r)));
+
+    let columnDefs = BASE_COLUMN_DEFS;
+    if (isSingleRole) {
+      columnDefs = columnDefs.filter(d => d.key !== 'role');
+    } else if (!hidePost) {
+      const idx = columnDefs.findIndex(d => d.key === 'role');
+      columnDefs = [
+        ...columnDefs.slice(0, idx + 1),
+        ...COLUMNS_WITH_POST,
+        ...columnDefs.slice(idx + 1),
+      ];
+    }
+    if (includeTeams) {
+      columnDefs = [...columnDefs, ...TEAM_COLUMN_DEFS];
+    }
+    columnDefs = [...columnDefs, DECISION_COLUMN_DEF];
+
+    const TOTAL_COLS = columnDefs.length;
+    const columnHeaders = columnDefs.map(c => c.header);
+    const columnColors = columnDefs.map(c => c.color);
+    const columnWidths = columnDefs.map(c => c.width);
+
     const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Members');
+    const ws = wb.addWorksheet('Membres');
 
     ws.columns = columnWidths.map(w => ({ width: w }));
 
@@ -54,7 +202,9 @@ export const downloadMembersAsExcel = async (
 
     ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
     const titleRow = ws.getRow(currentRow);
-    titleRow.getCell(1).value = 'JCI HAMMAM SOUSSE MEMBERS';
+    titleRow.getCell(1).value = isSingleRole
+      ? `MEMBRES JCI HAMMAM SOUSSE — ${sortedRoles[0].toUpperCase()}`
+      : 'MEMBRES JCI HAMMAM SOUSSE';
     titleRow.getCell(1).font = { name: 'Arial', size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
     titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
     titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -82,16 +232,8 @@ export const downloadMembersAsExcel = async (
     }
     currentRow++;
 
-    const groupedMembers = members.reduce((acc, member) => {
-        if (!member.role || member.role === 'JCI Hammam Sousse') return acc;
-        if (member.email?.includes('jci.hs')) return acc;
-        if (!acc[member.role]) acc[member.role] = [];
-        acc[member.role].push(member);
-        return acc;
-    }, {} as Record<string, Member[]>);
-
-    const sortedRoles = Object.keys(groupedMembers).sort();
     let globalIndex = 1;
+    const statusCounts: Record<string, number> = {};
 
     sortedRoles.forEach((role, roleIndex) => {
         const roleMembers = groupedMembers[role];
@@ -100,36 +242,85 @@ export const downloadMembersAsExcel = async (
         roleMembers.forEach((member, memberIndex) => {
             const row = ws.getRow(currentRow);
             const counts = participationMap?.[member.id];
-
-            row.getCell(1).value = globalIndex;
-            row.getCell(2).value = member.fullname;
-            row.getCell(3).value = member.email || '-';
-            row.getCell(4).value = getPhoneDisplay(member.phone);
-            row.getCell(5).value = role;
-            row.getCell(6).value = member.poste?.name || '-';
-            row.getCell(7).value = counts?.events ?? '-';
-            row.getCell(8).value = counts?.meetings ?? '-';
-            row.getCell(9).value = counts?.formations ?? '-';
-            row.getCell(10).value = counts?.assemblies ?? '-';
-            row.getCell(11).value = getAvgDisplay(counts);
-            row.getCell(12).value = member.is_banned ? 'Banned' : 'Active';
             const cStats = committeeMap?.[member.id];
-            row.getCell(13).value = cStats ? cStats.totalCommittees : 0;
-            row.getCell(14).value = cStats?.sponsoring ?? 0;
-            row.getCell(15).value = cStats?.media ?? 0;
-            row.getCell(16).value = cStats?.program ?? 0;
-            row.getCell(17).value = cStats?.logistic ?? 0;
+            const presence = getPresenceRate(member, periodStart, periodEnd, rawParticipations, rawActivities);
+
+            const getStatus = () => {
+              if (member.is_banned) return 'Suspendu';
+              if (presence.joinedAfterPeriod) return 'Pas encore membre';
+              if (presence.percent >= 0 && presence.percent <= 20) return 'Inactif';
+              return 'Actif';
+            };
+
+            const status = getStatus();
+            statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+            const cellValues: Record<string, string | number> = {
+                index: globalIndex,
+                name: member.fullname,
+                email: member.email || '-',
+                phone: getPhoneDisplay(member.phone),
+                role: role,
+                joined: member.created_at ? new Date(member.created_at).toLocaleDateString() : '-',
+                events: counts?.events ?? '-',
+                meetings: counts?.meetings ?? '-',
+                trainings: counts?.formations ?? '-',
+                assembly: counts?.assemblies ?? '-',
+                overall: getAvgDisplay(counts),
+                status: status,
+                presence: presence.joinedAfterPeriod ? '-' : presence.rate,
+                decision: getDecision(role, presence.percent),
+            };
+
+            if (!hidePost) {
+              cellValues.post = member.poste?.name || '-';
+            }
+
+            if (includeTeams) {
+                cellValues.committees = cStats ? cStats.totalCommittees : 0;
+                cellValues.sponsoring = cStats?.sponsoring ?? 0;
+                cellValues.media = cStats?.media ?? 0;
+                cellValues.program = cStats?.program ?? 0;
+                cellValues.logistic = cStats?.logistic ?? 0;
+            }
+
+            columnDefs.forEach((def, colIdx) => {
+                const cell = row.getCell(colIdx + 1);
+                cell.value = cellValues[def.key] ?? '-';
+            });
+
+            const isEmptyPresence = presence.percent === -1 || presence.percent === -2;
+            const hasLowPresence = presence.percent >= 0 && presence.percent < 10;
+            const hasMediumPresence = presence.percent >= 10 && presence.percent <= 20;
 
             const bgColor = memberIndex % 2 === 0 ? colors.bg : 'FFF9FAFB';
             for (let col = 1; col <= TOTAL_COLS; col++) {
                 const cell = row.getCell(col);
+                const isPresenceCol = columnDefs[col - 1]?.key === 'presence';
+                const isStatusCol = columnDefs[col - 1]?.key === 'status';
+                const isDecisionCol = columnDefs[col - 1]?.key === 'decision';
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
                 cell.font = {
                     name: 'Arial',
                     size: 11,
                     color: { argb: memberIndex % 2 === 0 ? colors.text : 'FF1F2937' }
                 };
-                cell.alignment = col === 1 ? { horizontal: 'center', vertical: 'middle' } : { horizontal: 'center', vertical: 'middle' };
+                if (isPresenceCol && isEmptyPresence) {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF0000' } };
+                } else if (isPresenceCol && hasLowPresence) {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF0000' } };
+                } else if (isPresenceCol && hasMediumPresence) {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF8C00' } };
+                }
+                if (isStatusCol && isEmptyPresence) {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF0000' } };
+                }
+                if (isDecisionCol && cellValues.decision === 'À exclure') {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF0000' } };
+                } else if (isDecisionCol && cellValues.decision === 'À encourager') {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF8C00' } };
+                }
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 cell.border = {
                     top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
                     bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
@@ -152,16 +343,17 @@ export const downloadMembersAsExcel = async (
 
     ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
     const summaryTitleRow = ws.getRow(currentRow);
-    summaryTitleRow.getCell(1).value = 'SUMMARY';
+    summaryTitleRow.getCell(1).value = 'RÉSUMÉ';
     summaryTitleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
     summaryTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
     summaryTitleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
     summaryTitleRow.height = 28;
     currentRow++;
 
-    const totalMembers = Object.values(groupedMembers).reduce((sum, arr) => sum + arr.length, 0);
+    const filteredMembersForSummary = Object.values(groupedMembers).flat();
+    const totalMembers = filteredMembersForSummary.length;
     const summaryRow = ws.getRow(currentRow);
-    summaryRow.getCell(2).value = 'Total Members:';
+    summaryRow.getCell(2).value = 'Total des membres :';
     summaryRow.getCell(2).font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF1B3A5C' } };
     summaryRow.getCell(4).value = totalMembers;
     summaryRow.getCell(4).font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF1B3A5C' } };
@@ -183,7 +375,7 @@ export const downloadMembersAsExcel = async (
         let totalAssemblies = 0;
         let membersWithData = 0;
 
-        members.forEach(m => {
+        filteredMembersForSummary.forEach(m => {
             const c = participationMap[m.id]
             if (c) {
                 totalEvents += c.events
@@ -196,7 +388,8 @@ export const downloadMembersAsExcel = async (
 
         ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
         const partTitleRow = ws.getRow(currentRow);
-        partTitleRow.getCell(1).value = 'PARTICIPATION SUMMARY (Jan - Now)';
+        const periodLabel = `${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()}`;
+        partTitleRow.getCell(1).value = `RÉSUMÉ DES PARTICIPATIONS (${periodLabel})`;
         partTitleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
         partTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0EA5E9' } };
         partTitleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -211,44 +404,60 @@ export const downloadMembersAsExcel = async (
         const overallAvg = membersWithData > 0 ? (totalAll / membersWithData / 4).toFixed(1) : '-';
 
         const statsData: [string, string, string, string, string, string][] = [
-            ['Total Participations', totalEvents.toString(), totalMeetings.toString(), totalFormations.toString(), totalAssemblies.toString(), (totalAll / membersWithData).toFixed(1)],
-            ['Average per Member', avgEvents, avgMeetings, avgFormations, avgAssemblies, overallAvg],
+            ['Total des participations', totalEvents.toString(), totalMeetings.toString(), totalFormations.toString(), totalAssemblies.toString(), (totalAll / membersWithData).toFixed(1)],
+            ['Moyenne par membre', avgEvents, avgMeetings, avgFormations, avgAssemblies, overallAvg],
         ]
 
-        if (activityTypeCounts) {
-            const rateEvents = activityTypeCounts.events > 0 ? ((totalEvents / activityTypeCounts.events)).toFixed(1) : '-'
-            const rateMeetings = activityTypeCounts.meetings > 0 ? ((totalMeetings / activityTypeCounts.meetings)).toFixed(1) : '-'
-            const rateFormations = activityTypeCounts.formations > 0 ? ((totalFormations / activityTypeCounts.formations)).toFixed(1) : '-'
-            const rateAssemblies = activityTypeCounts.assemblies > 0 ? ((totalAssemblies / activityTypeCounts.assemblies)).toFixed(1) : '-'
+        if (options.activityTypeCounts) {
+            const rateEvents = options.activityTypeCounts.events > 0 ? ((totalEvents / options.activityTypeCounts.events)).toFixed(1) : '-'
+            const rateMeetings = options.activityTypeCounts.meetings > 0 ? ((totalMeetings / options.activityTypeCounts.meetings)).toFixed(1) : '-'
+            const rateFormations = options.activityTypeCounts.formations > 0 ? ((totalFormations / options.activityTypeCounts.formations)).toFixed(1) : '-'
+            const rateAssemblies = options.activityTypeCounts.assemblies > 0 ? ((totalAssemblies / options.activityTypeCounts.assemblies)).toFixed(1) : '-'
             statsData.push([
-                'Avg Attendance by Type',
-                `(avg ${rateEvents}/event)`,
-                `(avg ${rateMeetings}/meeting)`,
-                `(avg ${rateFormations}/training)`,
-                `(avg ${rateAssemblies}/assembly)`,
+                'Taux moyen par type',
+                `(moy ${rateEvents}/évén)`,
+                `(moy ${rateMeetings}/réun)`,
+                `(moy ${rateFormations}/form)`,
+                `(moy ${rateAssemblies}/ass)`,
                 '-'
             ])
         }
+
+        const eventsCol = columnDefs.findIndex(d => d.key === 'events') + 1;
+        const meetingsCol = columnDefs.findIndex(d => d.key === 'meetings') + 1;
+        const trainingsCol = columnDefs.findIndex(d => d.key === 'trainings') + 1;
+        const assemblyCol = columnDefs.findIndex(d => d.key === 'assembly') + 1;
+        const overallCol = columnDefs.findIndex(d => d.key === 'overall') + 1;
 
         statsData.forEach(([label, ev, mt, tr, asm, overall]) => {
             const row = ws.getRow(currentRow)
             row.getCell(2).value = label
             row.getCell(2).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF374151' } }
-            row.getCell(7).value = ev
-            row.getCell(7).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
-            row.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' }
-            row.getCell(8).value = mt
-            row.getCell(8).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
-            row.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' }
-            row.getCell(9).value = tr
-            row.getCell(9).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
-            row.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' }
-            row.getCell(10).value = asm
-            row.getCell(10).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
-            row.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' }
-            row.getCell(11).value = overall
-            row.getCell(11).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
-            row.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' }
+            if (eventsCol > 0) {
+                row.getCell(eventsCol).value = ev
+                row.getCell(eventsCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
+                row.getCell(eventsCol).alignment = { horizontal: 'center', vertical: 'middle' }
+            }
+            if (meetingsCol > 0) {
+                row.getCell(meetingsCol).value = mt
+                row.getCell(meetingsCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
+                row.getCell(meetingsCol).alignment = { horizontal: 'center', vertical: 'middle' }
+            }
+            if (trainingsCol > 0) {
+                row.getCell(trainingsCol).value = tr
+                row.getCell(trainingsCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
+                row.getCell(trainingsCol).alignment = { horizontal: 'center', vertical: 'middle' }
+            }
+            if (assemblyCol > 0) {
+                row.getCell(assemblyCol).value = asm
+                row.getCell(assemblyCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
+                row.getCell(assemblyCol).alignment = { horizontal: 'center', vertical: 'middle' }
+            }
+            if (overallCol > 0) {
+                row.getCell(overallCol).value = overall
+                row.getCell(overallCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } }
+                row.getCell(overallCol).alignment = { horizontal: 'center', vertical: 'middle' }
+            }
             row.height = 22
             for (let col = 2; col <= TOTAL_COLS; col++) {
                 row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F9FF' } }
@@ -280,12 +489,12 @@ export const downloadMembersAsExcel = async (
         currentRow++;
     });
 
-    if (committeeMap) {
+    if (includeTeams && committeeMap) {
         currentRow++;
 
         ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
         const comTitleRow = ws.getRow(currentRow);
-        comTitleRow.getCell(1).value = 'COMMITTEE PARTICIPATION SUMMARY';
+        comTitleRow.getCell(1).value = 'RÉSUMÉ DES COMITÉS';
         comTitleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
         comTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B3A5C' } };
         comTitleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -314,30 +523,46 @@ export const downloadMembersAsExcel = async (
         const avgLogistic = membersWithCommittees > 0 ? (totalLogistic / membersWithCommittees).toFixed(1) : '0';
         const avgTotal = membersWithCommittees > 0 ? (totalCommittees / membersWithCommittees).toFixed(1) : '0';
 
+        const committeesCol = columnDefs.findIndex(d => d.key === 'committees') + 1;
+        const sponsoringCol = columnDefs.findIndex(d => d.key === 'sponsoring') + 1;
+        const mediaCol = columnDefs.findIndex(d => d.key === 'media') + 1;
+        const programCol = columnDefs.findIndex(d => d.key === 'program') + 1;
+        const logisticCol = columnDefs.findIndex(d => d.key === 'logistic') + 1;
+
         const comStatsRows: [string, string, string, string, string, string][] = [
-            ['Total Committee Memberships', totalSponsoring.toString(), totalMedia.toString(), totalProgram.toString(), totalLogistic.toString(), totalCommittees.toString()],
-            ['Average per Member', avgSponsoring, avgMedia, avgProgram, avgLogistic, avgTotal],
+            ['Total des adhésions aux comités', totalSponsoring.toString(), totalMedia.toString(), totalProgram.toString(), totalLogistic.toString(), totalCommittees.toString()],
+            ['Moyenne par membre', avgSponsoring, avgMedia, avgProgram, avgLogistic, avgTotal],
         ];
 
         comStatsRows.forEach(([label, sp, me, pr, lo, total]) => {
             const row = ws.getRow(currentRow);
             row.getCell(2).value = label;
             row.getCell(2).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF374151' } };
-            row.getCell(13).value = total;
-            row.getCell(13).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } };
-            row.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-            row.getCell(14).value = sp;
-            row.getCell(14).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
-            row.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
-            row.getCell(15).value = me;
-            row.getCell(15).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
-            row.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
-            row.getCell(16).value = pr;
-            row.getCell(16).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
-            row.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
-            row.getCell(17).value = lo;
-            row.getCell(17).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
-            row.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+            if (committeesCol > 0) {
+                row.getCell(committeesCol).value = total;
+                row.getCell(committeesCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1B3A5C' } };
+                row.getCell(committeesCol).alignment = { horizontal: 'center', vertical: 'middle' };
+            }
+            if (sponsoringCol > 0) {
+                row.getCell(sponsoringCol).value = sp;
+                row.getCell(sponsoringCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+                row.getCell(sponsoringCol).alignment = { horizontal: 'center', vertical: 'middle' };
+            }
+            if (mediaCol > 0) {
+                row.getCell(mediaCol).value = me;
+                row.getCell(mediaCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+                row.getCell(mediaCol).alignment = { horizontal: 'center', vertical: 'middle' };
+            }
+            if (programCol > 0) {
+                row.getCell(programCol).value = pr;
+                row.getCell(programCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+                row.getCell(programCol).alignment = { horizontal: 'center', vertical: 'middle' };
+            }
+            if (logisticCol > 0) {
+                row.getCell(logisticCol).value = lo;
+                row.getCell(logisticCol).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF56BDA3' } };
+                row.getCell(logisticCol).alignment = { horizontal: 'center', vertical: 'middle' };
+            }
             row.height = 22;
             for (let col = 2; col <= TOTAL_COLS; col++) {
                 row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F4FA' } };
@@ -347,14 +572,195 @@ export const downloadMembersAsExcel = async (
         });
     }
 
+    currentRow += 5;
+
+    if (participationMap) {
+      currentRow = addDistributionTable(ws, currentRow, groupedMembers, participationMap);
+    }
+
+    if (activityDetails && participationsWithActivityId) {
+      buildActivityMatrix(ws, currentRow, groupedMembers, activityDetails, participationsWithActivityId, periodStart, periodEnd);
+    }
+
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `JCI_Hammam_Sousse_Members_${new Date().toISOString().split('T')[0]}.xlsx`;
+    a.download = `Membres_JCI_Hammam_Sousse_${new Date().toISOString().split('T')[0]}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
+};
+
+const addDistributionTable = (ws: ExcelJS.Worksheet, startRow: number, groupedMembers: Record<string, Member[]>, participationMap: MemberParticipationMap): number => {
+  const filteredMembers = Object.values(groupedMembers).flat();
+  const chartHeaders = ['Type', 'Présents', 'Total Membres', 'Taux %'];
+  const typeLabels = ['Événements', 'Réunions', 'Formations', 'Assemblée'];
+  const typeKeys = ['events', 'meetings', 'formations', 'assemblies'] as const;
+  const typeColors = ['FF6366F1', 'FF0EA5E9', 'FFF59E0B', 'FFEF4444'];
+  const TOTAL_CHART_COLS = 4;
+  const totalMembers = filteredMembers.length;
+
+  let row = startRow;
+
+  ws.mergeCells(row, 1, row, TOTAL_CHART_COLS);
+  const titleRow = ws.getRow(row);
+  titleRow.getCell(1).value = `DISTRIBUTION PAR TYPE D'ACTIVITÉ`;
+  titleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
+  titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+  titleRow.height = 28;
+  row++;
+
+  const headerRow = ws.getRow(row);
+  headerRow.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.height = 24;
+  for (let i = 0; i < TOTAL_CHART_COLS; i++) {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = chartHeaders[i];
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i === 0 ? 'FF1B3A5C' : 'FF0D2137' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'medium', color: { argb: 'FF000000' } },
+      bottom: { style: 'medium', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } },
+    };
+  }
+  row++;
+
+  typeKeys.forEach((key, idx) => {
+    let present = 0;
+    filteredMembers.forEach(m => {
+      const c = participationMap[m.id];
+      if (c && c[key] > 0) present++;
+    });
+    const rate = totalMembers > 0 ? Math.round((present / totalMembers) * 100) : 0;
+
+    const rowObj = ws.getRow(row);
+    rowObj.getCell(1).value = typeLabels[idx];
+    rowObj.getCell(1).font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF374151' } };
+    rowObj.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+    rowObj.getCell(2).value = present;
+    rowObj.getCell(2).font = { name: 'Arial', size: 11, bold: true, color: { argb: typeColors[idx] } };
+    rowObj.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+    rowObj.getCell(3).value = totalMembers;
+    rowObj.getCell(3).font = { name: 'Arial', size: 11, color: { argb: 'FF374151' } };
+    rowObj.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+    rowObj.getCell(4).value = `${rate}%`;
+    rowObj.getCell(4).font = {
+      name: 'Arial', size: 11, bold: true,
+      color: { argb: rate < 30 ? 'FFFF0000' : rate < 50 ? 'FFFF8C00' : 'FF10B981' }
+    };
+    rowObj.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+    rowObj.height = 22;
+    for (let c = 1; c <= TOTAL_CHART_COLS; c++) {
+      rowObj.getCell(c).border = { bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } } };
+    }
+    row++;
+  });
+  return row;
+};
+
+const buildActivityMatrix = (
+  ws: ExcelJS.Workbook,
+  startRow: number,
+  groupedMembers: Record<string, Member[]>,
+  activityDetails: ActivityDetail[],
+  participationsWithActivityId: ParticipationActivityId[],
+  periodStart: string,
+  periodEnd: string
+) => {
+  const sheet = ws.addWorksheet('Présences par activité');
+
+  const filteredMembers = Object.values(groupedMembers).flat();
+
+  if (activityDetails.length === 0 || filteredMembers.length === 0) {
+    sheet.getCell(1, 1).value = 'Aucune activité dans la période sélectionnée';
+    return;
+  }
+
+  const memberSet = new Set(filteredMembers.map(m => m.id));
+  const attendanceByActivity: Record<string, Set<string>> = {};
+  for (const p of participationsWithActivityId) {
+    const actId = p.activity?.id;
+    if (!actId || !memberSet.has(p.user_id)) continue;
+    if (!attendanceByActivity[actId]) attendanceByActivity[actId] = new Set();
+    attendanceByActivity[actId].add(p.user_id);
+  }
+
+  const periodEndDate = new Date(periodEnd);
+  const headers = ['Membre', ...activityDetails.map(a => a.name)];
+  const TOTAL_COLS = headers.length;
+
+  sheet.columns = headers.map((_, i) => ({
+    width: i === 0 ? 32 : Math.min(22, Math.max(8, headers[i].length + 4)),
+  }));
+
+  let row = 1;
+
+  sheet.mergeCells(row, 1, row, TOTAL_COLS);
+  const titleRow = sheet.getRow(row);
+  titleRow.getCell(1).value = `MATRICE DES PRÉSENCES (${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()})`;
+  titleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
+  titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+  titleRow.height = 30;
+  row++;
+
+  const headerRow = sheet.getRow(row);
+  headerRow.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.height = 32;
+  for (let i = 0; i < TOTAL_COLS; i++) {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = headers[i];
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i === 0 ? 'FF1B3A5C' : 'FF0D2137' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: i > 0 };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } },
+    };
+  }
+  row++;
+
+  filteredMembers.forEach((member, memberIdx) => {
+    const rowObj = sheet.getRow(row);
+    const memberJoin = member.joined_at ? new Date(member.joined_at) : (member.created_at ? new Date(member.created_at) : null);
+    const joinedAfterPeriod = memberJoin && memberJoin > periodEndDate;
+
+    rowObj.getCell(1).value = member.fullname;
+    rowObj.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+    rowObj.getCell(1).alignment = { vertical: 'middle' };
+
+    activityDetails.forEach((activity, actIdx) => {
+      const cell = rowObj.getCell(actIdx + 2);
+
+      if (joinedAfterPeriod) {
+        cell.value = '-';
+        cell.font = { name: 'Arial', size: 10, color: { argb: 'FF9CA3AF' } };
+      } else if (attendanceByActivity[activity.id]?.has(member.id)) {
+        cell.value = '✓';
+        cell.font = { name: 'Arial', size: 12, color: { argb: 'FF10B981' }, bold: true };
+      } else {
+        cell.value = '✗';
+        cell.font = { name: 'Arial', size: 10, color: { argb: 'FFEF4444' } };
+      }
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+      };
+
+      if (memberIdx % 2 === 0) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } };
+      }
+    });
+
+    rowObj.height = 20;
+    row++;
+  });
 };
 
 export const getRankColor = (tier: string): string => {
@@ -370,7 +776,7 @@ export const getRankColor = (tier: string): string => {
 };
 
 export const getValidationStatusColor = (isValidated: boolean): string => {
-    return isValidated 
-        ? 'bg-green-100 text-green-800 border-green-200' 
+    return isValidated
+        ? 'bg-green-100 text-green-800 border-green-200'
         : 'bg-red-100 text-red-800 border-red-200';
 };
