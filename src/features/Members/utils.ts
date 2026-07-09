@@ -271,7 +271,9 @@ export const downloadMembersAsExcel = async (
                 email: member.email || '-',
                 phone: getPhoneDisplay(member.phone),
                 role: role,
-                joined: member.created_at ? new Date(member.created_at).toLocaleDateString() : '-',
+                joined: member.joined_at
+                  ? new Date(member.joined_at).toLocaleDateString()
+                  : (member.created_at ? new Date(member.created_at).toLocaleDateString() : '-'),
                 events: counts?.events ?? '-',
                 meetings: counts?.meetings ?? '-',
                 trainings: counts?.formations ?? '-',
