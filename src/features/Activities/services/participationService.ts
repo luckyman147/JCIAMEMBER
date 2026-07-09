@@ -194,7 +194,7 @@ export const participationService = {
       .select(`
         user_id,
         registered_at,
-        activity:activity_id(type)
+        activity:activity_id(id, type)
       `)
       .in('user_id', memberIds)
       .gte('registered_at', sinceDate)

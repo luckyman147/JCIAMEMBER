@@ -15,7 +15,7 @@ export interface MemberParticipationMap {
 export interface RawParticipation {
   user_id: string;
   registered_at: string;
-  activity: { type: string } | null;
+  activity: { id?: string; type: string } | null;
 }
 
 export interface RawActivity {
@@ -122,16 +122,29 @@ const getPresenceRate = (
     return d >= startDate && d <= endDate;
   });
 
+  // Dedupe by activity id: a member can have multiple participation rows for
+  // the same activity (re-registration, temp->confirmed, etc.), which would
+  // otherwise inflate the count past the number of distinct activities available.
+  const seenActivityIds = new Set<string>();
+  let distinctParticipationCount = 0;
+  memberParticipationsInPeriod.forEach((p, idx) => {
+    const key = p.activity?.id ?? `no-activity-${idx}`;
+    if (!seenActivityIds.has(key)) {
+      seenActivityIds.add(key);
+      distinctParticipationCount++;
+    }
+  });
+
   const totalActivitiesSinceMember = rawActivities.filter(a => {
     const d = new Date(a.activity_begin_date);
     return d >= memberJoin && d <= endDate;
   });
 
   if (totalActivitiesSinceMember.length === 0) {
-    return { rate: memberParticipationsInPeriod.length > 0 ? '100%' : '0%', percent: memberParticipationsInPeriod.length > 0 ? 100 : 0, joinedAfterPeriod: false };
+    return { rate: distinctParticipationCount > 0 ? '100%' : '0%', percent: distinctParticipationCount > 0 ? 100 : 0, joinedAfterPeriod: false };
   }
 
-  const percent = Math.round((memberParticipationsInPeriod.length / totalActivitiesSinceMember.length) * 100);
+  const percent = Math.min(100, Math.round((distinctParticipationCount / totalActivitiesSinceMember.length) * 100));
   return { rate: `${percent}%`, percent, joinedAfterPeriod: false };
 };
 
