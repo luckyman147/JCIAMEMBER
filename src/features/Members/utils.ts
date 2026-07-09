@@ -108,7 +108,8 @@ const getPresenceRate = (
     return { rate: '-', percent: -1, joinedAfterPeriod: false };
   }
 
-  if (new Date(member.created_at) > new Date(periodEnd)) {
+  const memberJoinDate = member.joined_at ? new Date(member.joined_at) : new Date(member.created_at);
+  if (memberJoinDate > new Date(periodEnd)) {
     return { rate: '-', percent: -2, joinedAfterPeriod: true };
   }
 
