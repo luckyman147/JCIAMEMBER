@@ -112,8 +112,7 @@ const getPresenceRate = (
     return { rate: '-', percent: -2, joinedAfterPeriod: true };
   }
 
-  const memberJoin = member.joined_at ? new Date(member.joined_at) : new Date(member.created_at);
-  const startDate = new Date(Math.max(memberJoin.getTime(), new Date(periodStart).getTime()));
+  const startDate = new Date(periodStart);
   const endDate = new Date(periodEnd);
 
   const memberParticipationsInPeriod = rawParticipations.filter(p => {
@@ -135,16 +134,16 @@ const getPresenceRate = (
     }
   });
 
-  const totalActivitiesSinceMember = rawActivities.filter(a => {
+  const totalActivitiesInPeriod = rawActivities.filter(a => {
     const d = new Date(a.activity_begin_date);
-    return d >= memberJoin && d <= endDate;
+    return d >= startDate && d <= endDate;
   });
 
-  if (totalActivitiesSinceMember.length === 0) {
+  if (totalActivitiesInPeriod.length === 0) {
     return { rate: distinctParticipationCount > 0 ? '100%' : '0%', percent: distinctParticipationCount > 0 ? 100 : 0, joinedAfterPeriod: false };
   }
 
-  const percent = Math.min(100, Math.round((distinctParticipationCount / totalActivitiesSinceMember.length) * 100));
+  const percent = Math.min(100, Math.round((distinctParticipationCount / totalActivitiesInPeriod.length) * 100));
   return { rate: `${percent}%`, percent, joinedAfterPeriod: false };
 };
 
