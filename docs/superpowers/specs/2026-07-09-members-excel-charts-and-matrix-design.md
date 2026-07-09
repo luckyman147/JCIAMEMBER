@@ -9,6 +9,8 @@ The "Membres" Excel export (`src/features/Members/utils.ts`, `downloadMembersAsE
 
 The export should also include several graphical charts (role distribution, activity-type participation, per-activity attendance rate, member status breakdown) so the file communicates trends visually, not just as tables.
 
+The user also wants the per-member table itself to drop the `Rôle` and `Poste` columns when the export contains only one distinct role (e.g. downloading a single-role filter), since repeating the same role on every row is redundant — the role should instead be shown once, in the main title.
+
 ## Existing code that already solves half the problem
 
 `utils.ts` already contains a `buildActivityMatrix` function that renders exactly this ✓/✗/- matrix — but onto a *separate* worksheet ("Présences par activité"), and it's currently dead code: the only caller, `MembersPage.tsx`, never passes the `activityDetails` / `participationsWithActivityId` options it needs, even though the underlying service methods (`getAllActivitiesWithDetails`, `getParticipationsWithActivityId` in `participationService.ts`) already exist and are unused elsewhere.
@@ -22,6 +24,7 @@ The export should also include several graphical charts (role distribution, acti
    - Activity type participation (bar): total Events/Meetings/Formations/Assembly participations
    - Per-activity attendance rate (bar): % of eligible members who attended, one bar per individual activity
    - Member status breakdown (pie): Active / Inactive / Suspended / Not yet member
+4. **Single-role collapse.** When the exported members reduce to exactly one distinct role, the `Rôle` and `Poste` columns are dropped from the table entirely, and the role name is appended to the main title instead (e.g. `MEMBRES JCI HAMMAM SOUSSE — PRÉSIDENT`).
 
 ## Design
 
@@ -73,6 +76,26 @@ After the existing "RÉSUMÉ DES COMITÉS" section (or after the new distributio
 - Renders each dataset to a PNG via `chartRenderer`, registers it with `wb.addImage(...)`, and places it with `ws.addImage(imageId, { tl: { col, row }, ext: { width, height } })` in a 2×2 grid (~8 columns / ~18 rows per chart cell, tuned to roughly 400×300px charts).
 - Adds a bold title cell above each chart image (reusing the section-title styling already used elsewhere).
 
+### 5. Single-role column collapse — `utils.ts`
+
+Today `downloadMembersAsExcel` builds `columnDefs` (deciding whether to include the `Poste` column) *before* computing `groupedMembers`/`sortedRoles`. That ordering has to flip, since the new rule needs to know how many distinct roles are present before the column list — and therefore the header row — can be finalized:
+
+1. Move the `groupedMembers` reduce (role filter + exclusion of `JCI Hammam Sousse` / `jci.hs` emails) up to the top of the function, before `hidePost`/`columnDefs` are built. `sortedRoles = Object.keys(groupedMembers).sort()` moves up with it. The reduce logic itself is unchanged.
+2. `const isSingleRole = sortedRoles.length === 1`.
+3. `hidePost` becomes `isSingleRole || <existing isSimpleRole-based check>` — single-role mode always hides Poste, on top of the existing simple-role rule.
+4. Column building:
+   ```ts
+   let columnDefs = BASE_COLUMN_DEFS;
+   if (isSingleRole) {
+     columnDefs = columnDefs.filter(d => d.key !== 'role');
+   } else if (!hidePost) {
+     // existing Poste-insertion logic, unchanged
+   }
+   ```
+   (`Poste` is never inserted in single-role mode since that branch is skipped entirely.)
+5. Title row: `titleRow.getCell(1).value = isSingleRole ? \`MEMBRES JCI HAMMAM SOUSSE — ${sortedRoles[0].toUpperCase()}\` : 'MEMBRES JCI HAMMAM SOUSSE'`.
+6. Everything downstream (the per-role member loop, `cellValues.role`/`cellValues.post` assignment, summary sections) is unaffected: `cellValues` still sets `role`/`post` keys, they're just silently unused when absent from `columnDefs` — same pattern the code already relies on elsewhere (`columnDefs.forEach(def => cell.value = cellValues[def.key] ?? '-')`).
+
 ## Non-goals
 
 - No new npm dependency (no chart.js/recharts-to-image pipeline) — canvas is drawn by hand.
@@ -83,5 +106,5 @@ After the existing "RÉSUMÉ DES COMITÉS" section (or after the new distributio
 ## Files touched
 
 - `src/features/Members/pages/MembersPage.tsx` — fetch + pass `activityDetails`, `participationsWithActivityId`.
-- `src/features/Members/utils.ts` — replace `addDistributionTable`, delete `buildActivityMatrix`, add chart section wiring.
+- `src/features/Members/utils.ts` — replace `addDistributionTable`, delete `buildActivityMatrix`, add chart section wiring, reorder `groupedMembers`/column-def computation for single-role collapse.
 - `src/features/Members/chartRenderer.ts` — new file, canvas pie/bar chart rendering to PNG data URLs.
