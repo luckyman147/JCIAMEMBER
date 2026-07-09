@@ -148,9 +148,10 @@ const getPresenceRate = (
 };
 
 export const getDecision = (presencePercent: number): string => {
-  if (presencePercent >= 0 && presencePercent <= 20) return 'À exclure';
-  if (presencePercent >= 21 && presencePercent <= 40) return 'À encourager';
-  return '-';
+  if (presencePercent < 0) return '-';
+  if (presencePercent <= 20) return 'À exclure';
+  if (presencePercent <= 40) return 'À encourager';
+  return 'À féliciter';
 };
 
 export const downloadMembersAsExcel = async (
@@ -323,6 +324,8 @@ export const downloadMembersAsExcel = async (
                     cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF0000' } };
                 } else if (isDecisionCol && cellValues.decision === 'À encourager') {
                     cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFF8C00' } };
+                } else if (isDecisionCol && cellValues.decision === 'À féliciter') {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF10B981' } };
                 }
                 cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 cell.border = {
