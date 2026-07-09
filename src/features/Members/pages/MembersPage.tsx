@@ -6,7 +6,7 @@ import ComplaintsOverview from "../../../Global_Components/ComplaintsOverview";
 import { useMembers, useAllPointsHistory } from "../hooks/useMembers";
 import { useAllMemberTasks } from "../../Tasks/hooks/useTasks";
 import AddMemberModal from "../components/Members/AddMemberModal";
-import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard, Download, X } from "lucide-react";
+import { UserPlus, Users, ShieldCheck, User, LayoutPanelLeft, LayoutPanelTop, Search, ListFilter, ChevronDown, CreditCard, Download, X, Loader2 } from "lucide-react";
 import { useAuth } from "../../Authentication/auth.context";
 import { EXECUTIVE_LEVELS } from "../../../utils/roles";
 
@@ -35,8 +35,11 @@ export default function MembersPage() {
     const [includeTeams, setIncludeTeams] = useState(false);
     const [periodStart, setPeriodStart] = useState(`${new Date().getFullYear()}-01-01`);
     const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0]);
+    const [periodPreset, setPeriodPreset] = useState('custom');
+    const [downloading, setDownloading] = useState(false);
 
     const handleDownload = async () => {
+      setDownloading(true);
       try {
         const dataStart = Math.min(
           new Date(periodStart).getTime(),
@@ -47,7 +50,7 @@ export default function MembersPage() {
         const memberIds = members.filter(m => !m.email?.includes('jci.hs') && m.role && m.role !== 'JCI Hammam Sousse').map(m => m.id);
 
         const promises: Promise<any>[] = [
-          participationService.getParticipationsSince(memberIds, periodStart, periodEnd),
+          participationService.getParticipationsSince(memberIds),
           participationService.getActivityTypeCountsSince(periodStart, periodEnd),
         ];
 
@@ -56,10 +59,10 @@ export default function MembersPage() {
           committeePromise = import('../../Activities/services/committeeService').then(m => m.committeeService.getMembersCommitteeStats());
         }
         promises.push(committeePromise);
-        promises.push(participationService.getParticipationsWithDates(memberIds, earliestDataDate));
+        promises.push(participationService.getParticipationsWithDates(memberIds));
         promises.push(participationService.getAllActivitiesSince(earliestDataDate));
         promises.push(participationService.getAllActivitiesWithDetails(periodStart, periodEnd));
-        promises.push(participationService.getParticipationsWithActivityId(memberIds, periodStart, periodEnd));
+        promises.push(participationService.getParticipationsWithActivityId(memberIds));
 
         const [participationMap, activityTypeCounts, committeeMap, rawParticipations, rawActivities, activityDetails, participationsWithActivityId] = await Promise.all(promises);
 
@@ -80,6 +83,8 @@ export default function MembersPage() {
         setShowDownloadModal(false);
       } catch {
         toast.error('Failed to download Excel');
+      } finally {
+        setDownloading(false);
       }
     };
 
@@ -434,18 +439,52 @@ export default function MembersPage() {
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                       {t('members.period')}
                     </p>
+                    <div className="flex gap-1.5 mb-3">
+                      {(['lastMonth', 'trimester', 'semester', 'custom'] as const).map(preset => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => {
+                            setPeriodPreset(preset)
+                            if (preset !== 'custom') {
+                              const now = new Date()
+                              setPeriodEnd(now.toISOString().split('T')[0])
+                              if (preset === 'lastMonth') {
+                                const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+                                setPeriodStart(start.toISOString().split('T')[0])
+                              } else if (preset === 'trimester') {
+                                const start = new Date(now)
+                                start.setMonth(start.getMonth() - 3)
+                                setPeriodStart(start.toISOString().split('T')[0])
+                              } else if (preset === 'semester') {
+                                const start = new Date(now)
+                                start.setMonth(start.getMonth() - 6)
+                                setPeriodStart(start.toISOString().split('T')[0])
+                              }
+                            }
+                          }}
+                          className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                            periodPreset === preset
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                          }`}
+                        >
+                          {t(`members.${preset}`)}
+                        </button>
+                      ))}
+                    </div>
                     <div className="flex gap-2">
                       <input
                         type="date"
                         value={periodStart}
-                        onChange={e => setPeriodStart(e.target.value)}
+                        onChange={e => { setPeriodStart(e.target.value); setPeriodPreset('custom') }}
                         className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                       <span className="text-xs text-gray-400 self-center">{t('members.to')}</span>
                       <input
                         type="date"
                         value={periodEnd}
-                        onChange={e => setPeriodEnd(e.target.value)}
+                        onChange={e => { setPeriodEnd(e.target.value); setPeriodPreset('custom') }}
                         className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
@@ -476,8 +515,10 @@ export default function MembersPage() {
                   </button>
                   <button
                     onClick={handleDownload}
-                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-semibold text-sm"
+                    disabled={downloading}
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
+                    {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     {t('members.download')}
                   </button>
                 </div>

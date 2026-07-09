@@ -1,6 +1,11 @@
 import supabase from '../../../utils/supabase'
 import { pointsService } from '../../Members/services/pointsService'
 
+// Date-only strings ("YYYY-MM-DD") passed as an upper bound to Postgres are
+// interpreted as midnight, excluding anything timestamped later that same
+// day. Push the bound to the end of that calendar day so it's inclusive.
+const toEndOfDay = (dateStr: string): string => `${dateStr}T23:59:59.999Z`
+
 export const participationService = {
   /**
    * Get all participants for a specific activity
@@ -128,9 +133,9 @@ export const participationService = {
   },
 
   /**
-   * Get participation counts per member by activity type within a date range
+   * Get participation counts per member by activity type
    */
-  getParticipationsSince: async (memberIds: string[], sinceDate: string, untilDate: string) => {
+  getParticipationsSince: async (memberIds: string[]) => {
     if (memberIds.length === 0) return {}
 
     const { data, error } = await supabase
@@ -140,9 +145,6 @@ export const participationService = {
         activity:activity_id(type)
       `)
       .in('user_id', memberIds)
-      .gte('registered_at', sinceDate)
-      .lte('registered_at', untilDate)
-      .not('is_interested', 'eq', true)
 
     if (error) throw error
 
@@ -171,7 +173,7 @@ export const participationService = {
       .from('activities')
       .select('type')
       .gte('activity_begin_date', sinceDate)
-      .lte('activity_begin_date', untilDate)
+      .lte('activity_begin_date', toEndOfDay(untilDate))
 
     if (error) throw error
 
@@ -188,7 +190,7 @@ export const participationService = {
   /**
    * Get raw participations with registered_at dates for multiple members
    */
-  getParticipationsWithDates: async (memberIds: string[], sinceDate: string) => {
+  getParticipationsWithDates: async (memberIds: string[]) => {
     if (memberIds.length === 0) return [];
 
     const { data, error } = await supabase
@@ -199,8 +201,6 @@ export const participationService = {
         activity:activity_id(id, type)
       `)
       .in('user_id', memberIds)
-      .gte('registered_at', sinceDate)
-      .not('is_interested', 'eq', true)
 
     if (error) throw error
     return data || []
@@ -227,7 +227,7 @@ export const participationService = {
       .from('activities')
       .select('id, name, type, activity_begin_date')
       .gte('activity_begin_date', sinceDate)
-      .lte('activity_begin_date', untilDate)
+      .lte('activity_begin_date', toEndOfDay(untilDate))
       .order('activity_begin_date', { ascending: false })
 
     if (error) throw error
@@ -235,9 +235,9 @@ export const participationService = {
   },
 
   /**
-   * Get detailed participations with activity id for matrix building, within a date range
+   * Get detailed participations with activity id for matrix building
    */
-  getParticipationsWithActivityId: async (memberIds: string[], sinceDate: string, untilDate: string) => {
+  getParticipationsWithActivityId: async (memberIds: string[]) => {
     if (memberIds.length === 0) return [];
 
     const { data, error } = await supabase
@@ -247,9 +247,6 @@ export const participationService = {
         activity:activity_id(id)
       `)
       .in('user_id', memberIds)
-      .gte('registered_at', sinceDate)
-      .lte('registered_at', untilDate)
-      .not('is_interested', 'eq', true)
 
     if (error) throw error
     return data || []
@@ -265,7 +262,7 @@ export const participationService = {
         user_id,
         member:profiles(fullname, avatar_url, role_id)
       `)
-      .not('is_interested', 'eq', true)
+     
 
     if (error) throw error
 

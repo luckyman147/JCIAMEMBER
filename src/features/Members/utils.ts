@@ -143,52 +143,34 @@ const isSimpleRole = (role: string) => {
 
 const getPresenceRate = (
   member: Member,
-  periodStart: string,
   periodEnd: string,
-  rawParticipations?: RawParticipation[],
-  rawActivities?: RawActivity[]
+  activityDetails: ActivityDetail[],
+  attendanceByActivity: Record<string, Set<string>>
 ): { rate: string; percent: number; joinedAfterPeriod: boolean } => {
-  if (!rawParticipations || !rawActivities || !member.created_at) {
+  const memberJoinDate = member.joined_at ? new Date(member.joined_at) : (member.created_at ? new Date(member.created_at) : null);
+  if (!memberJoinDate) {
     return { rate: '-', percent: -1, joinedAfterPeriod: false };
   }
 
-  const memberJoinDate = member.joined_at ? new Date(member.joined_at) : new Date(member.created_at);
   if (memberJoinDate > getEndOfDay(periodEnd)) {
     return { rate: '-', percent: -2, joinedAfterPeriod: true };
   }
 
-  const startDate = new Date(periodStart);
-  const endDate = getEndOfDay(periodEnd);
+  // Denominator: activities the member was supposed to attend since they
+  // joined (activityDetails is already scoped to the selected period, so
+  // this further narrows it to "on/after joined_at").
+  const activitiesSinceJoined = activityDetails.filter(a => new Date(a.activity_begin_date) >= memberJoinDate);
 
-  const memberParticipationsInPeriod = rawParticipations.filter(p => {
-    if (p.user_id !== member.id) return false;
-    const d = new Date(p.registered_at);
-    return d >= startDate && d <= endDate;
-  });
-
-  // Dedupe by activity id: a member can have multiple participation rows for
-  // the same activity (re-registration, temp->confirmed, etc.), which would
-  // otherwise inflate the count past the number of distinct activities available.
-  const seenActivityIds = new Set<string>();
-  let distinctParticipationCount = 0;
-  memberParticipationsInPeriod.forEach((p, idx) => {
-    const key = p.activity?.id ?? `no-activity-${idx}`;
-    if (!seenActivityIds.has(key)) {
-      seenActivityIds.add(key);
-      distinctParticipationCount++;
-    }
-  });
-
-  const totalActivitiesInPeriod = rawActivities.filter(a => {
-    const d = new Date(a.activity_begin_date);
-    return d >= startDate && d <= endDate;
-  });
-
-  if (totalActivitiesInPeriod.length === 0) {
-    return { rate: distinctParticipationCount > 0 ? '100%' : '0%', percent: distinctParticipationCount > 0 ? 100 : 0, joinedAfterPeriod: false };
+  if (activitiesSinceJoined.length === 0) {
+    return { rate: '-', percent: -1, joinedAfterPeriod: false };
   }
 
-  const percent = Math.min(100, Math.round((distinctParticipationCount / totalActivitiesInPeriod.length) * 100));
+  let attendedCount = 0;
+  for (const activity of activitiesSinceJoined) {
+    if (attendanceByActivity[activity.id]?.has(member.id)) attendedCount++;
+  }
+
+  const percent = Math.min(100, Math.round((attendedCount / activitiesSinceJoined.length) * 100));
   return { rate: `${percent}%`, percent, joinedAfterPeriod: false };
 };
 
@@ -203,7 +185,7 @@ export const downloadMembersAsExcel = async (
   members: Member[],
   options: DownloadOptions
 ): Promise<void> => {
-    const { selectedRoles, includeTeams, periodStart, periodEnd, participationMap, committeeMap, rawParticipations, rawActivities, activityDetails, participationsWithActivityId } = options;
+    const { selectedRoles, includeTeams, periodStart, periodEnd, participationMap, committeeMap, activityDetails, participationsWithActivityId } = options;
 
     const periodEndDate = getEndOfDay(periodEnd);
 
@@ -262,9 +244,10 @@ export const downloadMembersAsExcel = async (
 
     ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
     const titleRow = ws.getRow(currentRow);
+    const titlePeriodLabel = `${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()}`;
     titleRow.getCell(1).value = isSingleRole
-      ? `MEMBRES JCI HAMMAM SOUSSE — ${sortedRoles[0].toUpperCase()}`
-      : 'MEMBRES JCI HAMMAM SOUSSE';
+      ? `MEMBRES JCI HAMMAM SOUSSE — ${sortedRoles[0].toUpperCase()} (${titlePeriodLabel})`
+      : `MEMBRES JCI HAMMAM SOUSSE (${titlePeriodLabel})`;
     titleRow.getCell(1).font = { name: 'Arial', size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
     titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
     titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -303,7 +286,7 @@ export const downloadMembersAsExcel = async (
             const row = ws.getRow(currentRow);
             const counts = activityDetails ? getTypeCountsForMember(member.id, activityDetails, attendanceByActivity) : null;
             const cStats = committeeMap?.[member.id];
-            const presence = getPresenceRate(member, periodStart, periodEnd, rawParticipations, rawActivities);
+            const presence = getPresenceRate(member, periodEnd, activityDetails ?? [], attendanceByActivity);
 
             const getStatus = () => {
               if (member.is_banned) return 'Suspendu';
