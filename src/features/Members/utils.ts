@@ -94,6 +94,13 @@ const getEndOfDay = (dateStr: string): Date => {
   return d;
 };
 
+const MONTH_ABBR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+const formatDate = (dateStr: string): string => {
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${day}-${MONTH_ABBR[d.getMonth()]}-${d.getFullYear()}`;
+};
+
 // Builds member -> set of activity ids attended directly from the
 // activity_participants join table, so this is the single source of truth
 // for "did this member attend this activity" used by the count columns,
@@ -244,7 +251,7 @@ export const downloadMembersAsExcel = async (
 
     ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
     const titleRow = ws.getRow(currentRow);
-    const titlePeriodLabel = `${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()}`;
+    const titlePeriodLabel = `${formatDate(periodStart)} - ${formatDate(periodEnd)}`;
     titleRow.getCell(1).value = isSingleRole
       ? `MEMBRES JCI HAMMAM SOUSSE — ${sortedRoles[0].toUpperCase()} (${titlePeriodLabel})`
       : `MEMBRES JCI HAMMAM SOUSSE (${titlePeriodLabel})`;
@@ -305,8 +312,8 @@ export const downloadMembersAsExcel = async (
                 phone: getPhoneDisplay(member.phone),
                 role: role,
                 joined: member.joined_at
-                  ? new Date(member.joined_at).toLocaleDateString()
-                  : (member.created_at ? new Date(member.created_at).toLocaleDateString() : '-'),
+                  ? formatDate(member.joined_at)
+                  : (member.created_at ? formatDate(member.created_at) : '-'),
                 events: counts?.events ?? '-',
                 meetings: counts?.meetings ?? '-',
                 trainings: counts?.formations ?? '-',
@@ -434,7 +441,7 @@ export const downloadMembersAsExcel = async (
 
         ws.mergeCells(currentRow, 1, currentRow, TOTAL_COLS);
         const partTitleRow = ws.getRow(currentRow);
-        const periodLabel = `${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()}`;
+        const periodLabel = `${formatDate(periodStart)} - ${formatDate(periodEnd)}`;
         partTitleRow.getCell(1).value = `RÉSUMÉ DES PARTICIPATIONS (${periodLabel})`;
         partTitleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
         partTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0EA5E9' } };
