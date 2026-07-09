@@ -1,6 +1,7 @@
 import type { Member } from './types';
 import type { MemberCommitteeStats } from '../Activities/services/committeeService';
 import ExcelJS from 'exceljs';
+import { renderPieChart, renderBarChart, type ChartDatum } from './chartRenderer';
 
 export interface MemberParticipationMap {
   [memberId: string]: {
@@ -581,6 +582,10 @@ export const downloadMembersAsExcel = async (
       attendanceByActivity = distributionResult.attendanceByActivity;
     }
 
+    if (participationMap) {
+      currentRow = addChartsSection(wb, ws, currentRow, groupedMembers, statusCounts, participationMap, activityDetails ?? [], attendanceByActivity, periodEnd);
+    }
+
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
@@ -696,6 +701,107 @@ export const addDistributionTable = (
   });
 
   return { nextRow: row + 1, attendanceByActivity };
+};
+
+const addChartsSection = (
+  wb: ExcelJS.Workbook,
+  ws: ExcelJS.Worksheet,
+  startRow: number,
+  groupedMembers: Record<string, Member[]>,
+  statusCounts: Record<string, number>,
+  participationMap: MemberParticipationMap,
+  activityDetails: ActivityDetail[],
+  attendanceByActivity: Record<string, Set<string>>,
+  periodEnd: string
+): number => {
+  const argbToHex = (argb: string): string => `#${argb.slice(2)}`;
+
+  let row = startRow;
+
+  ws.mergeCells(row, 1, row, 12);
+  const titleRow = ws.getRow(row);
+  titleRow.getCell(1).value = 'GRAPHIQUES';
+  titleRow.getCell(1).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2137' } };
+  titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+  titleRow.height = 28;
+  row += 2;
+
+  const roleColorPalette = ['#1B3A5C', '#56BDA3', '#E8A838', '#3B82F6', '#9CA3AF', '#8B5CF6'];
+  const roleData: ChartDatum[] = Object.entries(groupedMembers).map(([role, roleMembers], i) => ({
+    label: role,
+    value: roleMembers.length,
+    color: roleColorPalette[i % roleColorPalette.length],
+  }));
+
+  const filteredMembersForCharts = Object.values(groupedMembers).flat();
+  let totalEvents = 0, totalMeetings = 0, totalFormations = 0, totalAssemblies = 0;
+  filteredMembersForCharts.forEach(m => {
+    const c = participationMap[m.id];
+    if (c) {
+      totalEvents += c.events;
+      totalMeetings += c.meetings;
+      totalFormations += c.formations;
+      totalAssemblies += c.assemblies;
+    }
+  });
+  const typeData: ChartDatum[] = [
+    { label: 'Événements', value: totalEvents, color: argbToHex('FF6366F1') },
+    { label: 'Réunions', value: totalMeetings, color: argbToHex('FF0EA5E9') },
+    { label: 'Formations', value: totalFormations, color: argbToHex('FFF59E0B') },
+    { label: 'Assemblée', value: totalAssemblies, color: argbToHex('FFEF4444') },
+  ];
+
+  const periodEndDate = new Date(periodEnd);
+  const eligibleCount = filteredMembersForCharts.filter(m => {
+    const joinDate = m.joined_at ? new Date(m.joined_at) : (m.created_at ? new Date(m.created_at) : null);
+    return !(joinDate && joinDate > periodEndDate);
+  }).length;
+  const activityRateData: ChartDatum[] = activityDetails.map(activity => {
+    const attendees = attendanceByActivity[activity.id]?.size ?? 0;
+    const rate = eligibleCount > 0 ? Math.round((attendees / eligibleCount) * 100) : 0;
+    return { label: activity.name, value: rate, color: argbToHex('FF10B981') };
+  });
+
+  const statusColors: Record<string, string> = {
+    'Actif': argbToHex('FF10B981'),
+    'Inactif': argbToHex('FFEF4444'),
+    'Suspendu': argbToHex('FF1B3A5C'),
+    'Pas encore membre': argbToHex('FF9CA3AF'),
+  };
+  const statusData: ChartDatum[] = Object.entries(statusCounts).map(([status, count]) => ({
+    label: status,
+    value: count,
+    color: statusColors[status] || '#6366F1',
+  }));
+
+  const charts: { title: string; imageDataUrl: string }[] = [
+    { title: 'RÉPARTITION PAR RÔLE', imageDataUrl: renderPieChart(roleData) },
+    { title: "PARTICIPATION PAR TYPE D'ACTIVITÉ", imageDataUrl: renderBarChart(typeData) },
+    { title: 'TAUX DE PRÉSENCE PAR ACTIVITÉ (%)', imageDataUrl: renderBarChart(activityRateData) },
+    { title: 'RÉPARTITION PAR STATUT', imageDataUrl: renderPieChart(statusData) },
+  ];
+
+  const chartColsWide = 8;
+  const chartRowsTall = 17;
+
+  charts.forEach((chart, i) => {
+    const gridCol = i % 2;
+    const gridRow = Math.floor(i / 2);
+    const anchorCol = gridCol * chartColsWide;
+    const anchorRow = row + gridRow * chartRowsTall;
+
+    ws.getCell(anchorRow, anchorCol + 1).value = chart.title;
+    ws.getCell(anchorRow, anchorCol + 1).font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF1B3A5C' } };
+
+    const imageId = wb.addImage({ base64: chart.imageDataUrl, extension: 'png' });
+    ws.addImage(imageId, {
+      tl: { col: anchorCol, row: anchorRow },
+      ext: { width: 420, height: 280 },
+    });
+  });
+
+  return row + 2 * chartRowsTall + 2;
 };
 
 export const getRankColor = (tier: string): string => {
