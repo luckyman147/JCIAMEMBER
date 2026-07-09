@@ -160,10 +160,14 @@ export const downloadMembersAsExcel = async (
 ): Promise<void> => {
     const { selectedRoles, includeTeams, periodStart, periodEnd, participationMap, committeeMap, rawParticipations, rawActivities, activityDetails, participationsWithActivityId } = options;
 
+    const periodEndDate = new Date(periodEnd);
+
     const groupedMembers = members.reduce((acc, member) => {
         if (!member.role || member.role === 'JCI Hammam Sousse') return acc;
         if (member.email?.includes('jci.hs')) return acc;
         if (selectedRoles.length > 0 && !selectedRoles.includes(member.role)) return acc;
+        const memberJoinDate = member.joined_at ? new Date(member.joined_at) : (member.created_at ? new Date(member.created_at) : null);
+        if (memberJoinDate && memberJoinDate > periodEndDate) return acc;
         if (!acc[member.role]) acc[member.role] = [];
         acc[member.role].push(member);
         return acc;
