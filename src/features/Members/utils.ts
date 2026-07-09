@@ -67,8 +67,6 @@ const BASE_COLUMN_DEFS = [
   { key: 'meetings', header: 'Réunions', width: 14, color: 'FFEF4444' },
   { key: 'trainings', header: 'Formations', width: 14, color: 'FF6366F1' },
   { key: 'assembly', header: 'Assemblée', width: 14, color: 'FF8B5CF6' },
-  { key: 'overall', header: 'Moyenne', width: 12, color: 'FF64748B' },
-  { key: 'status', header: 'Statut', width: 18, color: 'FF1B3A5C' },
   { key: 'presence', header: 'Taux présence', width: 18, color: 'FF56BDA3' },
 ];
 
@@ -93,14 +91,8 @@ const getPhoneDisplay = (phone?: string): string => {
     return num > 20000000 ? phone : '-';
 };
 
-const getAvgDisplay = (counts: { events: number; meetings: number; formations: number; assemblies: number } | undefined): string => {
-    if (!counts) return '-';
-    const total = counts.events + counts.meetings + counts.formations + counts.assemblies;
-    return total > 0 ? (total / 4).toFixed(1) : '-';
-};
-
 const isSimpleRole = (role: string) => {
-  const lower = role.toLowerCase();
+  const lower = role.trim().toLowerCase();
   return lower === 'member' || lower === 'new member' || lower === 'membre' || lower === 'nouveau membre';
 };
 
@@ -267,7 +259,6 @@ export const downloadMembersAsExcel = async (
                 meetings: counts?.meetings ?? '-',
                 trainings: counts?.formations ?? '-',
                 assembly: counts?.assemblies ?? '-',
-                overall: getAvgDisplay(counts),
                 status: status,
                 presence: presence.joinedAfterPeriod ? '-' : presence.rate,
                 decision: getDecision(role, presence.percent),

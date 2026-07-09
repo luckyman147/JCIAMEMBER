@@ -32,7 +32,7 @@ export default function MembersPage() {
     const [statsExpanded, setStatsExpanded] = useState(false);
     const [showDownloadModal, setShowDownloadModal] = useState(false);
     const [selectedRolesForDownload, setSelectedRolesForDownload] = useState<string[]>([]);
-    const [includeTeams, setIncludeTeams] = useState(true);
+    const [includeTeams, setIncludeTeams] = useState(false);
     const [periodStart, setPeriodStart] = useState(`${new Date().getFullYear()}-01-01`);
     const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0]);
 
