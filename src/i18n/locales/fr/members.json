@@ -74,5 +74,6 @@
   "lastMonth": "Mois dernier",
   "trimester": "Trimestre",
   "semester": "Semestre",
-  "custom": "Personnalisé"
+  "custom": "Personnalisé",
+  "sortByName": "Nom: A-Z"
 }

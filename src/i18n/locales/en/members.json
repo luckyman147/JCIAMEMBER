@@ -74,5 +74,6 @@
   "lastMonth": "Last Month",
   "trimester": "Quarter",
   "semester": "Semester",
-  "custom": "Custom"
+  "custom": "Custom",
+  "sortByName": "Name: A-Z"
 }

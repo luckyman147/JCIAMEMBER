@@ -121,6 +121,8 @@ export default function MembersPage() {
             result.sort((a, b) => (a.jps_score || 0) - (b.jps_score || 0));
         } else if (sortBy === 'volunteering_desc') {
             result.sort((a, b) => (b.estimated_volunteering_hours || 0) - (a.estimated_volunteering_hours || 0));
+        } else if (sortBy === 'name_asc') {
+            result.sort((a, b) => a.fullname.localeCompare(b.fullname));
         } else {
             // Default sort by points
             result.sort((a, b) => (b.points || 0) - (a.points || 0));
@@ -344,6 +346,9 @@ export default function MembersPage() {
                     </option>
                     <option value='volunteering_desc'>
                       ⌛ {t('members.sortVolDesc', 'Hours: High to Low')}
+                    </option>
+                    <option value='name_asc'>
+                      🔤 {t('members.sortByName', 'Name: A-Z')}
                     </option>
                   </select>
                   <ChevronDown className='absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-blue-500 transition-colors group-hover:translate-y-[-40%]' />
