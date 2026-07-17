@@ -13,6 +13,7 @@ import enRecruitment from './locales/en/recruitment.json';
 import enActivities from './locales/en/activities.json';
 import enObjectives from './locales/en/objectives.json';
 import enTreasury from './locales/en/treasury.json';
+import enOutings from './locales/en/outings.json';
 
 import frCommon from './locales/fr/common.json';
 import frAuth from './locales/fr/auth.json';
@@ -24,6 +25,7 @@ import frTeams from './locales/fr/teams.json';
 import frRecruitment from './locales/fr/recruitment.json';
 import frActivities from './locales/fr/activities.json';
 import frTreasury from './locales/fr/treasury.json';
+import frOutings from './locales/fr/outings.json';
 
 import arCommon from './locales/ar/common.json';
 import arAuth from './locales/ar/auth.json';
@@ -35,6 +37,7 @@ import arTeams from './locales/ar/teams.json';
 import arRecruitment from './locales/ar/recruitment.json';
 import arActivities from './locales/ar/activities.json';
 import arTreasury from './locales/ar/treasury.json';
+import arOutings from './locales/ar/outings.json';
 
 i18n
   .use(LanguageDetector)
@@ -53,7 +56,8 @@ i18n
           recruitment: enRecruitment,
           activities: enActivities,
           objectives: enObjectives,
-          treasury: enTreasury
+          treasury: enTreasury,
+          outings: enOutings
         }
       },
       fr: { 
@@ -67,7 +71,8 @@ i18n
           teams: frTeams,
           recruitment: frRecruitment,
           activities: frActivities,
-          treasury: frTreasury
+          treasury: frTreasury,
+          outings: frOutings
         }
       },
       ar: { 
@@ -81,7 +86,8 @@ i18n
           teams: arTeams.teams,
           recruitment: arRecruitment.recruitment,
           activities: arActivities.activities,
-          treasury: arTreasury.treasury
+          treasury: arTreasury.treasury,
+          outings: arOutings
         }
       }
     },

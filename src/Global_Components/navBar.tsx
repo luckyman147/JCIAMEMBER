@@ -2,7 +2,7 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../features/Authentication/auth.context'
 import logo from '../assets/logo.png'
 import { useState, useRef, useEffect } from 'react'
-import { Menu, X, LogOut, Home, Calendar, Users, Target, User, PieChart, Wallet } from 'lucide-react'
+import { Menu, X, LogOut, Home, Calendar, Users, Target, User, PieChart, Wallet, Map } from 'lucide-react'
 import { EXECUTIVE_LEVELS } from '../utils/roles'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -75,6 +75,13 @@ export default function Sidebar() {
             <Calendar className="w-5 h-5" />
             <span className="text-[10px] font-bold uppercase tracking-tighter">{t('nav.activities')}</span>
           </Link>
+
+          {user && (
+            <Link to="/outings" className={mobileTabClass('/outings')}>
+              <Map className="w-5 h-5" />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">{t('outings.sidebar')}</span>
+            </Link>
+          )}
 
           {user && hasExclusiveAccess && (
             <Link to="/treasury" className={mobileTabClass('/treasury')}>
@@ -211,6 +218,10 @@ export default function Sidebar() {
                   </NavLink>
                 </>
               )}
+              <NavLink to="/outings" className={navLinkClass}>
+                <Map className="w-4 h-4" />
+                <span className="flex-1">{t('outings.sidebar')}</span>
+              </NavLink>
               <NavLink to="/teams" className={navLinkClass}>
                  <Target className="w-4 h-4" />
                 <span className="flex-1">{t('nav.teams')}</span>

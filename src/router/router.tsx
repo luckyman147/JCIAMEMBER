@@ -23,6 +23,10 @@ import MemberDetailsPage from '../features/Members/pages/MemberDetailsPage'
 import NotFoundPage from '../Global_Components/NotFoundPage'
 import TreasuryPage from '../features/Treasury/pages/TreasuryPage'
 import { EXECUTIVE_LEVELS } from '../utils/roles'
+import OutingsListPage from '../features/Outings/pages/OutingsListPage'
+import OutingDetailsPage from '../features/Outings/pages/OutingDetailsPage'
+import CreateOutingPage from '../features/Outings/pages/CreateOutingPage'
+import EditOutingPage from '../features/Outings/pages/EditOutingPage'
 
 export const router = createBrowserRouter([
   {
@@ -196,6 +200,40 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <MemberDetailsPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Outings routes
+      {
+        path: '/outings',
+        element: (
+          <ProtectedRoute>
+            <OutingsListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/outings/create',
+        element: (
+          <ProtectedRoute>
+            <CreateOutingPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/outings/:id',
+        element: (
+          <ProtectedRoute>
+            <OutingDetailsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/outings/:id/edit',
+        element: (
+          <ProtectedRoute>
+            <EditOutingPage />
           </ProtectedRoute>
         ),
       },

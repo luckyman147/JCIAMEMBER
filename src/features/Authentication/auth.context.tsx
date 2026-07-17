@@ -153,11 +153,21 @@ const googleSignIn = async () => {
 
   const signOut = async () => {
     try {
-      setLoading(true) // Show loading state during logout
+      setLoading(true)
       await supabase.auth.signOut()
     } catch (error) {
       console.error('Error during sign out:', error)
     } finally {
+      // Clear all supabase-related localStorage items
+      const keysToRemove: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+          keysToRemove.push(key)
+        }
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key))
+
       setUser(null)
       setRole(null)
       setPoste(null)

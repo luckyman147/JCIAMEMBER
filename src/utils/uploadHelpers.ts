@@ -127,6 +127,42 @@ export const uploadActivityImage = async (file: File): Promise<UploadResult> => 
 }
 
 /**
+ * Upload outing cover image to Supabase Storage
+ */
+export const uploadOutingImage = async (file: File): Promise<UploadResult> => {
+  try {
+    const validation = validateFile(file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE)
+    if (!validation.valid) {
+      return { success: false, error: validation.error }
+    }
+
+    const filename = generateUniqueFilename(file.name)
+    const filePath = `outings/${filename}`
+
+    const { data, error } = await supabase.storage
+      .from('outing-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (error) {
+      console.error('Upload error:', error)
+      return { success: false, error: error.message }
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('outing-images')
+      .getPublicUrl(data.path)
+
+    return { success: true, url: publicUrl }
+  } catch (error) {
+    console.error('Upload error:', error)
+    return { success: false, error: 'Failed to upload image' }
+  }
+}
+
+/**
  * Upload activity video to Supabase Storage
  */
 export const uploadActivityVideo = async (file: File): Promise<UploadResult> => {
